@@ -176,9 +176,21 @@ export default {
 			line.moveTo(0, 0)
 			line.lineTo(0, vm.plot_height)
 			line.interactive = true
-			line.hitArea = new PIXI.Rectangle(-vm.filterbox_width*2, 0, 4 * vm.filterbox_width, vm.plot_height);
+			line.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 1, 0, 2 * vm.filterbox_width, vm.plot_height);
+
+			// let box = new PIXI.Graphics()
+			// box.alpha = 0
+			// box.lineStyle(1, 0)
+			// box.beginFill(0xFFFFFF, 1)
+			// box.drawRect(-vm.filterbox_width, 0, 2 * vm.filterbox_width, vm.plot_height)
+			// box.endFill()
+			// box.alpha = 1	
+			// box.x = 0
+			// box.y = 0
+			// grp_axis.addChild(box)
+				// console.log("draw hitarea")
+
 			line.y = indicator.y + vm.indicator_radius + 5
-			grp_axis.addChild(line)
 			line.box = []	
 			return line		
 		},
@@ -191,15 +203,17 @@ export default {
 			box.selecting = true
 			box.start_y = p.y
 			box.alpha = 1
-			box.present = true
+			// box.present = true
 			line.box.push(box)
 			line.current_box = box
 			grp_axis.addChild(box)
+			// console.log("start")
 		},
 		 
 		selectingRange(e, line, grp_axis){
 			let vm = this
 			if(line != undefined && line.current_box != undefined){
+				// console.log("selecting Range",line.current_box)
 				let box = line.current_box
 				let p = e.data.getLocalPosition(vm.wrapper)
 				if (!e.data.buttons) {
@@ -218,14 +232,15 @@ export default {
 					box.height = Math.abs(box.start_y - p.y)
 					vm.filterLines()
 				}
+				// console.log(box.height)
 			}
 		},
 		 
 		drawFilterEnd(e, line, grp_axis){
 			let vm = this
+			// let p = e.data.getLocalPosition(vm.wrapper)
 			if(line != undefined && line.current_box != undefined){
-				let box = line.current_box // bug
-				let p = e.data.getLocalPosition(vm.wrapper)
+				let box = line.current_box 
 				if (box) {
 					if (box.height < 10) {
 						grp_axis.removeChild(box)
@@ -233,11 +248,12 @@ export default {
 					} else {
 						if(line.current_box != undefined){
 							box.selecting = false
-							box.present = false
+							// box.present = false
 						}
 					}
 				}
 				vm.filterLines()
+				// console.log(box)
 			}
 		},
 		 
@@ -260,10 +276,13 @@ export default {
 			grp_axis.addChild(indicator)
 			//  draw line
 			let line = vm.drawLine(indicator, grp_axis)
+			grp_axis.addChild(line)
 			line.on("mousedown", (e) => vm.drawFilterStart(e, line, grp_axis))
 			line.on("mousemove", (e) => vm.selectingRange(e, line, grp_axis))
 			line.on("mouseup", (e) => vm.drawFilterEnd(e, line, grp_axis))
 			line.on("mouseout", (e) => vm.drawFilterEnd(e, line, grp_axis))
+
+			// let line = 
 			//  draw ticks
 			let ctn_ticks = new vm.$PIXI.Container()
 			grp_axis.addChild(ctn_ticks)
@@ -347,7 +366,8 @@ export default {
 		initFilterBox(x, y, container, line){
 			let vm = this
 			let box = vm.drawFilterBox(x, y, line.box.length)
-			// box.hitArea = new PIXI.Rectangle(-vm.filterbox_width*2, 0, 4 * vm.filterbox_width, vm.plot_height);
+			box.hitArea = new PIXI.Rectangle(-vm.filterbox_width*2, 0, 4 * vm.filterbox_width, vm.plot_height);
+			// console.log(box.x, box.y)
 			box.on("mousedown", () => box.moving = true )
 			box.on("mousemove", (e) => vm.filterBoxMove(e, box, line.y, container.x))
 			box.on("mouseup", () => box.moving = false)
@@ -462,6 +482,9 @@ export default {
 			let no_box = vm.state.axis.every(a => {
 				return a.grp.child_dict.line.box.length === 0
 			})
+			// console.log(vm.state.axis[0].grp.child_dict.line.box.length)
+			// console.log(no_box)
+			vm.state.axis[1].grp.child_dict.line.box.forEach((box,bi) => console.log(bi, ":", box.x, box.y))
 			vm.updateAlpha()
 			vm.eventBus.data.forEach(d => {
 				if (d.cal && d.cal.selected) {
@@ -497,12 +520,15 @@ export default {
 							line.tint = d.color
 							if (no_box) {
 								d.cal.texture = vm.eventBus.cal.cellTextureSelected
+								// console.log("pass,no_box _true:cellTextureSelectedeve")
 							} else {
 								d.cal.texture = vm.eventBus.cal.cellFilterTexture
+								// console.log("pass_true,no_box_false:cellFilterTexture")
 							}
 						} else {
 							line.alpha *= 0.1
 							d.cal.texture = vm.eventBus.cal.cellTextureSelected
+							// console.log("pass_false:cellTextureSelectedeve")
 						}
 					}
 				}
