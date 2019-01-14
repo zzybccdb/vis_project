@@ -1,0 +1,164 @@
+		addAxis(column, idx, dim) {
+            let vm = this
+			let additional = !vm.eventBus.root.columns_train.includes(column)
+			let grp_axis = new vm.$PIXI.Container()
+			vm.ctn_axis.addChild(grp_axis)
+        
+            // let label = vm.drawLabel(column)
+            // grp_axis.addChild(label)
+			// grp_axis.dragging = false
+            // label.on("rightdown", (e) => vm.axisStartDrag(e,grp_axis))
+            // label.on("mousemove", (e) => vm.axisDragging(e,grp_axis))
+            // label.on("rightup", () => vm.axisStopDrag(grp_axis) )
+			// label
+			let label = new vm.$PIXI.Text(column
+			, {fontFamily : vm.dim_font, fontSize: vm.dim_font_size, fill : 0x000000, align : 'center'})
+			label.x = -vm.indicator_radius * 2
+			label.rotation = - Math.PI / 6
+			label.y = 50
+			grp_axis.addChild(label)
+
+			label.interactive = true
+			label.buttonMode = true
+
+			grp_axis.dragging = false
+			label.rightdown = function(e) {
+				grp_axis.dragging = true
+				grp_axis.drag_start_x = grp_axis.x
+				grp_axis.drag_start_mouse_x = e.data.global.x
+			}
+
+			label.mousemove = function(e) {
+				if (grp_axis.dragging && e.data.buttons) {
+					grp_axis.x = e.data.global.x - grp_axis.drag_start_mouse_x + grp_axis.drag_start_x
+					vm.adjustLines()
+					vm.adjustAxisPosition()
+				} else {
+					if (grp_axis.dragging) {
+						label.stop_dragging()
+					}
+				}
+			}
+
+			label.stop_dragging = function() {
+				grp_axis.dragging = false
+				vm.adjustAxisPosition()
+				vm.adjustLines()
+			}
+
+			label.rightup = label.stop_dragging
+			// indicator
+			// let indicator = vm.drawIndicator(additional, label)
+            // indicator.on("mousedown", () => vm.hiddenLabels(column))
+			// grp_axis.addChild(indicator)
+
+			// indicator
+			let indicator = new vm.$PIXI.Graphics()
+			indicator.lineStyle(1, 0x0287e3)
+			indicator.beginFill(0x0287e3, 0.9)
+			if (additional) {
+				indicator.moveTo(0, -vm.indicator_radius)
+				indicator.lineTo(vm.indicator_radius, vm.indicator_radius)
+				indicator.lineTo(-vm.indicator_radius, vm.indicator_radius)
+				indicator.lineTo(0, -vm.indicator_radius)
+			} else {
+				indicator.drawCircle(0, 0, vm.indicator_radius, vm.indicator_radius)
+			}
+			indicator.endFill()
+			indicator.y = label.y + label.height + 8
+			indicator.interactive = true
+			indicator.buttonMode = true
+			indicator.mousedown = function() {
+				vm.eventBus.root.remove(column)
+				setTimeout(()=>{vm.filterLines()},100)
+			}
+			grp_axis.addChild(indicator)
+			// line
+			let line = new vm.$PIXI.Graphics()
+			line.lineStyle(1, 0)
+			line.moveTo(0, 0)
+			line.lineTo(0, vm.plot_height)
+			line.interactive = true
+			line.hitArea = new vm.$PIXI.Rectangle(-vm.hit_width, 0, 2 * vm.hit_width, vm.plot_height);
+			line.y = indicator.y + vm.indicator_radius + 5
+			grp_axis.addChild(line)
+			line.box = []
+			// handle selection
+			// line.boxList = []
+			line.selectionStart = function(e) {
+				console.log("why")
+				let box = vm.initSelectionBox(line.x, line.y, grp_axis, line)
+				let p = e.data.getLocalPosition(vm.wrapper)
+				box.height = 0
+				box.selecting = true
+				box.start_y = p.y
+				box.alpha = 1
+				box.present = true
+				line.box.push(box)
+				line.current_box = box
+				grp_axis.addChild(box)
+			}
+			
+			line.selectionEnd = function() {
+				let box = line.current_box
+				if (box) {
+					if (box.height < 10) {
+						grp_axis.removeChild(box)
+						line.box = line.box.slice(0, line.box.length-1)
+					} else {
+						if(line.current_box != undefined){
+							box.selecting = false
+							box.present = false
+						}
+					}
+				}
+				vm.filterLines()
+			}
+
+			line.selecting = function(e) {
+				if(line.current_box != undefined){
+					let box = line.current_box
+					let p = e.data.getLocalPosition(vm.wrapper)
+					if (!e.data.buttons) {
+						if (box.selecting) {
+							line.selectionEnd()
+						}
+					}
+					if (box.selecting && box != undefined) {
+						p.y = Math.min(line.y+line.height, p.y)
+						p.y = Math.max(line.y, p.y)
+						if (p.y < box.start_y) {
+							box.y = p.y
+						} else {
+							box.y = box.start_y
+						}
+						box.height = Math.abs(box.start_y - p.y)
+						vm.filterLines()
+					}
+				}
+			}
+
+			line.mousedown = line.selectionStart
+			line.mousemove = line.selecting
+			line.mouseup = line.selectionEnd
+
+			// ticks
+			let ctn_ticks = new vm.$PIXI.Container()
+			grp_axis.addChild(ctn_ticks)
+
+			// add shortcut --new
+			grp_axis.child_dict = {
+				label, line, ctn_ticks
+			}
+
+			vm.state.axis.push({
+				idx,
+				dim,
+				additional,
+				name: column,
+				disabled: false,
+				scale: null,
+				extent: null,
+				grp: grp_axis,
+			})
+        },
