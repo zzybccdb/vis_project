@@ -239,7 +239,7 @@ export default {
 			let vm = this
 			if(line != undefined && line.current_box != undefined){
 				let box = line.current_box 
-				if (box) {
+				if (box && line.box.length!= 0) {
 					if (box.height < 10) {
 						grp_axis.removeChild(box)
 						if(line.box[line.box.length-1].height < 10)
@@ -277,7 +277,7 @@ export default {
 			line.on("mousedown", (e) => vm.drawFilterStart(e, line, grp_axis))
 			line.on("mousemove", (e) => vm.selectingRange(e, line, grp_axis))
 			line.on("mouseup", (e) => vm.drawFilterEnd(e, line, grp_axis))
-			line.on("mouseout", (e) => vm.drawFilterEnd(e, line, grp_axis))
+			// line.on("mouseout", (e) => vm.drawFilterEnd(e, line, grp_axis))
 
 			// let line = 
 			//  draw ticks
