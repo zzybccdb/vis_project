@@ -188,7 +188,6 @@ export default {
 			// box.x = 0
 			// box.y = 0
 			// grp_axis.addChild(box)
-				// console.log("draw hitarea")
 
 			line.y = indicator.y + vm.indicator_radius + 5
 			line.box = []	
@@ -238,22 +237,20 @@ export default {
 		 
 		drawFilterEnd(e, line, grp_axis){
 			let vm = this
-			// let p = e.data.getLocalPosition(vm.wrapper)
 			if(line != undefined && line.current_box != undefined){
 				let box = line.current_box 
 				if (box) {
 					if (box.height < 10) {
 						grp_axis.removeChild(box)
-						line.box = line.box.slice(0, line.box.length-1)
+						if(line.box[line.box.length-1].height < 10)
+							line.box.splice(-1,1)
 					} else {
 						if(line.current_box != undefined){
 							box.selecting = false
-							// box.present = false
 						}
 					}
 				}
 				vm.filterLines()
-				// console.log(box)
 			}
 		},
 		 
@@ -366,7 +363,7 @@ export default {
 		initFilterBox(x, y, container, line){
 			let vm = this
 			let box = vm.drawFilterBox(x, y, line.box.length)
-			box.hitArea = new PIXI.Rectangle(-vm.filterbox_width*2, 0, 4 * vm.filterbox_width, vm.plot_height);
+			box.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 4 * vm.filterbox_width, vm.plot_height);
 			// console.log(box.x, box.y)
 			box.on("mousedown", () => box.moving = true )
 			box.on("mousemove", (e) => vm.filterBoxMove(e, box, line.y, container.x))
@@ -482,8 +479,9 @@ export default {
 			let no_box = vm.state.axis.every(a => {
 				return a.grp.child_dict.line.box.length === 0
 			})
-			// console.log(vm.state.axis[0].grp.child_dict.line.box.length)
-			// console.log(no_box)
+			// vm.state.axis.forEach((axis,i) => {
+			// 	console.log(i+":",axis.grp.child_dict.line.box.length)
+			// })
 			vm.state.axis[1].grp.child_dict.line.box.forEach((box,bi) => console.log(bi, ":", box.x, box.y))
 			vm.updateAlpha()
 			vm.eventBus.data.forEach(d => {
