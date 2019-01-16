@@ -604,7 +604,7 @@ export default {
             vm.indicator_radius = 5 
 
     		vm.normalizedby = 'each dimension'
-            vm.normalizedin = 'selected region'
+            vm.normalizedin = 'view region'
 
 			vm.app.stage.removeChildren()
 

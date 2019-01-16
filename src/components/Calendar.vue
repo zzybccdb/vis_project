@@ -35,7 +35,8 @@ export default {
 				rect1.x + rect1.width >= rect2.x &&
 				rect1.y <= rect2.y + rect2.height &&
 				rect1.height + rect1.y >= rect2.y) {
-				rect1.singleSelected = false
+				rect1.singSelected = false
+				rect1.neibor = false
 				return true
 			}
 			return false
@@ -118,16 +119,19 @@ export default {
 
 		updateSelection(ctn_cells, ctn_box) {
 			var vm = this
+			let i = 0
 			ctn_cells.children.forEach(c => {
 				let pass = ctn_box.children.some(box => {
 					return vm.collision(c, box)
 				})
+				// if(c.neibor){
+				// 	console.log(i++)
+				// }
 				if( c.data != undefined ){
-					if ((pass && !c.data.mask && c.tint != 0xCCCCCC) || (c.singleSelected || c.neibor)) {
+					if ((pass && !c.data.mask && c.tint != 0xCCCCCC) || (c.singSelected || c.neibor)) {
 						c.texture = vm.cellTextureSelected
 						c.selected = true
-					}
-					else {
+					} else {
 						c.texture = vm.cellTexture
 						c.selected = false
 					}
@@ -209,9 +213,10 @@ export default {
 
 				sp.selected = false
 				sp.msover = false
-				sp.singleSelected = false
+				sp.singSelected = false
 				sp.neibor = false
 				sp.oldTexture = sp.texture
+
 				sp.interactive = true
 				sp.mouseover = function(e) {
 					let data = sp.data
@@ -255,28 +260,32 @@ export default {
 
 				sp.mousedown = function(){
 					if( sp.selected ){
-						if(sp.singleSelected || sp.neibor){
-							ctn_cells.children.forEach( cell => {
-								if(cell.singleSelected || cell.neibor){
-									cell.singleSelected = false
-									cell.neibor = false
-								}
+						console.log("sp.mousedown")
+						if(ctn_box.singSelected){
+							vm.eventBus.data.forEach( d => {
+								d.cal.singSelected = false
+								d.cal.neibor = false	
+								d.cal.texture = vm.cellTexture
+								d.cal.selected = false
 							})
-						}
+							ctn_box.singSelected = false
+						}					
 						ctn_box.removeChild(sp.box)
 						sp.box = null
 						vm.updateSelection(ctn_cells, ctn_box)
 						vm.adjustAxisOrder()
 						vm.eventBus.pcp.clearData()
-						//vm.eventBus.pcp.updateData()
+						vm.eventBus.pcp.updateData()
 					}
 				}
 
 				sp.rightdown = function(){
 					if(!sp.data.mask && sp.tint != 0xCCCCCC){
-						sp.singleSelected = true
-						vm.colorSimilar(sp.tint, ctn_cells.children, sp)
+						ctn_box.singSelected = true
+						sp.singSelected = true
 						sp.msover = true
+						sp.selected = true
+						vm.colorSimilar(sp.tint, sp, ctn_cells.children)
 					}
 				}
 
@@ -365,26 +374,20 @@ export default {
 			}
 
 			main_ctn.selectionEnd = function() {
-				if(ctn_box.selecting){
-					let box = ctn_box.children[ctn_box.children.length-1]
-					if (box && box.height * box.width < (vm.cellSize * vm.cellSize) / 4) {
-						ctn_box.removeChild(box)
-					}
-					vm.updateSelection(ctn_cells, ctn_box)
-					vm.setBox(ctn_cells, ctn_box)
-					vm.adjustAxisOrder()
-					vm.eventBus.pcp.clearData()
-					vm.eventBus.pcp.updateData()
-					vm.eventBus.pcp.highLight()
-					ctn_box.selecting = false 
+				let box = ctn_box.children[ctn_box.children.length-1]
+				if (box && box.height * box.width < (vm.cellSize * vm.cellSize) / 4) {
+					ctn_box.removeChild(box)
 				}
+				vm.updateSelection(ctn_cells, ctn_box)
+				vm.setBox(ctn_cells, ctn_box)
+				vm.adjustAxisOrder()
+				vm.eventBus.pcp.clearData()
+				vm.eventBus.pcp.updateData()
+				vm.eventBus.pcp.highLight()
+				ctn_box.selecting = false
 			}
 
 			main_ctn.selecting = function(e) {
-				ctn_cells.children.forEach(cell => {
-					cell.singleSelected = false
-					cell.neibor = false
-				})
 				if (!e.data.buttons) {
 					if (ctn_box.selecting) {
 						main_ctn.selectionEnd()
@@ -392,6 +395,15 @@ export default {
 					return
 				}
 				if (ctn_box.selecting) {
+					if(ctn_box.singSelected){
+						vm.eventBus.data.forEach( d => {
+							d.cal.singSelected = false
+							d.cal.neibor = false	
+							d.cal.texture = vm.cellTexture
+							d.cal.selected = false
+						})
+						ctn_box.singSelected = false
+					}
 					let box = ctn_box.children[ctn_box.children.length-1]
 					let p = e.data.getLocalPosition(main_ctn)
 					let p_topleft = {
@@ -614,6 +626,7 @@ export default {
 
 				sp.interactive = true
 				sp.selected = false
+				sp.singleClick = false
 				sp.selectedTexture = vm.selectedTexture
 				sp.oldTexture = sp.texture
 
@@ -664,7 +677,7 @@ export default {
 						vm.updateSelection(ctn_cells, ctn_box)
 						vm.adjustAxisOrder()
 						vm.eventBus.pcp.clearData()
-						//vm.eventBus.pcp.updateData()
+						vm.eventBus.pcp.updateData()
 					}
 				}
 				date.add(2, 'hour')
@@ -686,6 +699,16 @@ export default {
 				box.start_p = p
 				box.clear()
 				ctn_box.addChild(box)
+
+				// box.interactive = true
+				// box.mousedown = function() {
+				// 	ctn_box.removeChild(box)
+                //     vm.updateSelection(ctn_cells, ctn_box)
+                //     vm.adjustAxisOrder()
+                //     vm.eventBus.pcp.clearData()
+                //     vm.eventBus.pcp.updateData()
+				// }
+
 				ctn_box.selecting = true
 			}
 
@@ -698,7 +721,7 @@ export default {
 				vm.setBox(ctn_cells, ctn_box)
 				vm.adjustAxisOrder()
 				vm.eventBus.pcp.clearData()
-				//vm.eventBus.pcp.updateData()
+				vm.eventBus.pcp.updateData()
 				ctn_box.selecting = false
 			}
 
@@ -896,7 +919,7 @@ export default {
 						vm.updateSelection(ctn_cells, ctn_box)
 						vm.adjustAxisOrder()
 						vm.eventBus.pcp.clearData()
-						//vm.eventBus.pcp.updateData()
+						vm.eventBus.pcp.updateData()
 					}
 				}
 				date.add(5, 'minute')
@@ -918,6 +941,16 @@ export default {
 				box.start_p = p
 				box.clear()
 				ctn_box.addChild(box)
+
+				// box.interactive = true
+				// box.mousedown = function() {
+				// 	ctn_box.removeChild(box)
+                //     vm.updateSelection(ctn_cells, ctn_box)
+                //     vm.adjustAxisOrder()
+                //     vm.eventBus.pcp.clearData()
+                //     vm.eventBus.pcp.updateData()
+				// }
+
 				ctn_box.selecting = true
 			}
 
@@ -930,7 +963,7 @@ export default {
 				vm.setBox(ctn_cells, ctn_box)
 				vm.adjustAxisOrder()
 				vm.eventBus.pcp.clearData()
-				//vm.eventBus.pcp.updateData()
+				vm.eventBus.pcp.updateData()
 				ctn_box.selecting = false
 			}
 
@@ -1035,7 +1068,7 @@ export default {
 			}
 			vm.mode = mode
 		},
-		
+
 		hexToRgb(hex){
 			let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/.exec(hex)
 			return result? {   
@@ -1045,20 +1078,32 @@ export default {
 			}:undefined;
 		},
 
-		colorSimilar(hex, ctn_cells, selectCell){
+		zeroPadding(hex){
+			hex = "000000"+hex 
+			return hex.substring(hex.length-6,hex.length); 
+		},
+
+		colorSimilar(hex, selectCell, ctn_cells){
 			let vm = this
 			let cellDistance = []
-			let rgb1 = vm.hexToRgb(hex.toString(16))
-			ctn_cells.forEach(cell => {
-				let rgb2 = vm.hexToRgb(cell.tint.toString(16))
-				cellDistance.push({dis:vm.colorDis(rgb1,rgb2),cell:cell})
+			let rgb1 = vm.hexToRgb(vm.zeroPadding(hex.toString(16)))
+
+			vm.eventBus.data.forEach( d => {
+				let rgb2 = vm.hexToRgb(vm.zeroPadding(d.cal.tint.toString(16)))
+				cellDistance.push({dis:vm.colorDis(rgb1,rgb2),cell:d.cal})				
 			})
+			// ctn_cells.forEach( cell => {
+			// 	let rgb2 = vm.hexToRgb(vm.zeroPadding(cell.tint.toString(16)))
+			// 	cellDistance.push({dis:vm.colorDis(rgb1,rgb2),cell:cell})				
+			// })
+
 			cellDistance.sort((a,b) => {
 				return a.dis - b.dis
 			})
 			cellDistance = cellDistance.slice(0,30)	
 			cellDistance.forEach( item => {
-				// item.cell.tint = 0xffffff
+				item.cell.texture = vm.cellTextureSelected
+				item.cell.selected = true
 				item.cell.neibor = true
 			})	
 		},

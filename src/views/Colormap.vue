@@ -232,7 +232,7 @@ export default {
 		normalizedby: 'each dimension',
 		normalizedby_options: ['each dimension', 'all dimension'],
 
-		normalizedin: 'selected region',
+		normalizedin: 'view region',
 		normalizedin_options: ['selected region', 'view region']
 	}),
 	watch: {
