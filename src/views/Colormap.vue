@@ -388,6 +388,7 @@ export default {
 		onDataLoaded(response) {
 			var vm = this
 			vm.response = response
+			window.response = response
 			// console.log('success')
 			vm.eventBus.mask = response.data.mask
 			vm.eventBus.columns = response.data.columns

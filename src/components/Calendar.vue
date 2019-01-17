@@ -275,6 +275,17 @@ export default {
 						vm.eventBus.pcp.clearData()
 						vm.eventBus.pcp.updateData()
 					}
+					else if(!sp.data.mask && sp.tint != 0xCCCCCC){
+						ctn_box.singSelected = true
+						sp.singSelected = true
+						sp.msover = true
+						sp.selected = true
+						vm.dimensionSimilar(sp.data.raw)
+						vm.adjustAxisOrder()
+						vm.eventBus.pcp.clearData()
+						vm.eventBus.pcp.updateData()
+						vm.eventBus.pcp.highLight()
+					}
 				}
 
 				sp.rightdown = function(){
@@ -283,7 +294,7 @@ export default {
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
-						vm.colorSimilar(sp.tint, sp, ctn_cells.children)
+						vm.colorSimilar(sp.tint, ctn_cells.children)
 					}
 				}
 
@@ -361,6 +372,7 @@ export default {
 			main_ctn.addChild(ctn_box)
 
 			main_ctn.selectionStart = function(e) {
+				console.log("selectionStart")
 				let p = e.data.getLocalPosition(main_ctn)
 				let box = new vm.$PIXI.Graphics()
 				box.x = p.x
@@ -372,6 +384,7 @@ export default {
 			}
 
 			main_ctn.selectionEnd = function() {
+				console.log("selectionEnd")
 				let box = ctn_box.children[ctn_box.children.length-1]
 				if (box && box.height * box.width < (vm.cellSize * vm.cellSize) / 4) {
 					ctn_box.removeChild(box)
@@ -383,7 +396,7 @@ export default {
 				vm.eventBus.pcp.updateData()
 				vm.eventBus.pcp.highLight()
 				ctn_box.selecting = false
-			}
+			}	
 
 			main_ctn.selecting = function(e) {
 				if (!e.data.buttons) {
@@ -689,6 +702,17 @@ export default {
 						vm.eventBus.pcp.clearData()
 						vm.eventBus.pcp.updateData()
 					}
+					else if(!sp.data.mask && sp.tint != 0xCCCCCC){
+						ctn_box.singSelected = true
+						sp.singSelected = true
+						sp.msover = true
+						sp.selected = true
+						vm.dimensionSimilar(sp.data.raw)
+						vm.adjustAxisOrder()
+						vm.eventBus.pcp.clearData()
+						vm.eventBus.pcp.updateData()
+						vm.eventBus.pcp.highLight()
+					}
 				}
 				
 				sp.rightdown = function(){
@@ -697,7 +721,7 @@ export default {
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
-						vm.colorSimilar(sp.tint, sp, ctn_cells.children)
+						vm.colorSimilar(sp.tint, ctn_cells.children)
 					}					
 				}
 
@@ -953,6 +977,17 @@ export default {
 						vm.eventBus.pcp.clearData()
 						vm.eventBus.pcp.updateData()
 					}
+					else if(!sp.data.mask && sp.tint != 0xCCCCCC){
+						ctn_box.singSelected = true
+						sp.singSelected = true
+						sp.msover = true
+						sp.selected = true
+						vm.dimensionSimilar(sp.data.raw)
+						vm.adjustAxisOrder()
+						vm.eventBus.pcp.clearData()
+						vm.eventBus.pcp.updateData()
+						vm.eventBus.pcp.highLight()
+					}
 				}
 
 				sp.rightdown = function(){
@@ -961,7 +996,7 @@ export default {
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
-						vm.colorSimilar(sp.tint, sp, ctn_cells.children)
+						vm.colorSimilar(sp.tint, ctn_cells.children)
 					}
 				}
 
@@ -1126,7 +1161,7 @@ export default {
 			return hex.substring(hex.length-6,hex.length); 
 		},
 
-		colorSimilar(hex, selectCell, ctn_cells){
+		colorSimilar(hex, ctn_cells){
 			let vm = this
 			let cellDistance = []
 			let rgb1 = vm.hexToRgb(vm.zeroPadding(hex.toString(16)))
@@ -1135,10 +1170,6 @@ export default {
 				let rgb2 = vm.hexToRgb(vm.zeroPadding(d.cal.tint.toString(16)))
 				cellDistance.push({dis:vm.colorDis(rgb1,rgb2),cell:d.cal})				
 			})
-			// ctn_cells.forEach( cell => {
-			// 	let rgb2 = vm.hexToRgb(vm.zeroPadding(cell.tint.toString(16)))
-			// 	cellDistance.push({dis:vm.colorDis(rgb1,rgb2),cell:cell})				
-			// })
 
 			cellDistance.sort((a,b) => {
 				return a.dis - b.dis
@@ -1156,7 +1187,36 @@ export default {
 			let g = rgb1.g - rgb2.g
 			let b = rgb1.b - rgb2.b
 			return Math.sqrt(r*r+g*g+b*b)
-		}
+		},
+
+		dimensionSimilar(selectedCell){
+			let vm = this
+			let cellDistance = []
+			let item2 = selectedCell.slice(4)
+			vm.eventBus.data.forEach( d => {
+				let item1 = d.raw.slice(4)
+				cellDistance.push({dis:vm.dimensionDis(item1,item2),cell:d.cal})
+			})
+			cellDistance.sort((a,b) => {
+				return a.dis - b.dis
+			})
+			cellDistance = cellDistance.slice(0,30)
+			cellDistance.forEach( item => {
+				item.cell.texture = vm.cellTextureSelected
+				item.cell.selected = true
+				item.cell.neibor = true				
+			})
+		},
+
+		dimensionDis(item1, item2){
+			let sum = []
+			item1.forEach((dim, i) => {
+				// console.log(dim-item2[i])
+				sum.push(Math.pow(dim-item2[i],2))
+			})
+			sum = sum.reduce((a,b) => {return a+b})
+			return Math.sqrt(sum)
+		},
 	},
 	mounted() {
 		var vm = this;

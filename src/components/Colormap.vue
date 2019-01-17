@@ -465,6 +465,8 @@ export default {
 				if( d.cal) {
 					d.cal.texture = vm.eventBus.cal.cellTexture
 					d.cal.selected = false
+					d.cal.singSelected = false
+					d.cal.neibor = false
 				}
 			})
 			vm.eventBus.cal.adjustAxisOrder()
