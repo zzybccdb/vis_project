@@ -34,6 +34,7 @@ export default {
 		highLight(){
 			let vm = this;
 			vm.updateAlpha()
+			console.log("highlight")
 			vm.eventBus.data.forEach(d => {
 				if (d.cal.selected && d.cal.msover) {
 					let line = d.pcp

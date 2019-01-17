@@ -184,7 +184,7 @@ const EventBus = {
 
 }
 import { mapGetters } from 'vuex'
-import Colormap from '@/components/Colormap_modify.vue'
+import Colormap from '@/components/Colormap.vue'
 import Calendar from '@/components/Calendar.vue'
 import Parallel from '@/components/Parallel.vue'
 import Slider from '@/components/Slider.vue'
@@ -362,7 +362,7 @@ export default {
 			}
 			sd = sd.format('YYYY-MM-DD') + " 00:00:00"
 			ed = ed.format('YYYY-MM-DD') + " 00:00:00"
-			vm.loadData(vm.eventBus.zoomHistory[vm.eventBus.zoomHistory.length-1].interval, sd, ed)
+			vm.loadData(vm.eventBus.zoomHistory[vm.eventBus.zoomHistory.length-1].interval, [sd, ed])
 		},
 
 		allInited() {
@@ -434,14 +434,16 @@ export default {
 			vm.init.me = true
 		},
 		// eslint-disable-next-line
-		loadData(interval, startDate, endDate) {
+		// loadData(interval, startDate, endDate) {
+		loadData(interval, date_range) {
 			var vm = this
 
 			vm.eventBus.zoomHistory.push({
 				calLevel: vm.eventBus.calLevel,
 				interval,
-				startDate,
-				endDate
+				// startDate,
+				// endDate
+				date_range,
 			})
 
 			vm.init.me = false
@@ -460,17 +462,21 @@ export default {
 				interval
 			}
 
-			if (startDate) {
-				param.start_date = startDate
+			// if (startDate) {
+			// 	param.start_date = startDate
+			// }
+
+			// if (endDate) {
+			// 	param.end_date = endDate
+			// }
+
+			if(date_range){
+				param.date_range = date_range
 			}
 
-			if (endDate) {
-				param.end_date = endDate
-			}
-
-			param.other_dims = vm.columns
-			// console.log(param)
-			vm.$axios.post(vm.$api + '/model/latent', param)
+			// param.other_dims = vm.columns
+			// vm.$axios.post(vm.$api + '/model/latent', param)
+			vm.$axios.post(vm.$api + '/inference/latent', param)
 			.then(vm.onDataLoaded)
 			.catch(error => {
 				window.error = error

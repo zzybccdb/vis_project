@@ -103,11 +103,11 @@
 
 <script>
 import Chart from 'chart.js'
-import BoxPlot from '@/components/BoxPlot.vue'
+// import BoxPlot from '@/components/BoxPlot.vue'
 
 export default {
 	components: {
-		BoxPlot
+		// BoxPlot
 	},
 	data: () => ({
 		state: 'reset',
@@ -130,6 +130,7 @@ export default {
 		batch_size_errors: [],
 		loaded: false,
 		requesting: 'none',
+		switch_dataset: false,
 	}),
 	computed: {
 		anyError() {
@@ -150,20 +151,23 @@ export default {
 			return this.requesting !== 'none' || this.state == 'training' || this.state == 'reset' || this.anyError
 		},
 		disablePauseBtn() {
-			return this.requesting !== 'none' || this.state == 'paused' || this.state == 'reset'
+			// return this.requesting !== 'none' || this.state == 'paused' || this.state == 'reset'
+			return this.requesting !== 'none' || this.state == 'ready' || this.state == 'reset'
 		},
 
 		showAnalysis() {
 			// this.$refs.box1.load()
 			// this.$refs.box2.load()
-			return this.state == 'paused'
+			// return this.state == 'paused'
+			return this.state = "ready"
 		}
 	},
 	methods: {
 		onNewTrain() {
 			var vm = this
 			vm.requesting = 'newTrain'
-			this.$axios.post(this.$api + '/train/start_new', {
+			// this.$axios.post(this.$api + '/train/start_new', {
+			this.$axios.post(this.$api + '/train/start', {
 				'network': vm.network,
 				'dataset': vm.dataset,
 				'columns': vm.columns,
@@ -217,7 +221,9 @@ export default {
 			if (vm.state == 'training' && vm.requesting == 'none') {
 				this.$axios.post(this.$api + '/train/progress').then(response => {
 					vm.state = response.data.state
-					vm.addLoss(response.data.loss, response.data.step)
+					if(response.data.loss){
+						vm.addLoss(response.data.loss, response.data.step)
+					}
 				}).catch(error => {
 					console.log('something went wrong!', error.response.data)
 				})
@@ -250,6 +256,7 @@ export default {
 				'name': vm.dataset
 			}).then(response => {
 				vm.state = response.data.state
+				vm.switch_dataset = true
 				vm.columns_all = response.data.columns_all
 				vm.columns = response.data.columns
 				vm.dataset_errors = []
@@ -259,6 +266,10 @@ export default {
 		},
 		onColumnsChange() {
 			var vm = this
+			if(vm.switch_dataset){
+				vm.switch_dataset = false
+				return
+			}
 			if (vm.columns.length == 0) {
 				return
 			}
@@ -285,7 +296,8 @@ export default {
 		onLearningRateChange() {
 			var vm = this
 			this.$axios.post(this.$api + '/train/set_param', {
-				'learning_rate': vm.learning_rate
+				// 'learning_rate': vm.learning_rate
+				'learning_rate': Number(vm.learning_rate)
 			}).then(response => {
 				vm.state = response.data.state
 				vm.learning_rate_errors = []
@@ -296,7 +308,8 @@ export default {
 		onBatchSizeChange() {
 			var vm = this
 			this.$axios.post(this.$api + '/train/set_param', {
-				'batch_size': vm.batch_size
+				// 'batch_size': vm.batch_size
+				'batch_size': Number(vm.batch_size)
 			}).then(response => {
 				vm.state = response.data.state
 				vm.batch_size_errors = []
@@ -357,8 +370,9 @@ export default {
 		}
 		var ctx = document.getElementById('loss').getContext('2d');
 		vm.loss_plot = new Chart(ctx, vm.config)
-		this.$axios.post(this.$api + '/train/get_param', {
-			'param': [
+		// this.$axios.post(this.$api + '/train/get_param', {
+		// 	'param': [
+		this.$axios.post(this.$api + '/train/get_param', [
 				'networks',
 				'network',
 				'datasets',
@@ -368,8 +382,9 @@ export default {
 				'learning_rate',
 				'batch_size',
 				'state',
-			]
-		}).then((response) => {
+			// ]
+		// }).then((response) => {
+		]).then((response) => {
 			vm.state = response.data.state
 			vm.network = response.data.network
 			vm.networks = response.data.networks

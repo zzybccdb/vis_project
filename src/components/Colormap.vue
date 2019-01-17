@@ -96,8 +96,6 @@ export default {
 				sp.oldAlpha = 0.3
 				vm.ctn_points.addChild(sp)
 			})
-			// vm.drawCurve(pts.slice(0,pts.length))
-			// vm.canvasDrawCureve(pts)
 			vm.applyZoom()
 		},
 
@@ -257,24 +255,6 @@ export default {
 
 		__changeColor(errorMode=false) {
 			var vm = this
-
-			// vm.app.stage.rightdown = function(e) {
-			// 	vm.rotating = true
-			// 	vm.ang1 = Math.atan2(e.data.global.y - 128, e.data.global.x - 128)
-			// }
-
-			// vm.app.stage.mousemove = function(e) {
-			// 	if (vm.rotating) {
-			// 		vm.rotation = Math.atan2(e.data.global.y - 128, e.data.global.x - 128) - vm.ang1 + vm.rotation_acc
-			// 		vm.rotate(vm.rotation)
-			// 	}
-			// }
-
-			// vm.app.stage.rightup = function() {
-			// 	vm.rotating = false
-			// 	vm.rotation_acc = vm.rotation
-			// }
-
 			if (vm.eventBus.data) {
 				vm.eventBus.data.forEach(d => {
 					if (d.cm) {
@@ -282,10 +262,10 @@ export default {
 
 						let color = vm.getColor(sp.x, sp.y)
 
-						sp.tint = color
-						// if (d.mask) {
-						// 	sp.tint = 0xCCCCCC
-						// }
+						if(!sp.kernel && !sp.neibor){
+							sp.tint = color
+						}
+
 						if (d.cal) {
 							if(errorMode){
 								d.cal.tint = color
@@ -335,13 +315,17 @@ export default {
 		},
 
 		switchZoom() {
-			var vm = this;
+            var vm = this;
 			vm.app.stage.rightdown = function(e) {
 				vm.rotating = true
 				vm.ang1 = Math.atan2(e.data.global.y - 128, e.data.global.x - 128)
 			}
 
 			vm.app.stage.mousemove = function(e) {
+                if (e.data.global.y >= 256 || e.data.global.y < 0 ||  e.data.global.x >= 256 ||  e.data.global.x < 0 ){
+                    vm.rotating = false
+                    vm.rotation_acc = vm.rotation
+                }
 				if (vm.rotating) {
 					vm.rotation = Math.atan2(e.data.global.y - 128, e.data.global.x - 128) - vm.ang1 + vm.rotation_acc
 					vm.rotate(vm.rotation)
@@ -445,35 +429,6 @@ export default {
 					box.bottomright = p_bottomright
 				}
 			}
-
-			// let rightup = function() {
-			// 	let box = ctn_box.children[ctn_box.children.length-1]
-			// 	let rect = [box.toplefg.x, box.toplefg.y,box.bottomright.x,box.bottomright.y]
-			// 	let moment = vm.$moment.utc
-			// 	let timelist = []
-			// 	vm.eventBus.data.forEach( d =>{
-			// 		if( d.cm ){
-			// 			let p = d.cm
-			// 			if(vm.collision([p.x,p.y], rect)){
-			// 				p.alpha = 0
-			// 				if( d.cal ){
-			// 					// d.cal.data.raw
-			// 					let time_start = moment(d.cal.data.raw[2]).format('YYYY-MM-DD HH:mm:ss')
-			// 					let time_end = moment(d.cal.data.raw[2]).add(vm.timeslot[vm.eventBus.calLevel],'minutes').format('YYYY-MM-DD HH:mm:ss')
-			// 					d.cal.texture = vm.cellMaskTexture
-			// 					d.cal.oldTexture = vm.cellMaskTexture
-			// 					d.cal.tint = 0xCCCCCC
-			// 					d.mask = true
-			// 					// console.log(time_start,time_end)
-			// 					timelist.push([time_start,time_end])
-			// 				}
-			// 			}
-			// 		}
-			// 	})
-			// 	ctn_box.removeChildAt(ctn_box.children.length-1)
-			// 	ctn_box.selecting = false
-			// 	vm.$axios.post(vm.$api + '/analysis/cm_mask',{'list':timelist})
-			// }
 
 			let rightup = function() {
 				let box = ctn_box.children[ctn_box.children.length-1]

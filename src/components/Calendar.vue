@@ -53,7 +53,8 @@ export default {
 			vm.eventBus.zoomHistory.pop()
 			let param = vm.eventBus.zoomHistory.pop()
 			vm.eventBus.calLevel = param.calLevel
-			vm.eventBus.root.loadData(param.interval, param.startDate, param.endDate)
+			// vm.eventBus.root.loadData(param.interval, param.startDate, param.endDate)
+			vm.eventBus.root.loadData(param.interval, param.date_range)
 		},
 
 		adjustAxisOrder() {
@@ -124,9 +125,6 @@ export default {
 				let pass = ctn_box.children.some(box => {
 					return vm.collision(c, box)
 				})
-				// if(c.neibor){
-				// 	console.log(i++)
-				// }
 				if( c.data != undefined ){
 					if ((pass && !c.data.mask && c.tint != 0xCCCCCC) || (c.singSelected || c.neibor)) {
 						c.texture = vm.cellTextureSelected
@@ -189,7 +187,8 @@ export default {
 				let sd = vm.$moment.utc().year(year).dayOfYear(1).hour(0).minute(0).second(0)
 				let ed = vm.$moment.utc().year(year+1).dayOfYear(1).hour(0).minute(0).second(0).add(-1, 'second')
 				vm.eventBus.calLevel = 'month'
-				vm.eventBus.root.loadData('2 hour', sd.format(date_format), ed.format(date_format))
+				// vm.eventBus.root.loadData('2 hour', sd.format(date_format), ed.format(date_format))
+				vm.eventBus.root.loadData('2 hour', [sd.format(date_format), ed.format(date_format)])
 			}
 
 			ctn_year.addChild(label)
@@ -260,7 +259,6 @@ export default {
 
 				sp.mousedown = function(){
 					if( sp.selected ){
-						console.log("sp.mousedown")
 						if(ctn_box.singSelected){
 							vm.eventBus.data.forEach( d => {
 								d.cal.singSelected = false
@@ -594,7 +592,8 @@ export default {
 				let sd = vm.$moment.utc().year(year).month(month).date(1).hour(0).minute(0).second(0)
 				let ed = vm.$moment.utc().year(year).month(month+1).date(1).hour(0).minute(0).second(0).add(-1, 'second')
 				vm.eventBus.calLevel = 'day'
-				vm.eventBus.root.loadData('5 minute', sd.format(date_format), ed.format(date_format))
+				// vm.eventBus.root.loadData('5 minute', sd.format(date_format), ed.format(date_format))
+				vm.eventBus.root.loadData('5 minute', [sd.format(date_format), ed.format(date_format)])
 			}
 
 			main_ctn.x = label.height
@@ -626,7 +625,9 @@ export default {
 
 				sp.interactive = true
 				sp.selected = false
-				sp.singleClick = false
+				sp.msover = false
+				sp.singSelected = false
+				sp.neibor = false
 				sp.selectedTexture = vm.selectedTexture
 				sp.oldTexture = sp.texture
 
@@ -672,6 +673,15 @@ export default {
 
 				sp.mousedown = function(){
 					if( sp.selected ){
+						if(ctn_box.singSelected){
+							vm.eventBus.data.forEach( d => {
+								d.cal.singSelected = false
+								d.cal.neibor = false	
+								d.cal.texture = vm.cellTexture
+								d.cal.selected = false
+							})
+							ctn_box.singSelected = false
+						}	
 						ctn_box.removeChild(sp.box)
 						sp.box = null
 						vm.updateSelection(ctn_cells, ctn_box)
@@ -680,6 +690,17 @@ export default {
 						vm.eventBus.pcp.updateData()
 					}
 				}
+				
+				sp.rightdown = function(){
+					if(!sp.data.mask && sp.tint != 0xCCCCCC){
+						ctn_box.singSelected = true
+						sp.singSelected = true
+						sp.msover = true
+						sp.selected = true
+						vm.colorSimilar(sp.tint, sp, ctn_cells.children)
+					}					
+				}
+
 				date.add(2, 'hour')
 			}
 
@@ -699,16 +720,6 @@ export default {
 				box.start_p = p
 				box.clear()
 				ctn_box.addChild(box)
-
-				// box.interactive = true
-				// box.mousedown = function() {
-				// 	ctn_box.removeChild(box)
-                //     vm.updateSelection(ctn_cells, ctn_box)
-                //     vm.adjustAxisOrder()
-                //     vm.eventBus.pcp.clearData()
-                //     vm.eventBus.pcp.updateData()
-				// }
-
 				ctn_box.selecting = true
 			}
 
@@ -722,6 +733,7 @@ export default {
 				vm.adjustAxisOrder()
 				vm.eventBus.pcp.clearData()
 				vm.eventBus.pcp.updateData()
+				vm.eventBus.pcp.highLight()
 				ctn_box.selecting = false
 			}
 
@@ -733,6 +745,15 @@ export default {
 					return
 				}
 				if (ctn_box.selecting) {
+					if(ctn_box.singSelected){
+						vm.eventBus.data.forEach( d => {
+							d.cal.singSelected = false
+							d.cal.neibor = false	
+							d.cal.texture = vm.cellTexture
+							d.cal.selected = false
+						})
+						ctn_box.singSelected = false
+					}
 					let box = ctn_box.children[ctn_box.children.length-1]
 					let p = e.data.getLocalPosition(main_ctn)
 					let p_topleft = {
@@ -871,7 +892,9 @@ export default {
 
 				sp.interactive = true
 				sp.selected = false
-				sp.singleClick = false
+				sp.msover = false
+				sp.singSelected = false
+				sp.neibor = false
 				sp.oldTexture = sp.texture
 
 				sp.mouseover = function(e) {
@@ -914,6 +937,15 @@ export default {
 
 				sp.mousedown = function(){
 					if( sp.selected ){
+						if(ctn_box.singSelected){
+							vm.eventBus.data.forEach( d => {
+								d.cal.singSelected = false
+								d.cal.neibor = false	
+								d.cal.texture = vm.cellTexture
+								d.cal.selected = false
+							})
+							ctn_box.singSelected = false
+						}	
 						ctn_box.removeChild(sp.box)
 						sp.box = null
 						vm.updateSelection(ctn_cells, ctn_box)
@@ -922,6 +954,17 @@ export default {
 						vm.eventBus.pcp.updateData()
 					}
 				}
+
+				sp.rightdown = function(){
+					if(!sp.data.mask && sp.tint != 0xCCCCCC){
+						ctn_box.singSelected = true
+						sp.singSelected = true
+						sp.msover = true
+						sp.selected = true
+						vm.colorSimilar(sp.tint, sp, ctn_cells.children)
+					}
+				}
+
 				date.add(5, 'minute')
 			}
 
@@ -941,16 +984,6 @@ export default {
 				box.start_p = p
 				box.clear()
 				ctn_box.addChild(box)
-
-				// box.interactive = true
-				// box.mousedown = function() {
-				// 	ctn_box.removeChild(box)
-                //     vm.updateSelection(ctn_cells, ctn_box)
-                //     vm.adjustAxisOrder()
-                //     vm.eventBus.pcp.clearData()
-                //     vm.eventBus.pcp.updateData()
-				// }
-
 				ctn_box.selecting = true
 			}
 
@@ -964,6 +997,7 @@ export default {
 				vm.adjustAxisOrder()
 				vm.eventBus.pcp.clearData()
 				vm.eventBus.pcp.updateData()
+				vm.eventBus.pcp.highLight()
 				ctn_box.selecting = false
 			}
 
@@ -975,6 +1009,15 @@ export default {
 					return
 				}
 				if (ctn_box.selecting) {
+					if(ctn_box.singSelected){
+						vm.eventBus.data.forEach( d => {
+							d.cal.singSelected = false
+							d.cal.neibor = false	
+							d.cal.texture = vm.cellTexture
+							d.cal.selected = false
+						})
+						ctn_box.singSelected = false
+					}
 					let box = ctn_box.children[ctn_box.children.length-1]
 					let p = e.data.getLocalPosition(main_ctn)
 					let p_topleft = {
