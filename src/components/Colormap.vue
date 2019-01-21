@@ -25,6 +25,25 @@ export default {
 			}
 		},
 
+		highLightSelectedPoint(){
+			let vm = this
+			// console.log(vm.eventBus.data[0].cm)
+			vm.eventBus.data.forEach(d => {
+				if(d.cal.selected && d.cal){
+					d.cm.texture = vm.selectedTexture
+					d.cm.alpha = 1.0	
+				}	
+			});
+		},
+
+		clearHighlight(){
+			let vm = this
+			vm.eventBus.data.forEach(d => {
+				d.cm.texture = vm.dotTexture
+				d.cm.alpha = 0.3	
+			})
+		},
+
 		getColor(x, y) {
 			var vm = this
 			x = parseInt(x)
@@ -64,14 +83,14 @@ export default {
 		addPoints() {
 			var vm = this
 
-			let mt = new vm.$PIXI.Graphics()
+			// let mt = new vm.$PIXI.Graphics()
 			let pts = []
 			// add new graphics
-			mt.lineStyle(1, 0x0)
-			mt.beginFill(0xFFFFFF)
-			mt.drawCircle(0, 0, 3, 3)
-			mt.endFill()
-			let dotTexture = mt.generateCanvasTexture()
+			// mt.lineStyle(1, 0x0)
+			// mt.beginFill(0xFFFFFF)
+			// mt.drawCircle(0, 0, 3, 3)
+			// mt.endFill()
+			// let dotTexture = mt.generateCanvasTexture()
 
 			let data = vm.eventBus.data
 			let x_extent = vm.$d3.extent(data.map(d => {return parseFloat(d.raw[0])}))
@@ -80,7 +99,7 @@ export default {
 			let y_range = y_extent[1] - y_extent[0]
 			data.forEach(d => {
 				let p = new vm.$PIXI.Point(parseFloat(d.raw[0]), parseFloat(d.raw[1]))
-				let sp = new vm.$PIXI.Sprite(dotTexture)
+				let sp = new vm.$PIXI.Sprite(vm.dotTexture)
 				let nx = (p.x - x_extent[0]) / x_range
 				let ny = (p.y - y_extent[0]) / y_range
 				let x = nx * 250 + 3
@@ -366,7 +385,19 @@ export default {
 			vm.switchZoom()
 			vm.initZoom()
 
-			vm.cellMaskTexture = vm.maskBox().generateCanvasTexture()
+			let g = new vm.$PIXI.Graphics
+			g.lineStyle(1, 0x000000)
+			g.beginFill(0xFF0000)
+			g.drawCircle(0, 0, 3, 3)
+			g.endFill()
+			vm.selectedTexture = g.generateCanvasTexture()
+
+			let mt = new vm.$PIXI.Graphics
+			mt.lineStyle(1, 0x0)
+			mt.beginFill(0xFFFFFF)
+			mt.drawCircle(0, 0, 3, 3)
+			mt.endFill()
+			vm.dotTexture = mt.generateCanvasTexture()			
 
 			vm.$emit('loaded')
 		},

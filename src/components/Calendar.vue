@@ -408,6 +408,7 @@ export default {
 						vm.adjustAxisOrder()
 						vm.eventBus.pcp.clearData()
 						vm.eventBus.pcp.updateData()
+						vm.eventBus.cm.clearHighlight()
 					}
 				}
 
@@ -524,6 +525,7 @@ export default {
 				vm.eventBus.pcp.clearData()
 				vm.eventBus.pcp.updateData()
 				vm.eventBus.pcp.highLight()
+				vm.eventBus.cm.highLightSelectedPoint()
 				ctn_box.selecting = false
 			}	
 
@@ -736,6 +738,7 @@ export default {
 						vm.adjustAxisOrder()
 						vm.eventBus.pcp.clearData()
 						vm.eventBus.pcp.updateData()
+						vm.eventBus.cm.clearHighlight()
 					}
 				}
 				
@@ -788,6 +791,7 @@ export default {
 				vm.eventBus.pcp.clearData()
 				vm.eventBus.pcp.updateData()
 				vm.eventBus.pcp.highLight()
+				vm.eventBus.cm.highLightSelectedPoint()
 				ctn_box.selecting = false
 			}
 
@@ -1006,6 +1010,7 @@ export default {
 						vm.adjustAxisOrder()
 						vm.eventBus.pcp.clearData()
 						vm.eventBus.pcp.updateData()
+						vm.eventBus.cm.clearHighlight()
 					}
 				}
 
@@ -1060,6 +1065,7 @@ export default {
 				vm.eventBus.pcp.clearData()
 				vm.eventBus.pcp.updateData()
 				vm.eventBus.pcp.highLight()
+				vm.eventBus.cm.highLightSelectedPoint()
 				ctn_box.selecting = false
 			}
 
@@ -1214,7 +1220,6 @@ export default {
 
 		similarProcess(item,single=true){
 			let vm = this
-			
 			let process = {
 				c:single?vm.hexToRgb(vm.zeroPadding(item.tint.toString(16))):vm.hexToRgb(vm.zeroPadding(item.cal.tint.toString(16))),
 				d:single?item.data.raw.slice(4):item.raw.slice(4),
