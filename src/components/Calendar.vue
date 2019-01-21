@@ -218,12 +218,13 @@ export default {
 			vm.cellMaskTexture = vm.maskBox().generateCanvasTexture()
 			vm.cellFilterTexture = vm.filterBox().generateCanvasTexture()
 
-			g.clear()
-			g.lineStyle(1, 0x333333)
-			g.beginFill(0xFFFFFF)
-			g.drawRect(0, 0, vm.cellSize, vm.cellSize)
-			g.endFill()
-			vm.cellTextureSelected = g.generateCanvasTexture()
+			// g.clear()
+			// g.lineStyle(1, 0x333333)
+			// g.beginFill(0xFFFFFF)
+			// g.drawRect(0, 0, vm.cellSize, vm.cellSize)
+			// g.endFill()
+			// vm.cellTextureSelected = g.generateCanvasTexture()
+			vm.cellTextureSelected = vm.selectedBox().generateCanvasTexture()
 
 			vm.$emit('loaded')
 		},
@@ -245,6 +246,28 @@ export default {
 			g.lineTo(0,7.5)
 			g.moveTo(7.5,15)
 			g.lineTo(15,7.5)
+			g.endFill()
+			return g
+		},
+
+		selectedBox(){
+			let vm = this
+			let PIXI = vm.$PIXI
+			let g = new PIXI.Graphics()
+			g.lineStyle(1,0x000000)
+			g.beginFill(0x000000)
+			g.moveTo(0,0)
+			g.lineTo(0,7.5)
+			g.lineTo(7.5,0)
+			g.lineTo(0,0)
+			g.endFill()
+			g.beginFill(0xFFFFFF)
+			g.moveTo(0,15)
+			g.lineTo(15,15)
+			g.lineTo(15,0)
+			g.lineTo(7.5,0)
+			g.lineTo(0,7.5)
+			g.lineTo(0,15)
 			g.endFill()
 			return g
 		},
@@ -389,16 +412,6 @@ export default {
 				}
 
 				sp.rightdown = function(){
-					let distanceMethod = {
-						c:vm.colorSimilar, //(sp.tint)
-						d:vm.dimensionSimilar,//(sp.data.raw)
-						l:vm.colorPointSimilar,//(sp.data.raw)
-					}
-					let item = {
-						c:sp.tint,
-						d:sp.data.raw,
-						l:sp.data.raw		
-					}
 					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
 						vm.message = vm.notice[vm.keyDown]
 						vm.color = "black"
@@ -409,7 +422,7 @@ export default {
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
-						distanceMethod[vm.keyDown](item[vm.keyDown])
+						vm.Similar(sp)
 					}
 					else{
 						console.error("No Key press")
@@ -727,16 +740,6 @@ export default {
 				}
 				
 				sp.rightdown = function(){
-					let distanceMethod = {
-						c:vm.colorSimilar, //(sp.tint)
-						d:vm.dimensionSimilar,//(sp.data.raw)
-						l:vm.colorPointSimilar,//(sp.data.raw)
-					}
-					let item = {
-						c:sp.tint,
-						d:sp.data.raw,
-						l:sp.data.raw		
-					}
 					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
 						vm.message = vm.notice[vm.keyDown]
 						vm.color = "black"
@@ -747,7 +750,7 @@ export default {
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
-						distanceMethod[vm.keyDown](item[vm.keyDown])
+						vm.Similar(sp)
 					}
 					else{
 						console.error("No Key press")
@@ -1007,16 +1010,6 @@ export default {
 				}
 
 				sp.rightdown = function(){
-					let distanceMethod = {
-						c:vm.colorSimilar, //(sp.tint)
-						d:vm.dimensionSimilar,//(sp.data.raw)
-						l:vm.colorPointSimilar,//(sp.data.raw)
-					}
-					let item = {
-						c:sp.tint,
-						d:sp.data.raw,
-						l:sp.data.raw		
-					}
 					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
 						vm.message = vm.notice[vm.keyDown]
 						vm.color = "black"
@@ -1027,7 +1020,7 @@ export default {
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
-						distanceMethod[vm.keyDown](item[vm.keyDown])
+						vm.Similar(sp)
 					}
 					else{
 						console.error("No Key press")
@@ -1195,16 +1188,19 @@ export default {
 			return hex.substring(hex.length-6,hex.length); 
 		},
 
-		colorSimilar(hex){
+		Similar(selectedCell){
 			let vm = this
 			let cellDistance = []
-			let rgb1 = vm.hexToRgb(vm.zeroPadding(hex.toString(16)))
-
-			vm.eventBus.data.forEach( d => {
-				let rgb2 = vm.hexToRgb(vm.zeroPadding(d.cal.tint.toString(16)))
-				cellDistance.push({dis:vm.colorDis(rgb1,rgb2),cell:d.cal})				
+			let item1 = vm.similarProcess(selectedCell)
+			let distanceMethod = {
+				c:vm.colorDis,
+				d:vm.dimensionDis,
+				l:vm.colorPointDis
+			}
+			vm.eventBus.data.forEach(d => {
+				let item2 = vm.similarProcess(d,false)
+				cellDistance.push({dis:distanceMethod[vm.keyDown](item1,item2),cell:d.cal})
 			})
-
 			cellDistance.sort((a,b) => {
 				return a.dis - b.dis
 			})
@@ -1213,7 +1209,18 @@ export default {
 				item.cell.texture = vm.cellTextureSelected
 				item.cell.selected = true
 				item.cell.neibor = true
-			})	
+			})				
+		},
+
+		similarProcess(item,single=true){
+			let vm = this
+			
+			let process = {
+				c:single?vm.hexToRgb(vm.zeroPadding(item.tint.toString(16))):vm.hexToRgb(vm.zeroPadding(item.cal.tint.toString(16))),
+				d:single?item.data.raw.slice(4):item.raw.slice(4),
+				l:single?item.data.raw.slice(0,2):item.raw.slice(0,2),
+			}
+			return process[vm.keyDown]
 		},
 
 		colorDis(rgb1, rgb2){
@@ -1223,54 +1230,15 @@ export default {
 			return Math.sqrt(r*r+g*g+b*b)
 		},
 
-		dimensionSimilar(selectedCell){
-			let vm = this
-			let cellDistance = []
-			let item2 = selectedCell.slice(4)
-			vm.eventBus.data.forEach( d => {
-				let item1 = d.raw.slice(4)
-				cellDistance.push({dis:vm.dimensionDis(item1,item2),cell:d.cal})
-			})
-			cellDistance.sort((a,b) => {
-				return a.dis - b.dis
-			})
-			cellDistance = cellDistance.slice(0,30)
-			cellDistance.forEach( item => {
-				item.cell.texture = vm.cellTextureSelected
-				item.cell.selected = true
-				item.cell.neibor = true				
-			})
-		},
-
 		dimensionDis(item1, item2){
 			let sum = []
 			item1.forEach((dim, i) => {
-				// console.log(dim-item2[i])
 				sum.push(Math.pow(dim-item2[i],2))
 			})
 			sum = sum.reduce((a,b) => {return a+b})
 			return Math.sqrt(sum)
 		},
 		
-		colorPointSimilar(selectedCell){
-			let vm = this
-			let cellDistance = []
-			let item2 = selectedCell.slice(0,2)
-			vm.eventBus.data.forEach( d => {
-				let item1 = d.raw.slice(0,2)
-				cellDistance.push({dis:vm.colorPointDis(item1,item2),cell:d.cal})
-			})
-			cellDistance.sort((a,b) => {
-				return a.dis - b.dis
-			})
-			cellDistance = cellDistance.slice(0,30)
-			cellDistance.forEach( item => {
-				item.cell.texture = vm.cellTextureSelected
-				item.cell.selected = true
-				item.cell.neibor = true				
-			})
-		},
-
 		colorPointDis(item1, item2){
 			let a = Math.pow((item1[0]-item2[0]),2)
 			let b = Math.pow((item1[1]-item2[1]),2)
