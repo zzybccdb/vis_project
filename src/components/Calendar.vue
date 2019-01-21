@@ -1,6 +1,9 @@
 <template>
 
 <div class="cal-wrapper" ref="home">
+	<v-alert ref="alert" :value="alert" :color="color" outline>
+	{{message}}
+	</v-alert>
 </div>
 
 </template>
@@ -9,6 +12,13 @@
 const date_format = 'YYYY-MM-DD HH:mm:ss'
 export default {
 	components: {},
+	data(){
+		return{
+			alert:true,
+			message:"aaaa",
+			color:"white"
+		}
+	},
 	methods: {
 		handleResize() {
 			var vm = this;
@@ -148,9 +158,110 @@ export default {
 			})
 		},
 
-		addYear(year) {
+		init() {
 			var vm = this
 
+			vm.cellSize = 15
+			vm.padding = 30
+			vm.gap_size = (vm.padding + vm.cellSize * 7)
+			vm.dim_font = 'Arial'
+			vm.dim_font_size = 14
+			// vm.selectionBoxColor = 0x0287e3
+			vm.selectionBoxColor = 0xFFFFFF
+			
+			vm.keyCode = {67:'c', 76:'l', 68:'d'}
+			vm.keyDown = undefined
+			vm.notice = {
+				c: "Color Similarity",
+				d: "Dimension Similar",
+				l: "Latent Space Similar"
+			}
+
+			vm.wrapper = new vm.$PIXI.Container()
+			vm.wrapper.name = 'wrapper'
+			vm.app.stage.addChild(vm.wrapper)
+
+			vm.ctn_tooltip = new vm.$PIXI.Container()
+			vm.app.stage.addChild(vm.ctn_tooltip)
+
+			vm.tooltip = new vm.$PIXI.Container()
+			vm.tooltip.alpha = 0
+			vm.ctn_tooltip.addChild(vm.tooltip)
+
+			vm.tooltip_label = new vm.$PIXI.Text("Test"
+			, {fontFamily : vm.dim_font, fontSize: vm.dim_font_size, fill : 0xFFFFFF, align : 'center'})
+			vm.tooltip_box = new vm.$PIXI.Graphics()
+			vm.tooltip_box.lineStyle(1, 0x0)
+			vm.tooltip_box.beginFill(0x0, 0.5)
+			vm.tooltip_box.drawRect(0, 0, vm.tooltip_label.width + 20, vm.tooltip_label.height + 20)
+			vm.tooltip_box.endFill()
+			vm.tooltip.addChild(vm.tooltip_box)
+			vm.tooltip_label.x = 10
+			vm.tooltip_label.y = 10
+			vm.tooltip.addChild(vm.tooltip_label)
+
+			vm.tooltip.countdown = 2
+			vm.tooltip_timer = setInterval(function() {
+				if (vm.tooltip.countdown <= 0) {
+					vm.tooltip.alpha = 0
+				} else {
+					vm.tooltip.countdown -= 1
+				}
+			}, 1000)
+
+			let g = new vm.$PIXI.Graphics()
+			g.lineStyle(1, 0xCCCCCC)
+			g.beginFill(0xFFFFFF)
+			g.drawRect(0, 0, vm.cellSize, vm.cellSize)
+			g.endFill()
+			vm.cellTexture = g.generateCanvasTexture()
+			vm.cellMaskTexture = vm.maskBox().generateCanvasTexture()
+			vm.cellFilterTexture = vm.filterBox().generateCanvasTexture()
+
+			g.clear()
+			g.lineStyle(1, 0x333333)
+			g.beginFill(0xFFFFFF)
+			g.drawRect(0, 0, vm.cellSize, vm.cellSize)
+			g.endFill()
+			vm.cellTextureSelected = g.generateCanvasTexture()
+
+			vm.$emit('loaded')
+		},
+
+		maskBox(){
+			let vm = this
+			let g = new vm.$PIXI.Graphics()
+			g.lineStyle(1, 0xCCCCCC)
+			g.beginFill(0xFFFFFF)
+			g.moveTo(0,0)
+			g.lineTo(0,15)
+			g.lineTo(15,15)
+			g.lineTo(15,0)
+			g.lineTo(0,0)
+			g.lineStyle(1, 0x000000)
+			g.moveTo(15,0)
+			g.lineTo(0,15)
+			g.moveTo(7.5,0)
+			g.lineTo(0,7.5)
+			g.moveTo(7.5,15)
+			g.lineTo(15,7.5)
+			g.endFill()
+			return g
+		},
+
+		filterBox() {
+			let vm = this
+			let g = new vm.$PIXI.Graphics()
+			g.lineStyle(1, 0x000000)
+			g.beginFill(0xFFFFFF)
+			g.drawCircle(vm.cellSize/2, vm.cellSize/2, vm.cellSize/2)
+			
+			g.endFill()
+			return g
+		},
+
+		addYear(year) {
+			var vm = this
 			let ctn_year = new vm.$PIXI.Container()
 			ctn_year.name = 'ctn_year'
 			let main_ctn = new vm.$PIXI.Container()
@@ -275,26 +386,33 @@ export default {
 						vm.eventBus.pcp.clearData()
 						vm.eventBus.pcp.updateData()
 					}
-					else if(!sp.data.mask && sp.tint != 0xCCCCCC){
-						ctn_box.singSelected = true
-						sp.singSelected = true
-						sp.msover = true
-						sp.selected = true
-						vm.dimensionSimilar(sp.data.raw)
-						vm.adjustAxisOrder()
-						vm.eventBus.pcp.clearData()
-						vm.eventBus.pcp.updateData()
-						vm.eventBus.pcp.highLight()
-					}
 				}
 
 				sp.rightdown = function(){
-					if(!sp.data.mask && sp.tint != 0xCCCCCC){
+					let distanceMethod = {
+						c:vm.colorSimilar, //(sp.tint)
+						d:vm.dimensionSimilar,//(sp.data.raw)
+						l:vm.colorPointSimilar,//(sp.data.raw)
+					}
+					let item = {
+						c:sp.tint,
+						d:sp.data.raw,
+						l:sp.data.raw		
+					}
+					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
+						vm.message = vm.notice[vm.keyDown]
+						vm.color = "black"
+						setTimeout(() => {
+							vm.color = "white"
+						}, 1500);
 						ctn_box.singSelected = true
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
-						vm.colorSimilar(sp.tint, ctn_cells.children)
+						distanceMethod[vm.keyDown](item[vm.keyDown])
+					}
+					else{
+						console.error("No Key press")
 					}
 				}
 
@@ -372,7 +490,6 @@ export default {
 			main_ctn.addChild(ctn_box)
 
 			main_ctn.selectionStart = function(e) {
-				console.log("selectionStart")
 				let p = e.data.getLocalPosition(main_ctn)
 				let box = new vm.$PIXI.Graphics()
 				box.x = p.x
@@ -384,7 +501,6 @@ export default {
 			}
 
 			main_ctn.selectionEnd = function() {
-				console.log("selectionEnd")
 				let box = ctn_box.children[ctn_box.children.length-1]
 				if (box && box.height * box.width < (vm.cellSize * vm.cellSize) / 4) {
 					ctn_box.removeChild(box)
@@ -444,100 +560,6 @@ export default {
 
 			vm.wrapper.addChild(ctn_year)
 			return ctn_year
-		},
-
-		init() {
-			var vm = this
-
-			vm.cellSize = 15
-			vm.padding = 30
-			vm.gap_size = (vm.padding + vm.cellSize * 7)
-			vm.dim_font = 'Arial'
-			vm.dim_font_size = 14
-			// vm.selectionBoxColor = 0x0287e3
-			vm.selectionBoxColor = 0xFFFFFF
-
-			vm.wrapper = new vm.$PIXI.Container()
-			vm.wrapper.name = 'wrapper'
-			vm.app.stage.addChild(vm.wrapper)
-
-			vm.ctn_tooltip = new vm.$PIXI.Container()
-			vm.app.stage.addChild(vm.ctn_tooltip)
-
-			vm.tooltip = new vm.$PIXI.Container()
-			vm.tooltip.alpha = 0
-			vm.ctn_tooltip.addChild(vm.tooltip)
-
-			vm.tooltip_label = new vm.$PIXI.Text("Test"
-			, {fontFamily : vm.dim_font, fontSize: vm.dim_font_size, fill : 0xFFFFFF, align : 'center'})
-			vm.tooltip_box = new vm.$PIXI.Graphics()
-			vm.tooltip_box.lineStyle(1, 0x0)
-			vm.tooltip_box.beginFill(0x0, 0.5)
-			vm.tooltip_box.drawRect(0, 0, vm.tooltip_label.width + 20, vm.tooltip_label.height + 20)
-			vm.tooltip_box.endFill()
-			vm.tooltip.addChild(vm.tooltip_box)
-			vm.tooltip_label.x = 10
-			vm.tooltip_label.y = 10
-			vm.tooltip.addChild(vm.tooltip_label)
-
-			vm.tooltip.countdown = 2
-			vm.tooltip_timer = setInterval(function() {
-				if (vm.tooltip.countdown <= 0) {
-					vm.tooltip.alpha = 0
-				} else {
-					vm.tooltip.countdown -= 1
-				}
-			}, 1000)
-
-			let g = new vm.$PIXI.Graphics()
-			g.lineStyle(1, 0xCCCCCC)
-			g.beginFill(0xFFFFFF)
-			g.drawRect(0, 0, vm.cellSize, vm.cellSize)
-			g.endFill()
-			vm.cellTexture = g.generateCanvasTexture()
-			vm.cellMaskTexture = vm.maskBox().generateCanvasTexture()
-			vm.cellFilterTexture = vm.filterBox().generateCanvasTexture()
-
-			g.clear()
-			g.lineStyle(1, 0x333333)
-			g.beginFill(0xFFFFFF)
-			g.drawRect(0, 0, vm.cellSize, vm.cellSize)
-			g.endFill()
-			vm.cellTextureSelected = g.generateCanvasTexture()
-
-			vm.$emit('loaded')
-		},
-
-		maskBox(){
-			let vm = this
-			let g = new vm.$PIXI.Graphics()
-			g.lineStyle(1, 0xCCCCCC)
-			g.beginFill(0xFFFFFF)
-			g.moveTo(0,0)
-			g.lineTo(0,15)
-			g.lineTo(15,15)
-			g.lineTo(15,0)
-			g.lineTo(0,0)
-			g.lineStyle(1, 0x000000)
-			g.moveTo(15,0)
-			g.lineTo(0,15)
-			g.moveTo(7.5,0)
-			g.lineTo(0,7.5)
-			g.moveTo(7.5,15)
-			g.lineTo(15,7.5)
-			g.endFill()
-			return g
-		},
-
-		filterBox() {
-			let vm = this
-			let g = new vm.$PIXI.Graphics()
-			g.lineStyle(1, 0x000000)
-			g.beginFill(0xFFFFFF)
-			g.drawCircle(vm.cellSize/2, vm.cellSize/2, vm.cellSize/2)
-			
-			g.endFill()
-			return g
 		},
 
 		drawYear() {
@@ -635,7 +657,7 @@ export default {
 					label.rotation = - Math.PI / 4;
 					ctn_label.addChild(label)
 				}
-
+				
 				sp.interactive = true
 				sp.selected = false
 				sp.msover = false
@@ -702,32 +724,37 @@ export default {
 						vm.eventBus.pcp.clearData()
 						vm.eventBus.pcp.updateData()
 					}
-					else if(!sp.data.mask && sp.tint != 0xCCCCCC){
-						ctn_box.singSelected = true
-						sp.singSelected = true
-						sp.msover = true
-						sp.selected = true
-						vm.dimensionSimilar(sp.data.raw)
-						vm.adjustAxisOrder()
-						vm.eventBus.pcp.clearData()
-						vm.eventBus.pcp.updateData()
-						vm.eventBus.pcp.highLight()
-					}
 				}
 				
 				sp.rightdown = function(){
-					if(!sp.data.mask && sp.tint != 0xCCCCCC){
+					let distanceMethod = {
+						c:vm.colorSimilar, //(sp.tint)
+						d:vm.dimensionSimilar,//(sp.data.raw)
+						l:vm.colorPointSimilar,//(sp.data.raw)
+					}
+					let item = {
+						c:sp.tint,
+						d:sp.data.raw,
+						l:sp.data.raw		
+					}
+					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
+						vm.message = vm.notice[vm.keyDown]
+						vm.color = "black"
+						setTimeout(() => {
+							vm.color = "white"
+						}, 1500);
 						ctn_box.singSelected = true
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
-						vm.colorSimilar(sp.tint, ctn_cells.children)
-					}					
+						distanceMethod[vm.keyDown](item[vm.keyDown])
+					}
+					else{
+						console.error("No Key press")
+					}
 				}
-
 				date.add(2, 'hour')
 			}
-
 			bg.beginFill(0xFFFFFF)
 			bg.drawRect(0, 0, ctn_cells.width, ctn_cells.height)
 			bg.endFill()
@@ -977,26 +1004,33 @@ export default {
 						vm.eventBus.pcp.clearData()
 						vm.eventBus.pcp.updateData()
 					}
-					else if(!sp.data.mask && sp.tint != 0xCCCCCC){
-						ctn_box.singSelected = true
-						sp.singSelected = true
-						sp.msover = true
-						sp.selected = true
-						vm.dimensionSimilar(sp.data.raw)
-						vm.adjustAxisOrder()
-						vm.eventBus.pcp.clearData()
-						vm.eventBus.pcp.updateData()
-						vm.eventBus.pcp.highLight()
-					}
 				}
 
 				sp.rightdown = function(){
-					if(!sp.data.mask && sp.tint != 0xCCCCCC){
+					let distanceMethod = {
+						c:vm.colorSimilar, //(sp.tint)
+						d:vm.dimensionSimilar,//(sp.data.raw)
+						l:vm.colorPointSimilar,//(sp.data.raw)
+					}
+					let item = {
+						c:sp.tint,
+						d:sp.data.raw,
+						l:sp.data.raw		
+					}
+					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
+						vm.message = vm.notice[vm.keyDown]
+						vm.color = "black"
+						setTimeout(() => {
+							vm.color = "white"
+						}, 1500);
 						ctn_box.singSelected = true
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
-						vm.colorSimilar(sp.tint, ctn_cells.children)
+						distanceMethod[vm.keyDown](item[vm.keyDown])
+					}
+					else{
+						console.error("No Key press")
 					}
 				}
 
@@ -1161,7 +1195,7 @@ export default {
 			return hex.substring(hex.length-6,hex.length); 
 		},
 
-		colorSimilar(hex, ctn_cells){
+		colorSimilar(hex){
 			let vm = this
 			let cellDistance = []
 			let rgb1 = vm.hexToRgb(vm.zeroPadding(hex.toString(16)))
@@ -1217,6 +1251,41 @@ export default {
 			sum = sum.reduce((a,b) => {return a+b})
 			return Math.sqrt(sum)
 		},
+		
+		colorPointSimilar(selectedCell){
+			let vm = this
+			let cellDistance = []
+			let item2 = selectedCell.slice(0,2)
+			vm.eventBus.data.forEach( d => {
+				let item1 = d.raw.slice(0,2)
+				cellDistance.push({dis:vm.colorPointDis(item1,item2),cell:d.cal})
+			})
+			cellDistance.sort((a,b) => {
+				return a.dis - b.dis
+			})
+			cellDistance = cellDistance.slice(0,30)
+			cellDistance.forEach( item => {
+				item.cell.texture = vm.cellTextureSelected
+				item.cell.selected = true
+				item.cell.neibor = true				
+			})
+		},
+
+		colorPointDis(item1, item2){
+			let a = Math.pow((item1[0]-item2[0]),2)
+			let b = Math.pow((item1[1]-item2[1]),2)
+			return Math.sqrt(a+b)
+		},
+
+		checkKeydown(key){
+			let vm = this
+			vm.keyDown = vm.keyCode[key.keyCode]
+		},
+		
+		KeyUp(){
+			let vm = this 
+			vm.keyDown = undefined
+		}
 	},
 	mounted() {
 		var vm = this;
@@ -1230,6 +1299,8 @@ export default {
 		vm.app.renderer.resize(10, 0);
 
 		window.addEventListener('resize', vm.handleResize)
+		window.addEventListener("keydown",vm.checkKeydown)
+		window.addEventListener("keyup", vm.KeyUp);
 		vm.handleResize()
 		vm.$refs.home.appendChild(vm.app.view)
 
@@ -1238,6 +1309,8 @@ export default {
 	beforeDestroy() {
 		var vm = this;
 		window.removeEventListener('resize', vm.handleResize)
+		window.removeEventListener("keydown",vm.checkKeydown)
+		window.removeEventListener("keyup", vm.KeyUp);
 		if (vm.app !== undefined) {
 			vm.app.destroy()
 		}
