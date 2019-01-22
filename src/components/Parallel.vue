@@ -18,8 +18,7 @@ export default {
 			let vm = this;
 			vm.alpha_m = Math.min(1, Math.max(0.1, alpha))
 			vm.updateAlpha()
-		},
-         
+		},   
 		updateAlpha() {
 			let vm = this
 			vm.eventBus.data.forEach(d => {
@@ -30,7 +29,6 @@ export default {
 				}
 			})
 		},
-
 		highLight(){
 			let vm = this;
 			vm.updateAlpha()
@@ -79,15 +77,13 @@ export default {
 
 			})
 		},
-          
 		resetAlpha(){
 			let vm = this;
 			let thick_line = vm.thick_line
 			thick_line.clear()
 			vm.updateAlpha()
 			vm.filterLines()
-		},
-         
+		},     
         handleResize(){
             let vm = this;
             let width = vm.$refs.home.clientWidth;
@@ -98,8 +94,7 @@ export default {
 				vm.adjustLines()
 				vm.filterLines()
 			}
-        },
-         
+        }, 
         drawLabel(column){
             let vm = this
             let PIXI = vm.$PIXI
@@ -114,13 +109,11 @@ export default {
             
             return label
         },
-         
         axisStartDrag(e,grp_axis){
             grp_axis.dragging = true
             grp_axis.drag_start_x = grp_axis.x
             grp_axis.drag_start_mouse_x = e.data.global.x
         },
-         
         axisDragging(e,grp_axis){
             let vm = this
             if (grp_axis.dragging && e.data.buttons) {
@@ -133,14 +126,12 @@ export default {
                 }
             }
         },
-         
         axisStopDrag(grp_axis){
             let vm = this
             grp_axis.dragging = false
             vm.adjustAxisPosition()
             vm.adjustLines()
-        },
-		 
+		},
         drawIndicator(additional, label){
             let vm = this
             let PIXI = vm.$PIXI
@@ -161,14 +152,12 @@ export default {
             indicator.buttonMode = true
             return indicator
         },
-		 
         hiddenLabels(column){
             let vm = this
             vm.eventBus.root.remove(column)
 			setTimeout(()=>{vm.filterLines()},100)            
         },
-		 
-		drawLine(indicator, grp_axis){
+		drawLine(indicator){
 			let vm = this 
 			let PIXI = vm.$PIXI
 			let line = new PIXI.Graphics()
@@ -177,23 +166,10 @@ export default {
 			line.lineTo(0, vm.plot_height)
 			line.interactive = true
 			line.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 1, 0, 2 * vm.filterbox_width, vm.plot_height);
-
-			// let box = new PIXI.Graphics()
-			// box.alpha = 0
-			// box.lineStyle(1, 0)
-			// box.beginFill(0xFFFFFF, 1)
-			// box.drawRect(-vm.filterbox_width, 0, 2 * vm.filterbox_width, vm.plot_height)
-			// box.endFill()
-			// box.alpha = 1	
-			// box.x = 0
-			// box.y = 0
-			// grp_axis.addChild(box)
-
 			line.y = indicator.y + vm.indicator_radius + 5
 			line.box = []	
 			return line		
 		},
-		 
 		drawFilterStart(e, line, grp_axis){
 			let vm = this
 			let box = vm.initFilterBox(line.x, line.y, grp_axis, line)
@@ -208,7 +184,6 @@ export default {
 			grp_axis.addChild(box)
 			// console.log("start")
 		},
-		 
 		selectingRange(e, line, grp_axis){
 			let vm = this
 			if(line != undefined && line.current_box != undefined){
@@ -234,7 +209,6 @@ export default {
 				// console.log(box.height)
 			}
 		},
-		 
 		drawFilterEnd(e, line, grp_axis){
 			let vm = this
 			if(line != undefined && line.current_box != undefined){
@@ -253,7 +227,6 @@ export default {
 				vm.filterLines()
 			}
 		},
-		 
 		addAxis(column, idx, dim) {
             let vm = this
 			let additional = !vm.eventBus.root.columns_train.includes(column)
@@ -297,8 +270,7 @@ export default {
 				extent: null,
 				grp: grp_axis,
 			})
-        },
-		 
+        }, 
 		drawFilterBox(x, y, length){
 			let vm = this 
 			let PIXI = vm.$PIXI
@@ -315,8 +287,7 @@ export default {
 			box.moving = false
 			box.index = length
 			return box
-		},
-		 
+		},		 
 		filterBoxMove(e, box, line_y, line_x){
 			let vm = this
 			if(box.moving){
@@ -331,8 +302,7 @@ export default {
 				}
 				vm.filterLines()
 			}			
-		},
-		 
+		},	 
 		filterBoxMoveOver(line, box){
 			let vm = this
 			line.box.forEach(b => {
@@ -341,7 +311,6 @@ export default {
 			box.enabled = true
 			vm.filterLines()
 		},
-
 		filterBoxOut(line){
 			let vm = this
 			line.box.forEach(b => {
@@ -349,7 +318,6 @@ export default {
 			})
 			vm.filterLines()
 		},
-		 
 		removeFilterBox(line, box, container){
 			let vm = this
 			line.box.splice(line.box.findIndex((a)=>{return a.index === box.index}),1)
@@ -359,9 +327,9 @@ export default {
 			})
 			vm.filterLines()
 		},
-		 
 		initFilterBox(x, y, container, line){
 			let vm = this
+			let PIXI = new vm.$PIXI
 			let box = vm.drawFilterBox(x, y, line.box.length)
 			box.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 4 * vm.filterbox_width, vm.plot_height);
 			// console.log(box.x, box.y)
@@ -373,15 +341,13 @@ export default {
 			box.on("rightdown", () => vm.removeFilterBox(line, box, container))
 			box.enabled = true
 			return box
-		},
-		 
+		},	 
 		maskAxis(sldmode=false) {
 			let vm = this
 			vm.adjustAxisPosition(sldmode)
 			vm.adjustTicks()
 			vm.adjustLines()
 		},
-
 		adjustTicks() {
 			var vm = this
 			let data = null
@@ -432,7 +398,6 @@ export default {
 				}
 			})
 		},
-
 		adjustAxisPosition() {
 			var vm = this
 			vm.state.axis.forEach(a => {
@@ -462,7 +427,6 @@ export default {
 				a.idx = ai
 			})
 		},
-
 		getAxisList() {
 			var vm = this;
 			let res = []
@@ -473,7 +437,6 @@ export default {
 			})
 			return res.join(',')
 		},
-
 		filterLines() {
 			let vm = this
 			let no_box = vm.state.axis.every(a => {
@@ -532,7 +495,6 @@ export default {
 				}
 			})
 		},
-
 		adjustLines() {
 			let vm = this
 			vm.eventBus.pcp.state.axis.sort((x, y) => x.grp.x - y.grp.x)
@@ -561,7 +523,6 @@ export default {
 			})
 			vm.updateAlpha()
 		},
-
 		replaceData(data, colors) {
 			var vm = this
 			vm.ctn_lines.removeChildren()
@@ -570,7 +531,6 @@ export default {
 				vm.addLine(d, colors[di])
 			})
         },
-         
 		updateData() {
 			let vm = this
 			vm.eventBus.data.forEach(d => {
@@ -583,14 +543,12 @@ export default {
 			vm.adjustTicks()
 			vm.adjustLines()
         },      
-         
 		clearData() {
 			let vm = this
 			if (vm.ctn_lines) {
 				vm.ctn_lines.removeChildren()
 			}
         },
-         
         pcpInit(){
             let vm = this
 			// constant 
@@ -629,7 +587,6 @@ export default {
 			vm.thick_line = new vm.$PIXI.Graphics()
             vm.thick.addChild(vm.thick_line)
         },
-         
         init(){
 			let vm = this
 			vm.state = {}

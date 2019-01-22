@@ -129,8 +129,7 @@ export default {
 		},
 
 		updateSelection(ctn_cells, ctn_box) {
-			var vm = this
-			let i = 0
+			let vm = this
 			ctn_cells.children.forEach(c => {
 				let pass = ctn_box.children.some(box => {
 					return vm.collision(c, box)

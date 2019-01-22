@@ -159,7 +159,7 @@ export default {
 			// this.$refs.box1.load()
 			// this.$refs.box2.load()
 			// return this.state == 'paused'
-			return this.state = "ready"
+			return this.state == "ready"
 		}
 	},
 	methods: {
