@@ -382,7 +382,7 @@ export default {
 						vm.eventBus.pcp.resetAlpha();
 					}
 				}
-
+ 
 				sp.mouseout = function(){
 					sp.msover = false;
 					if (sp.selected && !ctn_box.selecting) {
@@ -392,15 +392,12 @@ export default {
 
 				sp.mousedown = function(){
 					if( sp.selected ){
-						if(ctn_box.singSelected){
-							vm.eventBus.data.forEach( d => {
-								d.cal.singSelected = false
-								d.cal.neibor = false	
-								d.cal.texture = vm.cellTexture
-								d.cal.selected = false
-							})
-							ctn_box.singSelected = false
-						}					
+						vm.eventBus.data.forEach( d => {
+							d.cal.singSelected = false
+							d.cal.neibor = false	
+							d.cal.texture = vm.cellTexture
+							d.cal.selected = false
+						})				
 						ctn_box.removeChild(sp.box)
 						sp.box = null
 						vm.updateSelection(ctn_cells, ctn_box)
@@ -418,7 +415,6 @@ export default {
 						setTimeout(() => {
 							vm.color = "white"
 						}, 1500);
-						ctn_box.singSelected = true
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
@@ -536,14 +532,13 @@ export default {
 					return
 				}
 				if (ctn_box.selecting) {
-					if(ctn_box.singSelected){
+					if(vm.keyDown != undefined){
 						vm.eventBus.data.forEach( d => {
 							d.cal.singSelected = false
 							d.cal.neibor = false	
 							d.cal.texture = vm.cellTexture
 							d.cal.selected = false
 						})
-						ctn_box.singSelected = false
 					}
 					let box = ctn_box.children[ctn_box.children.length-1]
 					let p = e.data.getLocalPosition(main_ctn)
@@ -641,7 +636,6 @@ export default {
 				let sd = vm.$moment.utc().year(year).month(month).date(1).hour(0).minute(0).second(0)
 				let ed = vm.$moment.utc().year(year).month(month+1).date(1).hour(0).minute(0).second(0).add(-1, 'second')
 				vm.eventBus.calLevel = 'day'
-				// vm.eventBus.root.loadData('5 minute', sd.format(date_format), ed.format(date_format))
 				vm.eventBus.root.loadData('5 minute', [sd.format(date_format), ed.format(date_format)])
 			}
 
@@ -722,15 +716,12 @@ export default {
 
 				sp.mousedown = function(){
 					if( sp.selected ){
-						if(ctn_box.singSelected){
-							vm.eventBus.data.forEach( d => {
-								d.cal.singSelected = false
-								d.cal.neibor = false	
-								d.cal.texture = vm.cellTexture
-								d.cal.selected = false
-							})
-							ctn_box.singSelected = false
-						}	
+						vm.eventBus.data.forEach( d => {
+							d.cal.singSelected = false
+							d.cal.neibor = false	
+							d.cal.texture = vm.cellTexture
+							d.cal.selected = false
+						})
 						ctn_box.removeChild(sp.box)
 						sp.box = null
 						vm.updateSelection(ctn_cells, ctn_box)
@@ -748,7 +739,6 @@ export default {
 						setTimeout(() => {
 							vm.color = "white"
 						}, 1500);
-						ctn_box.singSelected = true
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
@@ -764,7 +754,6 @@ export default {
 			bg.drawRect(0, 0, ctn_cells.width, ctn_cells.height)
 			bg.endFill()
 
-			// let ctn_box = new vm.$PIXI.Container()
 			ctn_box.name = 'ctn_box'
 			main_ctn.addChild(ctn_box)
 
@@ -802,14 +791,13 @@ export default {
 					return
 				}
 				if (ctn_box.selecting) {
-					if(ctn_box.singSelected){
+					if(vm.keyDown != undefined){
 						vm.eventBus.data.forEach( d => {
 							d.cal.singSelected = false
 							d.cal.neibor = false	
 							d.cal.texture = vm.cellTexture
 							d.cal.selected = false
 						})
-						ctn_box.singSelected = false
 					}
 					let box = ctn_box.children[ctn_box.children.length-1]
 					let p = e.data.getLocalPosition(main_ctn)
@@ -994,15 +982,12 @@ export default {
 
 				sp.mousedown = function(){
 					if( sp.selected ){
-						if(ctn_box.singSelected){
-							vm.eventBus.data.forEach( d => {
-								d.cal.singSelected = false
-								d.cal.neibor = false	
-								d.cal.texture = vm.cellTexture
-								d.cal.selected = false
-							})
-							ctn_box.singSelected = false
-						}	
+						vm.eventBus.data.forEach( d => {
+							d.cal.singSelected = false
+							d.cal.neibor = false	
+							d.cal.texture = vm.cellTexture
+							d.cal.selected = false
+						})	
 						ctn_box.removeChild(sp.box)
 						sp.box = null
 						vm.updateSelection(ctn_cells, ctn_box)
@@ -1020,7 +1005,6 @@ export default {
 						setTimeout(() => {
 							vm.color = "white"
 						}, 1500);
-						ctn_box.singSelected = true
 						sp.singSelected = true
 						sp.msover = true
 						sp.selected = true
@@ -1076,14 +1060,13 @@ export default {
 					return
 				}
 				if (ctn_box.selecting) {
-					if(ctn_box.singSelected){
+					if(vm.keyDown != undefined){
 						vm.eventBus.data.forEach( d => {
 							d.cal.singSelected = false
 							d.cal.neibor = false	
 							d.cal.texture = vm.cellTexture
 							d.cal.selected = false
 						})
-						ctn_box.singSelected = false
 					}
 					let box = ctn_box.children[ctn_box.children.length-1]
 					let p = e.data.getLocalPosition(main_ctn)
