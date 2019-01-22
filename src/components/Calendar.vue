@@ -168,12 +168,18 @@ export default {
 			// vm.selectionBoxColor = 0x0287e3
 			vm.selectionBoxColor = 0xFFFFFF
 			
-			vm.keyCode = {67:'c', 76:'l', 68:'d'}
+			vm.keyCode = {
+				67:'c', 
+				76:'l', 
+				68:'d',
+				72:'h',
+			}
 			vm.keyDown = undefined
+			vm.highLightBlock = false
 			vm.notice = {
 				c: "Color Similarity",
 				d: "Dimension Similar",
-				l: "Latent Space Similar"
+				l: "Latent Space Similar",
 			}
 
 			vm.wrapper = new vm.$PIXI.Container()
@@ -216,13 +222,6 @@ export default {
 			vm.cellTexture = g.generateCanvasTexture()
 			vm.cellMaskTexture = vm.maskBox().generateCanvasTexture()
 			vm.cellFilterTexture = vm.filterBox().generateCanvasTexture()
-
-			// g.clear()
-			// g.lineStyle(1, 0x333333)
-			// g.beginFill(0xFFFFFF)
-			// g.drawRect(0, 0, vm.cellSize, vm.cellSize)
-			// g.endFill()
-			// vm.cellTextureSelected = g.generateCanvasTexture()
 			vm.cellTextureSelected = vm.selectedBox().generateCanvasTexture()
 
 			vm.$emit('loaded')
@@ -302,7 +301,9 @@ export default {
 			ctn_cells.interactive = true
 			ctn_cells.buttonMode = true
 			ctn_cells.mouseout = function(){
-				vm.eventBus.pcp.resetAlpha();
+				if(!vm.highLightBlock){
+					vm.eventBus.pcp.resetAlpha();
+				}
 			}
 
 			let ctn_border = new vm.$PIXI.Container()
@@ -320,7 +321,6 @@ export default {
 				let sd = vm.$moment.utc().year(year).dayOfYear(1).hour(0).minute(0).second(0)
 				let ed = vm.$moment.utc().year(year+1).dayOfYear(1).hour(0).minute(0).second(0).add(-1, 'second')
 				vm.eventBus.calLevel = 'month'
-				// vm.eventBus.root.loadData('2 hour', sd.format(date_format), ed.format(date_format))
 				vm.eventBus.root.loadData('2 hour', [sd.format(date_format), ed.format(date_format)])
 			}
 
@@ -352,7 +352,9 @@ export default {
 				sp.interactive = true
 				sp.mouseover = function(e) {
 					let data = sp.data
-					sp.msover = true
+					if(!vm.highLightBlock){
+						sp.msover = true
+					}
 					if (data && sp.tint != 0xFFFFFF) {
 						sp.buttonMode = true
 						vm.tooltip.alpha = 1
@@ -375,18 +377,26 @@ export default {
 					vm.tooltip.y = e.data.global.y
 
 					if( sp.selected && !ctn_box.selecting){
-						sp.msover = true
-						vm.eventBus.pcp.highLight();
+						if(!vm.highLightBlock){
+							sp.msover = true
+							vm.eventBus.pcp.highLight();
+						}
 					}
 					if(!sp.selected && !ctn_box.selecting){
-						vm.eventBus.pcp.resetAlpha();
+						if(!vm.highLightBlock){
+							vm.eventBus.pcp.resetAlpha();
+						}
 					}
 				}
  
 				sp.mouseout = function(){
-					sp.msover = false;
+					if(!vm.highLightBlock){
+						sp.msover = false;
+					}
 					if (sp.selected && !ctn_box.selecting) {
-						vm.eventBus.pcp.highLight();
+						if(!vm.highLightBlock){
+							vm.eventBus.pcp.highLight();
+						}
 					}
 				}
 
@@ -416,12 +426,14 @@ export default {
 							vm.color = "white"
 						}, 1500);
 						sp.singSelected = true
-						sp.msover = true
+						if(!vm.highLightBlock){
+							sp.msover = true
+						}
 						sp.selected = true
 						vm.Similar(sp)
 					}
 					else{
-						console.error("No Key press")
+						console.error("Key Invalid")
 					}
 				}
 
@@ -519,7 +531,9 @@ export default {
 				vm.adjustAxisOrder()
 				vm.eventBus.pcp.clearData()
 				vm.eventBus.pcp.updateData()
-				vm.eventBus.pcp.highLight()
+				if(!vm.highLightBlock){
+					vm.eventBus.pcp.highLight();
+				}
 				vm.eventBus.cm.highLightSelectedPoint()
 				ctn_box.selecting = false
 			}	
@@ -620,7 +634,9 @@ export default {
 			ctn_cells.interactive = true
 			ctn_cells.buttonMode = true
 			ctn_cells.mouseout = function(){
-				vm.eventBus.pcp.resetAlpha();
+				if(!vm.highLightBlock){
+					vm.eventBus.pcp.resetAlpha();
+				}
 			}
 
 			let label = new vm.$PIXI.Text(date.format('MMM')
@@ -700,17 +716,23 @@ export default {
 					vm.tooltip.y = e.data.global.y
 					if( sp.selected && !ctn_box.selecting){
 						sp.msover = true
-						vm.eventBus.pcp.highLight();
+						if(!vm.highLightBlock){
+							vm.eventBus.pcp.highLight();
+						}
 					}
 					if(!sp.selected && !ctn_box.selecting){
-						vm.eventBus.pcp.resetAlpha();
+						if(!vm.highLightBlock){
+							vm.eventBus.pcp.resetAlpha();
+						}
 					}
 				}
 
 				sp.mouseout = function(){
 					sp.msover = false;
 					if (sp.selected && !ctn_box.selecting) {
-						vm.eventBus.pcp.highLight();
+						if(!vm.highLightBlock){
+							vm.eventBus.pcp.highLight();
+						}
 					}
 				}
 
@@ -778,7 +800,9 @@ export default {
 				vm.adjustAxisOrder()
 				vm.eventBus.pcp.clearData()
 				vm.eventBus.pcp.updateData()
-				vm.eventBus.pcp.highLight()
+				if(!vm.highLightBlock){
+					vm.eventBus.pcp.highLight();
+				}
 				vm.eventBus.cm.highLightSelectedPoint()
 				ctn_box.selecting = false
 			}
@@ -896,7 +920,9 @@ export default {
 			ctn_cells.interactive = true
 			ctn_cells.buttonMode = true
 			ctn_cells.mouseout = function(){
-				vm.eventBus.pcp.resetAlpha();
+				if(!vm.highLightBlock){
+					vm.eventBus.pcp.resetAlpha();
+				}
 			}
 
 			let ctn_label = new vm.$PIXI.Container()
@@ -966,17 +992,23 @@ export default {
 					vm.tooltip.y = e.data.global.y
 					if( sp.selected && !ctn_box.selecting){
 						sp.msover = true
-						vm.eventBus.pcp.highLight();
+						if(!vm.highLightBlock){
+							vm.eventBus.pcp.highLight();
+						}
 					}
 					if(!sp.selected && !ctn_box.selecting){
-						vm.eventBus.pcp.resetAlpha();
+						if(!vm.highLightBlock){
+							vm.eventBus.pcp.resetAlpha();
+						}
 					}
 				}
 
 				sp.mouseout = function(){
 					sp.msover = false;
 					if (sp.selected && !ctn_box.selecting) {
-						vm.eventBus.pcp.highLight();
+						if(!vm.highLightBlock){
+							vm.eventBus.pcp.highLight();
+						}
 					}
 				}
 
@@ -1047,7 +1079,9 @@ export default {
 				vm.adjustAxisOrder()
 				vm.eventBus.pcp.clearData()
 				vm.eventBus.pcp.updateData()
-				vm.eventBus.pcp.highLight()
+				if(!vm.highLightBlock){
+					vm.eventBus.pcp.highLight();
+				}
 				vm.eventBus.cm.highLightSelectedPoint()
 				ctn_box.selecting = false
 			}
@@ -1235,6 +1269,9 @@ export default {
 		checkKeydown(key){
 			let vm = this
 			vm.keyDown = vm.keyCode[key.keyCode]
+			if(vm.keyDown === 'h'){
+				vm.highLightBlock=!vm.highLightBlock
+			}
 		},
 		
 		KeyUp(){
