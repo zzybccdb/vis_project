@@ -181,6 +181,8 @@ export default {
 				d: "Dimension Similar",
 				l: "Latent Space Similar",
 			}
+			vm.root_colunms = []
+			vm.lastCell = undefined
 
 			vm.wrapper = new vm.$PIXI.Container()
 			vm.wrapper.name = 'wrapper'
@@ -354,6 +356,18 @@ export default {
 					let data = sp.data
 					if(!vm.highLightBlock){
 						sp.msover = true
+						sp.texture = vm.cellFilterTexture
+						if(vm.lastCell != undefined){
+							if(vm.lastCell.selected){
+								vm.lastCell.texture = vm.cellTextureSelected
+							}
+							else{
+								vm.lastCell.texture = vm.cellTexture
+							}
+							vm.lastCell = sp 
+						}else{
+							vm.lastCell = sp 
+						}	
 					}
 					if (data && sp.tint != 0xFFFFFF) {
 						sp.buttonMode = true
@@ -379,7 +393,8 @@ export default {
 					if( sp.selected && !ctn_box.selecting){
 						if(!vm.highLightBlock){
 							sp.msover = true
-							vm.eventBus.pcp.highLight();
+							sp.texture = vm.cellFilterTexture
+							vm.eventBus.pcp.highLight();						
 						}
 					}
 					if(!sp.selected && !ctn_box.selecting){
@@ -392,9 +407,11 @@ export default {
 				sp.mouseout = function(){
 					if(!vm.highLightBlock){
 						sp.msover = false;
+						sp.texture = vm.cellTexture
 					}
 					if (sp.selected && !ctn_box.selecting) {
 						if(!vm.highLightBlock){
+							sp.texture = vm.cellTextureSelected
 							vm.eventBus.pcp.highLight();
 						}
 					}
@@ -428,6 +445,7 @@ export default {
 						sp.singSelected = true
 						if(!vm.highLightBlock){
 							sp.msover = true
+							sp.texture = vm.cellFilterTexture
 						}
 						sp.selected = true
 						vm.Similar(sp)
@@ -586,7 +604,7 @@ export default {
 		},
 
 		drawYear() {
-			var vm = this
+			let vm = this
 			let startYear = vm.eventBus.startDate.year()
 			let endYear = vm.eventBus.endDate.year()
 
@@ -607,6 +625,7 @@ export default {
 					d.cal.oldTexture = vm.cellMaskTexture
 				}
 			})
+			vm.getTrainedColumns()
 		},
 
 		addMonth(year, month) {
@@ -691,8 +710,21 @@ export default {
 				sp.oldTexture = sp.texture
 
 				sp.mouseover = function(e) {
-					// if (vm.mode == 'tooltip') {
-					sp.msover = true;
+					if(!vm.highLightBlock){
+						sp.msover = true
+						sp.texture = vm.cellFilterTexture
+						if(vm.lastCell != undefined){
+							if(vm.lastCell.selected){
+								vm.lastCell.texture = vm.cellTextureSelected
+							}
+							else{
+								vm.lastCell.texture = vm.cellTexture
+							}
+							vm.lastCell = sp 
+						}else{
+							vm.lastCell = sp 
+						}	
+					}
 					let data = sp.data
 					if (data && sp.tint != 0xFFFFFF) {
 						sp.buttonMode = true
@@ -715,8 +747,9 @@ export default {
 					}
 					vm.tooltip.y = e.data.global.y
 					if( sp.selected && !ctn_box.selecting){
-						sp.msover = true
 						if(!vm.highLightBlock){
+							sp.msover = true
+							sp.texture = vm.cellFilterTexture
 							vm.eventBus.pcp.highLight();
 						}
 					}
@@ -728,9 +761,13 @@ export default {
 				}
 
 				sp.mouseout = function(){
-					sp.msover = false;
+					if(!vm.highLightBlock){
+						sp.msover = false;
+						sp.texture = vm.cellTexture
+					}
 					if (sp.selected && !ctn_box.selecting) {
 						if(!vm.highLightBlock){
+							sp.texture = vm.cellTextureSelected
 							vm.eventBus.pcp.highLight();
 						}
 					}
@@ -763,6 +800,7 @@ export default {
 						}, 1500);
 						sp.singSelected = true
 						sp.msover = true
+						sp.texture = vm.cellFilterTexture
 						sp.selected = true
 						vm.Similar(sp)
 					}
@@ -969,7 +1007,21 @@ export default {
 				sp.oldTexture = sp.texture
 
 				sp.mouseover = function(e) {
-					sp.msover = true;
+					if(!vm.highLightBlock){
+						sp.msover = true
+						sp.texture = vm.cellFilterTexture
+						if(vm.lastCell != undefined){
+							if(vm.lastCell.selected){
+								vm.lastCell.texture = vm.cellTextureSelected
+							}
+							else{
+								vm.lastCell.texture = vm.cellTexture
+							}
+							vm.lastCell = sp 
+						}else{
+							vm.lastCell = sp 
+						}	
+					}
 					let data = sp.data
 					if (data) {
 						vm.tooltip.alpha = 1
@@ -991,8 +1043,9 @@ export default {
 					}
 					vm.tooltip.y = e.data.global.y
 					if( sp.selected && !ctn_box.selecting){
-						sp.msover = true
 						if(!vm.highLightBlock){
+							sp.msover = true
+							sp.texture = vm.cellFilterTexture
 							vm.eventBus.pcp.highLight();
 						}
 					}
@@ -1004,9 +1057,13 @@ export default {
 				}
 
 				sp.mouseout = function(){
-					sp.msover = false;
+					if(!vm.highLightBlock){
+						sp.msover = false;
+						sp.texture = vm.cellTexture
+					}
 					if (sp.selected && !ctn_box.selecting) {
 						if(!vm.highLightBlock){
+							sp.texture = vm.cellTextureSelected
 							vm.eventBus.pcp.highLight();
 						}
 					}
@@ -1038,12 +1095,15 @@ export default {
 							vm.color = "white"
 						}, 1500);
 						sp.singSelected = true
-						sp.msover = true
+						if(!vm.highLightBlock){
+							sp.msover = true
+							sp.texture = vm.cellFilterTexture
+						}
 						sp.selected = true
 						vm.Similar(sp)
 					}
 					else{
-						console.error("No Key press")
+						console.error("Key Invalid")
 					}
 				}
 
@@ -1231,7 +1291,7 @@ export default {
 				item.cell.texture = vm.cellTextureSelected
 				item.cell.selected = true
 				item.cell.neibor = true
-			})				
+			})
 		},
 
 		similarProcess(item,single=true){
@@ -1253,9 +1313,20 @@ export default {
 
 		dimensionDis(item1, item2){
 			let sum = []
-			item1.forEach((dim, i) => {
-				sum.push(Math.pow(dim-item2[i],2))
-			})
+			let vm = this
+			let pcp_axis = vm.eventBus.pcp.state.axis
+			vm.root_colunms.forEach(item => {
+				let i = item.idx
+				let dis = pcp_axis[i].extent[1]-pcp_axis[i].extent[0]
+				let a = item1[i]/dis
+				let b = item2[i]/dis
+				sum.push(Math.pow(a-b,2))
+			});
+			// item1.forEach((dim, i) => {
+			// 	if(vm.eventBus.pcp.state.axis[i].disabled === false){
+			// 		sum.push(Math.pow(dim-item2[i],2))
+			// 	}
+			// })
 			sum = sum.reduce((a,b) => {return a+b})
 			return Math.sqrt(sum)
 		},
@@ -1277,6 +1348,19 @@ export default {
 		KeyUp(){
 			let vm = this 
 			vm.keyDown = undefined
+		},
+
+		getTrainedColumns(){
+			let vm = this
+			let start_idx = vm.eventBus.date_idx + 1
+			let colunms = vm.eventBus.columns.slice(start_idx)
+			let root_colunms = vm.eventBus.root.columns_train 
+
+			colunms.forEach((item,i) => {
+				if(root_colunms.includes(item)){
+					vm.root_colunms.push({idx:i,name:item})
+				}
+			})
 		}
 	},
 	mounted() {

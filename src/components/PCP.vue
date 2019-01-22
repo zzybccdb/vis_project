@@ -1,7 +1,6 @@
 <template>
-    <v-container px-0 style="margin:0; max-width:1920px;background:white;padding-top:0px" fluid fill-height>
-
-    </v-container> 
+    <div class="pcp-wrapper" ref="home">
+    </div>
 </template>
 
 <script>
@@ -12,7 +11,6 @@ export default{
     //全局监听的变量
     data:()=>{
         return{
-            toggle_exclusive:1,
         }
     },
     //
@@ -31,5 +29,10 @@ export default{
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+.pcp-wrapper {
+	// min-height: 315px;
+	height: 300px;
+	overflow-x: scroll;
+}
 </style>

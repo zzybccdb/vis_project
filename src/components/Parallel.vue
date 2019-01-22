@@ -592,8 +592,8 @@ export default {
 			vm.state = {}
             vm.pcpInit()
             // get axis start index 
-            let start_idx = vm.eventBus.date_idx + 1
-            vm.state.columns = vm.eventBus.columns.slice(start_idx)
+			let start_idx = vm.eventBus.date_idx + 1
+			vm.state.columns = vm.eventBus.columns.slice(start_idx)
             vm.state.axis = []
 			vm.state.columns.forEach((c, ci) => {
 				vm.addAxis(c, ci, ci + start_idx)
