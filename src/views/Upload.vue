@@ -142,8 +142,11 @@ export default {
 		},
 		updateDatasetList() {
 			var vm = this;
-			vm.$axios.get(vm.$api + '/dataset/list_all').then(response => {
-				vm.datasets = response.data
+			vm.$axios.get(vm.$api + '/dataset/listall').then(response => {
+				vm.datasets = response.data.map(n => {
+					return {'name':n}
+				})
+				
 			}).catch(error => {
 				console.log(error.response.data)
 			})
