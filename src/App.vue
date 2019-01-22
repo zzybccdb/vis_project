@@ -64,7 +64,6 @@ export default {
 			{ title: 'Results', icon: 'attachment' , href: 'results'},
 			{ title: 'Colormap', icon: 'pie_chart' , href: 'colormap'},
 			{ title: 'Streamgraph', icon: 'pie_chart' , href: 'Streamgraph'},
-			{ title: 'Parallel', icon: 'scatter_plot' , href: 'parallel'},
 		]
 	}),
 	watch: {

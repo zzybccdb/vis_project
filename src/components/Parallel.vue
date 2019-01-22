@@ -329,7 +329,7 @@ export default {
 		},
 		initFilterBox(x, y, container, line){
 			let vm = this
-			let PIXI = new vm.$PIXI
+			let PIXI = vm.$PIXI
 			let box = vm.drawFilterBox(x, y, line.box.length)
 			box.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 4 * vm.filterbox_width, vm.plot_height);
 			// console.log(box.x, box.y)

@@ -34,7 +34,7 @@ export default new Router({
 	{
 		path: '/Streamgraph',
 		name: 'Streamgraph',
-		component: () => {return import('@/views/Streamgraph.vue')}		
+		component: () => {return import('@/views/test.vue')}		
 	},
   ]
 })
