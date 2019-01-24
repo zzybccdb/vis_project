@@ -483,6 +483,7 @@ export default {
 				vm.eventBus.cal.adjustAxisOrder()
 				vm.eventBus.pcp.clearData()
 				vm.eventBus.pcp.updateData()
+				vm.highLightSelectedPoint()
 			}
 
 			vm.app.stage.rightdown = rightdown
