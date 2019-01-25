@@ -494,11 +494,13 @@ export default {
 		clearSelect() {
 			var vm = this;
 			vm.eventBus.data.forEach( d =>{
-				if( d.cal) {
+				if( d.cal && d.cm ) {
 					d.cal.texture = vm.eventBus.cal.cellTexture
 					d.cal.selected = false
 					d.cal.singSelected = false
 					d.cal.neibor = false
+					d.cm.texture = vm.dotTexture
+					d.cm.alpha = 0.3	
 				}
 			})
 			vm.eventBus.cal.adjustAxisOrder()
