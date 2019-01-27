@@ -1,5 +1,5 @@
 <template>
-    <div class="pcp-wrapper" ref="home">
+    <div class="streamGraph-wrapper" ref="home">
     </div>
 </template>
 
@@ -18,21 +18,21 @@ export default{
     },
     //所有需要呼叫的function放在这里
     methods:{
+        init(){},
+        d3Init(){},
     },
     //启动呼叫
     mounted(){
-    },
+        let vm = this 
+
+    }, 
     //离开时执行的内容
     beforeDestroy(){
-
+        let vm = this
+		if (vm.appLegend && vm.appInfo) {
+            vm.appLegend.destroy()
+            vm.appInfo.destroy()
+		}
     }
 }
 </script>
-
-<style lang="scss" scoped>
-.pcp-wrapper {
-	// min-height: 315px;
-	height: 300px;
-	// overflow-x: scroll;
-}
-</style>

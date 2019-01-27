@@ -10,24 +10,28 @@
     v-layout 可以控制 v-flex的分布状况, v-container 并不能控制 row/column 的布局分布
     v-flex  是最基础的区块单位    
     -->
-    <v-container style="margin:0; max-width:1920px;background:orange;padding-top:0px" fluid fill-height>
+    <v-container ref='home' style="margin:0; max-width:1920px;padding-top:0px" fluid fill-height>
         <v-layout column>
-            <v-flex style="height:15%;background:red" fluid>
+            <v-flex class="card" fluid>
+                <PCP></PCP>
             </v-flex>
-            <v-flex xs8 style="background:green" fluid>
+            <v-flex xs12 style="background:white" class="card" fluid>
+                <StackedAreaChart></StackedAreaChart>
             </v-flex>
-            <v-flex xs4 style="background:blue" fluid>
-            </v-flex>
+            <!-- <v-flex xs4 style="background:blue" fluid>
+            </v-flex> -->
         </v-layout>
     </v-container>
 </template>
 
 <script>
 import PCP from '@/components/PCP.vue'
+import StackedAreaChart from '@/components/StackedAreaChart.vue'
 export default{
     //需要使用到的组件
     components:{
-        PCP
+        PCP,
+        StackedAreaChart
     },
     //全局监听的变量
     data:() => {
@@ -41,7 +45,9 @@ export default{
     },
     //启动呼叫
     mounted(){
-        console.log("test view")
+        let vm = this   
+        //取消鼠標右鍵的菜單選項
+        vm.$refs.home.oncontextmenu = () => {return false}
     },
     //离开时执行的内容
     beforeDestroy(){
@@ -51,4 +57,9 @@ export default{
 </script>
 
 <style scoped>
+.card{
+    border:1px solid #ccc;
+    box-shadow:none;
+    margin:10px;
+}
 </style>

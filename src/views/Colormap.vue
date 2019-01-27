@@ -246,9 +246,9 @@ export default {
 			// not sure if this is costly
 			this.handleResize()
 		},
-		calendar_mode() {
-			this.changeCalendarMode()
-		},
+		// calendar_mode() {
+		// 	this.changeCalendarMode()
+		// },
 		errorAlpha() {
 			this.changeView()
 		}
@@ -339,7 +339,7 @@ export default {
 		changeCalendarMode() {
 			var vm = this
 			let mode = ['tooltip', 'box_select', 'zoom'][vm.calendar_mode]
-			vm.eventBus.cal.switchMode(mode)
+			// vm.eventBus.cal.switchMode(mode)
 		},
 		onStartDatePicked() {
 			var vm = this

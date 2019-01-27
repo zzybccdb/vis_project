@@ -594,6 +594,7 @@ export default {
             // get axis start index 
 			let start_idx = vm.eventBus.date_idx + 1
 			vm.state.columns = vm.eventBus.columns.slice(start_idx)
+			vm.eventBus.cal.trainedColunms = vm.eventBus.cal.getTrainedColumns()
             vm.state.axis = []
 			vm.state.columns.forEach((c, ci) => {
 				vm.addAxis(c, ci, ci + start_idx)

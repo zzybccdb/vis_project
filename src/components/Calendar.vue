@@ -23,7 +23,6 @@ export default {
 		handleResize() {
 			var vm = this;
 			let width = vm.$refs.home.clientWidth
-			width = Math.min(width, vm.maxwidth)
 			vm.app.renderer.resize(width, vm.app.renderer.height);
 			if (vm.wrapper) {
 				vm.wrapper.x = (vm.app.renderer.width - vm.wrapper.width) / 2
@@ -428,7 +427,7 @@ export default {
 						ctn_box.removeChild(sp.box)
 						sp.box = null
 						vm.updateSelection(ctn_cells, ctn_box)
-						vm.adjustAxisOrder()
+						// vm.adjustAxisOrder()
 						vm.eventBus.pcp.clearData()
 						vm.eventBus.pcp.updateData()
 						vm.eventBus.cm.clearHighlight()
@@ -436,8 +435,8 @@ export default {
 				}
 
 				sp.rightdown = function(){
-					// vm.$router.push('/TestView')	
-					vm.$router.push('/TestView')
+					// // vm.$router.push('/TestView')	
+					// vm.$router.push('/TestView')
 					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
 						vm.message = vm.notice[vm.keyDown]
 						vm.color = "black"
@@ -627,7 +626,6 @@ export default {
 					d.cal.oldTexture = vm.cellMaskTexture
 				}
 			})
-			vm.getTrainedColumns()
 		},
 
 		addMonth(year, month) {
@@ -1232,7 +1230,7 @@ export default {
 		},
 
 		updateData() {
-			var vm = this
+			let vm = this
 			vm.mapping = {}
 			if (vm.eventBus.calLevel == 'year') {
 				vm.drawYear()
@@ -1368,7 +1366,7 @@ export default {
 	mounted() {
 		var vm = this;
 		this.$refs.home.oncontextmenu = ()=>{return false ;};
-		vm.mode = 'box_select'
+		// vm.mode = 'tooltip'
 		vm.app = new vm.$PIXI.Application({
 			autoResize: true,
 			backgroundColor: 0xFFFFFF,
