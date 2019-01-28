@@ -436,7 +436,14 @@ export default {
 
 				sp.rightdown = function(){
 					// // vm.$router.push('/TestView')	
-					// vm.$router.push('/TestView')
+					vm.$router.push({
+						name:'TestView',
+						params:{
+							date:date.format(date_format),
+							calLevel:vm.eventBus.calLevel
+						}
+					})
+					// console.log(vm.eventBus.data)
 					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
 						vm.message = vm.notice[vm.keyDown]
 						vm.color = "black"

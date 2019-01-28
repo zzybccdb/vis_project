@@ -39,7 +39,7 @@ export default new Router({
 	{
 		path: '/TestView',
 		name: 'TestView',
-		component: () => {return import('@/views/test.vue')}		
+		component: () => {return import('@/views/test.vue')},
 	},
   ]
 })

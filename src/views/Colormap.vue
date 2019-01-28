@@ -477,6 +477,7 @@ export default {
 
 			// param.other_dims = vm.columns
 			// vm.$axios.post(vm.$api + '/model/latent', param)
+
 			vm.$axios.post(vm.$api + '/inference/latent', param)
 			.then(vm.onDataLoaded)
 			.catch(error => {
