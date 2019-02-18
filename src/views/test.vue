@@ -112,7 +112,7 @@ export default{
             vm.$route.params.columns.splice(0,0,'date')
             vm.eventBus.columns = vm.$route.params.columns
             vm.eventBus.data = responese.data.data.slice(0,30)
-            vm.eventBus.lossdf = responese.data.losssdf
+            vm.eventBus.lossdf = responese.data.lossdf
             vm.eventBus.org_columns = vm.$route.params.org_columns
             vm.checkInit()
         },

@@ -55,32 +55,120 @@ export default{
         adjustTicks(){
             let vm = this
             let d3 = vm.$d3
+            let moment = vm.$moment
+            let pixi = vm.$PIXI
             let data = vm.eventBus.data
-            console.log(vm.ctn.axis)
+            //利用 d3.extent() 得到每個座標軸的區間.
             vm.ctn.axis.forEach(axis => {
-                let dim_data = data.map(d => {
-                    return parseFloat(d[axis.index])
-                })
-                
-                axis.extent = d3.extent(dim_data)
-                console.log(axis.extent) 
+                let dim_data = undefined
+                if( axis.name === 'date'){
+                    dim_data = data.map( d => {return moment(d[0])})
+                    axis.extent = d3.extent(dim_data)
+                }else{
+                    dim_data = data.map(d => {
+                        return parseFloat(d[axis.index])
+                    })
+                    axis.extent = d3.extent(dim_data)
+                }
             })
+            let plot_start = vm.ctn.axis[0].grp.child_dict.axis_line.y
+            let height = vm.plot_height
+            //通過設定 d3.scale() 來得到 ticks 的位置與內容 
+            vm.ctn.axis.forEach(axis => {
+                axis.grp.child_dict.ctn_ticks.removeChildren()
+                let ticks = undefined
+                if( axis.name === 'date' ){
+                    axis.scale = d3.scaleTime()
+                                .domain(axis.extent)
+                                .range([plot_start + height, plot_start])
+                    //利用 d3.scale().ticks() 幫助獲取座標軸中的刻度值,貌似當前狀態下ticks的最小值都是5
+                    ticks = axis.scale.ticks()
+                    vm.drawTimeTicks(ticks,axis)
+                }else{
+                    axis.scale = d3.scaleLinear()
+                                .domain(axis.extent)
+                                .range([plot_start + height, plot_start])
+                    ticks = axis.scale.ticks(5)        
+                    vm.drawNumTicks(ticks,axis)               
+                }  
+            
+            })
+        },
+
+        drawTimeTicks(ticks,axis){
+            let vm = this 
+            let moment = vm.$moment
+            let pixi = vm.$PIXI
+
+            let level = vm.eventBus.calLevel
+            let format = vm.timeslot[level]    
+            let ticksRange = vm.ticksRange[level]
+
+            let ticks_format = ticks.map(item => {
+                return moment(item).format(format)
+            })
+            ticks.forEach((item,i) => {
+                let tick = new pixi.Graphics()
+                tick.lineStyle(1,0)
+                tick.moveTo(0,0)
+                tick.lineTo(vm.tick_length,0)
+                tick.y = axis.scale(item)
+                tick.x = -vm.tick_length
+
+                let tick_label = new pixi.Text(ticks_format[i],
+                {fontFamily : vm.font, fontSize: 12, fill : 0x000000, align : 'center'})
+
+                tick_label.x = tick.x - tick_label.width
+                tick_label.y = tick.y - tick_label.height / 2
+                axis.grp.child_dict.ctn_ticks.addChild(tick)
+                axis.grp.child_dict.ctn_ticks.addChild(tick_label)
+            })                
+        },
+
+        drawNumTicks(ticks,axis){
+            let vm = this
+            let pixi = vm.$PIXI
+            ticks.forEach( item => {
+                let tick = new pixi.Graphics()
+                tick.lineStyle(1,0)
+                tick.moveTo(0,0)
+                tick.lineTo(vm.tick_length,0)
+                tick.y = axis.scale(item)
+                tick.x = -vm.tick_length
+
+                let tick_label = new pixi.Text(String(item),
+                {fontFamily : vm.font, fontSize: vm.font_size, fill : 0x000000, align : 'center'})
+
+                tick_label.x = tick.x - tick_label.width
+                tick_label.y = tick.y - tick_label.height / 2
+                axis.grp.child_dict.ctn_ticks.addChild(tick)
+                axis.grp.child_dict.ctn_ticks.addChild(tick_label)
+            })      
         },
 
         init(){
             let vm =this
             vm.timeslot = {
-                'year':"YYYYMMDD",
-                'month':"YYYYMMDDHH",
-                'day':"YYYYMMDDHHmm"
+                'year':"MM.DD",
+                'month':"DD.HH",
+                'day':"HH:mm"
             }
+            vm.ticksRange = {
+                'year':"YYYY.MM.DD",
+                "month":"YY.MM.DD.HH",
+                "day":"YY.MM.DD.HH:mm"
+            }
+            vm.data_lenght = vm.eventBus.data.length
+            //起始-終止時間
+            vm.start_time = vm.eventBus.data[0][0]
+            vm.end_time = vm.eventBus.data[vm.data_lenght-1][0]
             // pcp 初始設定
             vm.pixiInit()
             //儲存所有圖形數據的容器
             vm.ctn = {}
             vm.ctn.axis = []
-            console.log(vm.eventBus.data)
-            console.log(vm.eventBus.lossdf)
+            // console.log(vm.eventBus.data)
+            // console.log(vm.eventBus.lossdf)
             //繪製軸線
             vm.eventBus.columns.forEach((item,i) => {
                 //得到原始 dimension index
@@ -96,6 +184,9 @@ export default{
         pixiInit(){
             let vm = this
             let pixi = vm.$PIXI
+            let moment = vm.$moment
+            let level = vm.eventBus.calLevel
+
             vm.init_alpha = 0.4 
             vm.min_axis_gap = 40
             vm.plot_height = 190
@@ -103,9 +194,10 @@ export default{
             vm.font_size = 14
             vm.tick_length = 5
             vm.indicator_radius = 5
-            vm.margin = 40
+            vm.margin = 60
             vm.filterbox_width = 10
             vm.init_color = 0xff0000
+
             //移除 pixi-application 下的 children
             vm.app.stage.removeChildren()
             //最外層的包裝紙
@@ -118,6 +210,14 @@ export default{
             //pcp 軸的容器
             vm.ctn_axis = new pixi.Container()
             vm.wrapper.addChild(vm.ctn_axis)
+            //時間標題繪製
+            let start = moment(vm.start_time).format(vm.ticksRange[level])
+            let end = moment(vm.end_time).format(vm.ticksRange[level])
+            vm.time_title = new pixi.Text(start+' ~ '+end, 
+            {fontFamily : vm.font, fontSize: 18, fill : 0x000000, align : 'center'})
+            vm.time_title.x = 0
+            vm.time_title.y = 0
+            vm.wrapper.addChild(vm.time_title)
         },
 
         addAxis(axis_name,index,dim_index){
@@ -144,13 +244,13 @@ export default{
             axis_line.on('mousemove', e => vm.selectingRange(e,axis_line,grp_axis))
             axis_line.on('mousemove', e => vm.drawFilterEnd(e,axis_line,grp_axis))
             grp_axis.addChild(axis_line)
-            // //刻度指示符
-            // let ctn_ticks = new pixi.Container()
-            // grp_axis.addChild(ctn_ticks)
+            //刻度指示符
+            let ctn_ticks = new pixi.Container()
+            grp_axis.addChild(ctn_ticks)
 
             grp_axis.dragging = false
 			grp_axis.child_dict = {
-				label,axis_line,
+				label,axis_line,ctn_ticks
             }
 			vm.ctn.axis.push({
 				index,
@@ -231,12 +331,10 @@ export default{
         //調整爲可以比較的時間大小模式
         processData(){
             let vm = this
-            let moment = vm.$moment
             let pixi = vm.$PIXI
             let level = vm.eventBus.calLevel
-            let format = vm.timeslot[level]
+
             vm.eventBus.data.forEach(item => {
-                item[0] = moment(item[0]).format(format)
                 //添加線條
                 let line = new pixi.Graphics()
                 vm.ctn_lines.addChild(line)
