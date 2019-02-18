@@ -230,6 +230,7 @@ export default {
 		addAxis(column, idx, dim) {
             let vm = this
 			let additional = !vm.eventBus.root.columns_train.includes(column)
+			// console.log(vm.eventBus.root.columns_train)
 			let grp_axis = new vm.$PIXI.Container()
 			vm.ctn_axis.addChild(grp_axis)
 			
@@ -250,9 +251,6 @@ export default {
 			line.on("mousedown", (e) => vm.drawFilterStart(e, line, grp_axis))
 			line.on("mousemove", (e) => vm.selectingRange(e, line, grp_axis))
 			line.on("mouseup", (e) => vm.drawFilterEnd(e, line, grp_axis))
-			// line.on("mouseout", (e) => vm.drawFilterEnd(e, line, grp_axis))
-
-			// let line = 
 			//  draw ticks
 			let ctn_ticks = new vm.$PIXI.Container()
 			grp_axis.addChild(ctn_ticks)
@@ -575,10 +573,7 @@ export default {
 
 			vm.ctn_axis = new vm.$PIXI.Container()
 			vm.wrapper.addChild(vm.ctn_axis)
-
-			vm.ctn_ticks = new vm.$PIXI.Container()
-			vm.wrapper.addChild(vm.ctn_ticks)
-            
+			
             // highlight thick line 
 			vm.thick = new vm.$PIXI.Container()
 			vm.thick.name = "thick"

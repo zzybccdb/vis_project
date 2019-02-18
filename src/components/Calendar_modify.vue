@@ -414,8 +414,13 @@ export default {
         },
 
         addYear(year){
-            let vm = this
-            
+			let vm = this
+			let PIXI = vm.$PIXI
+			let ctn_year = new PIXI.Container()
+			ctn_year.name = 'ctn_year'
+			let main_ctn = new PIXI.Container()
+			main_ctn.name = 'main_ctn'
+			
         },
 
         monthChart(){   

@@ -436,11 +436,14 @@ export default {
 
 				sp.rightdown = function(){
 					// // vm.$router.push('/TestView')	
+					let start_idx = vm.eventBus.date_idx + 1
 					vm.$router.push({
 						name:'TestView',
 						params:{
 							date:date.format(date_format),
-							calLevel:vm.eventBus.calLevel
+							calLevel:vm.eventBus.calLevel,
+							columns:vm.eventBus.root.columns_train,
+							org_columns:vm.eventBus.columns,
 						}
 					})
 					// console.log(vm.eventBus.data)

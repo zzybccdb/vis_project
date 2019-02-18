@@ -13,7 +13,7 @@
     <v-container ref='home' style="margin:0; max-width:1920px;padding-top:0px" fluid fill-height>
         <v-layout column>
             <v-flex class="card" fluid>
-                <PCP ref='pcp'></PCP>
+                <PCP ref='pcp' @loaded='onPCPLoaded'></PCP>
             </v-flex>
             <v-flex xs12 style="background:white" class="card" fluid>
                 <StackedAreaChart ref='sac'></StackedAreaChart>
@@ -43,6 +43,11 @@ export default{
     },
     //所有需要呼叫的function放在这里
     methods:{
+        onPCPLoaded(){
+            let vm = this
+            vm.init.pcp = true
+        },
+
         init(){
             let vm = this
             // vm.$ref.sac.drawGraph()
@@ -66,13 +71,28 @@ export default{
                 level:vm.timeSlot[vm.eventBus.calLevel][1],
                 date_range:timeRange
             }
-            console.log(param)
 			vm.$axios.post(vm.$api + '/inference/loss', param)
 			.then(vm.onDataLoaded)
 			.catch(error => {
 				window.error = error
 				console.error(error)
-			})
+            })
+        },
+
+        checkInit(){
+            let vm = this
+            if(vm.allInited()){
+                vm.$refs.pcp.init()
+                vm.$refs.pcp.updateData()
+            }
+            else{
+                setTimeout(vm.checkInit, 500);
+            }
+        },
+
+        allInited(){
+            let vm = this
+            return vm.init.pcp
         },
 
         getTimeRange(){
@@ -88,7 +108,13 @@ export default{
         },
 
         onDataLoaded(responese){
-            console.log(responese)
+            let vm = this
+            vm.$route.params.columns.splice(0,0,'date')
+            vm.eventBus.columns = vm.$route.params.columns
+            vm.eventBus.data = responese.data.data.slice(0,30)
+            vm.eventBus.lossdf = responese.data.losssdf
+            vm.eventBus.org_columns = vm.$route.params.org_columns
+            vm.checkInit()
         },
     },
     //启动呼叫

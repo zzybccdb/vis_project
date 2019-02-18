@@ -197,6 +197,7 @@ export default{
     mounted(){
         let vm = this 
         vm.init()
+        console.log("oneplus")
     }, 
     //离开时执行的内容
     beforeDestroy(){
