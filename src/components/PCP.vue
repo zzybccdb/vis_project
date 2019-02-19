@@ -25,7 +25,7 @@ export default{
             //重置 pixi application 的長寬
             vm.app.renderer.resize(width,height)
             vm.adjustAxisPosition()
-            vm.adjustTicks()
+            vm.adjustTicks(vm.eventBus.data)
         },    
 
 		adjustAxisPosition() {
@@ -52,32 +52,28 @@ export default{
 			})
         },  
         
-        adjustTicks(){
+        adjustTicks(data=undefined){
+            if(data === undefined){
+                console.error("Ticks error:Data is undefined")
+                return 
+            }
             let vm = this
             let d3 = vm.$d3
             let moment = vm.$moment
             let pixi = vm.$PIXI
-            let data = vm.eventBus.data
+            //PCP 圖標的高度和圖表的起始位置獲取
+            let height = vm.plot_height
+            let plot_start = vm.ctn.axis[0].grp.child_dict.axis_line.y
             //利用 d3.extent() 得到每個座標軸的區間.
             vm.ctn.axis.forEach(axis => {
                 let dim_data = undefined
+                let ticks = undefined
+                axis.grp.child_dict.ctn_ticks.removeChildren()
+                
                 if( axis.name === 'date'){
                     dim_data = data.map( d => {return moment(d[0])})
                     axis.extent = d3.extent(dim_data)
-                }else{
-                    dim_data = data.map(d => {
-                        return parseFloat(d[axis.index])
-                    })
-                    axis.extent = d3.extent(dim_data)
-                }
-            })
-            let plot_start = vm.ctn.axis[0].grp.child_dict.axis_line.y
-            let height = vm.plot_height
-            //通過設定 d3.scale() 來得到 ticks 的位置與內容 
-            vm.ctn.axis.forEach(axis => {
-                axis.grp.child_dict.ctn_ticks.removeChildren()
-                let ticks = undefined
-                if( axis.name === 'date' ){
+                    //通過設定 d3.scale() 來得到 ticks 的位置與內容 
                     axis.scale = d3.scaleTime()
                                 .domain(axis.extent)
                                 .range([plot_start + height, plot_start])
@@ -85,13 +81,56 @@ export default{
                     ticks = axis.scale.ticks()
                     vm.drawTimeTicks(ticks,axis)
                 }else{
+                    dim_data = data.map(d => {
+                        return parseFloat(d[axis.index])
+                    })
+                    axis.extent = d3.extent(dim_data)
+                    //通過設定 d3.scale() 來得到 ticks 的位置與內容 
                     axis.scale = d3.scaleLinear()
                                 .domain(axis.extent)
                                 .range([plot_start + height, plot_start])
+                    //利用 d3.scale().ticks() 幫助獲取座標軸中的刻度值,貌似當前狀態下ticks的最小值都是5
                     ticks = axis.scale.ticks(5)        
-                    vm.drawNumTicks(ticks,axis)               
-                }  
-            
+                    vm.drawNumTicks(ticks,axis)  
+                }
+            })
+        },
+
+        drawPCPLines(data=undefined){
+            if(data === undefined){
+                console.error("Draw PCP line error:Data is undefined")
+                return
+            }
+            let vm = this
+            let pixi = vm.$PIXI
+            let moment = vm.$moment
+            vm.ctn_lines.removeChildren()
+            //對每一筆資料繪製 PCP 線條
+            data.forEach(d => {
+                let line = new pixi.Graphics()
+                let first = true
+                line.lineStyle(1,0xfff)
+                d.forEach((dim,i) => {
+                    let axis = vm.ctn.axis[i]
+                    let x = axis.grp.x
+                    let y = undefined
+                    //時間維度需要轉換資料型別到時間形態.不然就會error
+                    if(axis.name === 'date'){
+                        y = axis.scale(moment(dim)) + axis.grp.y
+                    }else{
+                        y = axis.scale(dim) + axis.grp.y
+                    }
+                    if(first){
+                        line.moveTo(x,y)
+                    }else{
+                        line.lineTo(x,y)
+                    }
+                    first = false
+                    // console.log(x,y)
+                })
+                line.tint = vm.init_color
+                d.pcp = line
+                vm.ctn_lines.addChild(line)
             })
         },
 
@@ -177,8 +216,6 @@ export default{
             })
             //調整視窗大小,座標軸分佈
             vm.handleResize()
-            //對資料的日期欄位進行整理
-            vm.processData()
         },
 
         pixiInit(){
@@ -323,24 +360,6 @@ export default{
         drawFilterStart(e,axis_line,grp_axis){},
         selectingRange(e,axis_line,grp_axis){},
         drawFilterEnd(e,axis_line,grp_axis){},
-
-        updateData(){
-            let vm = this 
-            let pixi = vm.$PIXI
-        },
-        //調整爲可以比較的時間大小模式
-        processData(){
-            let vm = this
-            let pixi = vm.$PIXI
-            let level = vm.eventBus.calLevel
-
-            vm.eventBus.data.forEach(item => {
-                //添加線條
-                let line = new pixi.Graphics()
-                vm.ctn_lines.addChild(line)
-                item.pcp = line
-            })
-        },
         //繪製線條
         drawDataLine(){
             let vm = this

@@ -83,7 +83,7 @@ export default{
             let vm = this
             if(vm.allInited()){
                 vm.$refs.pcp.init()
-                vm.$refs.pcp.updateData()
+                vm.$refs.pcp.drawPCPLines(vm.eventBus.data)
             }
             else{
                 setTimeout(vm.checkInit, 500);
