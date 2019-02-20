@@ -82,25 +82,39 @@ export default{
         checkInit(){
             let vm = this
             if(vm.allInited()){
-                vm.$refs.pcp.init()
-                vm.$refs.pcp.drawPCPLines(vm.eventBus.data)
-            }
-            else{
-                setTimeout(vm.checkInit, 500);
+                vm.eventBus.pcp.handleResize()
+                // vm.drawPCP()
             }
         },
 
         allInited(){
             let vm = this
-            return vm.init.pcp
+            vm.$refs.pcp.init()
+            return true
+        },
+
+        drawPCP(){
+            let vm = this
+            let length = vm.eventBus.data.length
+            //起始-終止時間
+            let start_time = vm.eventBus.data[0][0]
+            let end_time = vm.eventBus.data[length-1][0]
+            let data = vm.eventBus.data
+            let selected_date = vm.eventBus.selected_date
+            vm.$refs.pcp.drawChartTitle(start_time,end_time)
+            vm.$refs.pcp.adjustTicks(vm.eventBus.data)
+            vm.$refs.pcp.drawPCPLines(vm.eventBus.data)
+            vm.$refs.pcp.HighlightByTime(data,selected_date)
         },
 
         getTimeRange(){
             let vm = this
-            let temp = vm.selectedDate 
+            let moment = vm.$moment
+            let temp = moment(vm.eventBus.selected_date)
             let level = vm.eventBus.calLevel
             let slot = vm.timeSlot[level][0]
             let format = vm.timeFormat[level]
+            let slot_level = vm.timeSlot[level][1]
             let time1 = temp.add(-slot,level).format(format)
             let time2 = temp.add(slot*2,level).format(format)
             let range = [time1,time2]
@@ -109,9 +123,9 @@ export default{
 
         onDataLoaded(responese){
             let vm = this
-            vm.$route.params.columns.splice(0,0,'date')
+            vm.$route.params.columns.splice(0,0,'Time')
             vm.eventBus.columns = vm.$route.params.columns
-            vm.eventBus.data = responese.data.data.slice(0,30)
+            vm.eventBus.data = responese.data.data
             vm.eventBus.lossdf = responese.data.lossdf
             vm.eventBus.org_columns = vm.$route.params.org_columns
             vm.checkInit()
@@ -120,8 +134,6 @@ export default{
     //启动呼叫
     mounted(){
         let vm = this   
-
-        let moment = vm.$moment
         //取消鼠標右鍵的菜單選項
         vm.$refs.home.oncontextmenu = () => {return false}
         //资料传递
@@ -133,9 +145,9 @@ export default{
         vm.$refs.pcp.eventBus = EventBus
         vm.$refs.sac.eventBus = EventBus
         //从呼叫端口获取传递的资料
-        vm.selectedDate = moment(vm.$route.params.date)
+        vm.eventBus.selected_date = vm.$route.params.date
         vm.eventBus.calLevel = vm.$route.params.calLevel
-
+        //進入初始化設定
         vm.init()
         vm.loadData()
     },

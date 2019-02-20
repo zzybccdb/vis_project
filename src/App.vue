@@ -61,10 +61,11 @@ export default {
 		items: [
 			{ title: 'Training', icon: 'build' , href: 'training'},
 			{ title: 'Upload Dataset', icon: 'cloud_upload' , href: 'upload'},
+			{ title: 'Data Review', icon:'cloud_upload', href: 'RawDataTable'},
 			{ title: 'Results', icon: 'attachment' , href: 'results'},
 			{ title: 'Colormap', icon: 'pie_chart' , href: 'colormap'},
 			{ title: 'Streamgraph', icon: 'pie_chart' , href: 'Streamgraph'},
-			{ title: 'test', icon: 'pie_chart' , href: 'TestView'},
+			// { title: 'test', icon: 'pie_chart' , href: 'TestView'},
 		]
 	}),
 	watch: {

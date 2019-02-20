@@ -435,8 +435,7 @@ export default {
 				}
 
 				sp.rightdown = function(){
-					// // vm.$router.push('/TestView')	
-					let start_idx = vm.eventBus.date_idx + 1
+					let date = sp.data.datetime
 					vm.$router.push({
 						name:'TestView',
 						params:{
@@ -446,7 +445,6 @@ export default {
 							org_columns:vm.eventBus.columns,
 						}
 					})
-					// console.log(vm.eventBus.data)
 					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
 						vm.message = vm.notice[vm.keyDown]
 						vm.color = "black"

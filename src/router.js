@@ -41,5 +41,10 @@ export default new Router({
 		name: 'TestView',
 		component: () => {return import('@/views/test.vue')},
 	},
+	{
+		path: '/RawDataTable',
+		name: 'DataTable',
+		component: () => {return import('@/views/DataTable.vue')},
+	},
   ]
 })

@@ -25,11 +25,11 @@ export default{
             //重置 pixi application 的長寬
             vm.app.renderer.resize(width,height)
             vm.adjustAxisPosition()
-            vm.adjustTicks(vm.eventBus.data)
+            vm.eventBus.root.drawPCP()
         },    
-
+        //調整每個軸線的位置
 		adjustAxisPosition() {
-		    let vm = this            
+            let vm = this            
             let axis = vm.ctn.axis
             //計算最小的寬度
 			let min_width = vm.min_axis_gap * (axis.length - 1) + vm.wrapper.x * 2
@@ -39,9 +39,6 @@ export default{
             }
             //獲取圖形的寬度
 			vm.plot_width = vm.app.renderer.width  - vm.wrapper.x * 2
-			let firstAxis = axis[0]
-            let lastAxis = axis[axis.length - 1]
-
             let axis_gap = vm.plot_width / (axis.length - 1)
 			axis.forEach((a, ai) => {
 				a.grp.alpha = 1
@@ -51,7 +48,49 @@ export default{
 				a.idx = ai
 			})
         },  
-        
+        //給圖表上標題
+        drawChartTitle(start_time=undefined,end_time=undefined){
+            if(start_time === undefined || end_time === undefined){
+                console.error("Time range error")
+                return
+            }
+            let vm = this
+            let pixi = vm.$PIXI
+            let moment = vm.$moment
+            let level = vm.eventBus.calLevel
+            let title_format = vm.title_format[level]
+            
+            start_time = moment(start_time).format(title_format)
+            end_time = moment(end_time).format(title_format)
+
+            let title = new pixi.Text(start_time+' ~ '+end_time, 
+            {fontFamily : vm.font, fontSize: 15, fill : 0x000000, align : 'center'})
+            title.x = 0, title.y = 10
+            title.interactive = true
+            title.buttonMode = true
+            title.on('mousedown',() => {
+                vm.$router.push({name: 'colormap'})
+            })
+            vm.wrapper.addChild(title)
+        },
+
+        HighlightByTime(data,query){
+            let vm = this
+            let moment = vm.$moment
+            let level = vm.eventBus.calLevel
+            let format = vm.timeformat[level]
+            query = moment(query).format(format)
+            data.forEach(d => {
+                let date = moment(d[0]).format(format)
+                if(query === date){
+                    d.pcp.alpha = 1.0
+                    d.pcp.tint = 0x000000
+                }else{
+                    d.pcp.alpha = 0.3
+                }
+            })
+        },
+
         adjustTicks(data=undefined){
             if(data === undefined){
                 console.error("Ticks error:Data is undefined")
@@ -60,17 +99,16 @@ export default{
             let vm = this
             let d3 = vm.$d3
             let moment = vm.$moment
-            let pixi = vm.$PIXI
             //PCP 圖標的高度和圖表的起始位置獲取
             let height = vm.plot_height
             let plot_start = vm.ctn.axis[0].grp.child_dict.axis_line.y
             //利用 d3.extent() 得到每個座標軸的區間.
-            vm.ctn.axis.forEach(axis => {
+            vm.ctn.axis.forEach(axis => {   
                 let dim_data = undefined
                 let ticks = undefined
                 axis.grp.child_dict.ctn_ticks.removeChildren()
                 
-                if( axis.name === 'date'){
+                if( axis.name === 'Time'){
                     dim_data = data.map( d => {return moment(d[0])})
                     axis.extent = d3.extent(dim_data)
                     //通過設定 d3.scale() 來得到 ticks 的位置與內容 
@@ -78,7 +116,7 @@ export default{
                                 .domain(axis.extent)
                                 .range([plot_start + height, plot_start])
                     //利用 d3.scale().ticks() 幫助獲取座標軸中的刻度值,貌似當前狀態下ticks的最小值都是5
-                    ticks = axis.scale.ticks()
+                    ticks = axis.scale.ticks(vm.time_axis_ticks_nums)
                     vm.drawTimeTicks(ticks,axis)
                 }else{
                     dim_data = data.map(d => {
@@ -95,7 +133,7 @@ export default{
                 }
             })
         },
-
+        //繪製線條
         drawPCPLines(data=undefined){
             if(data === undefined){
                 console.error("Draw PCP line error:Data is undefined")
@@ -109,13 +147,14 @@ export default{
             data.forEach(d => {
                 let line = new pixi.Graphics()
                 let first = true
-                line.lineStyle(1,0xfff)
+                line.clear()
+                line.lineStyle(2,0xFFFFFF,0.5)
                 d.forEach((dim,i) => {
                     let axis = vm.ctn.axis[i]
                     let x = axis.grp.x
                     let y = undefined
                     //時間維度需要轉換資料型別到時間形態.不然就會error
-                    if(axis.name === 'date'){
+                    if(axis.name === 'Time'){
                         y = axis.scale(moment(dim)) + axis.grp.y
                     }else{
                         y = axis.scale(dim) + axis.grp.y
@@ -126,9 +165,10 @@ export default{
                         line.lineTo(x,y)
                     }
                     first = false
-                    // console.log(x,y)
                 })
-                line.tint = vm.init_color
+                //設定line的顏色
+                line.tint = 0xC5DBE7
+                line.alpha = 0.1
                 d.pcp = line
                 vm.ctn_lines.addChild(line)
             })
@@ -141,7 +181,6 @@ export default{
 
             let level = vm.eventBus.calLevel
             let format = vm.timeslot[level]    
-            let ticksRange = vm.ticksRange[level]
 
             let ticks_format = ticks.map(item => {
                 return moment(item).format(format)
@@ -185,6 +224,10 @@ export default{
             })      
         },
 
+        drawFilterbox(){
+
+        },
+
         init(){
             let vm =this
             vm.timeslot = {
@@ -192,22 +235,21 @@ export default{
                 'month':"DD.HH",
                 'day':"HH:mm"
             }
-            vm.ticksRange = {
+            vm.title_format = {
                 'year':"YYYY.MM.DD",
                 "month":"YY.MM.DD.HH",
                 "day":"YY.MM.DD.HH:mm"
             }
-            vm.data_lenght = vm.eventBus.data.length
-            //起始-終止時間
-            vm.start_time = vm.eventBus.data[0][0]
-            vm.end_time = vm.eventBus.data[vm.data_lenght-1][0]
+            vm.timeformat = {
+                'year':"YYYY-MM-DD",
+                'month':"YYYY-MM-DD HH-00",
+                'day':"YYYY-MM-DD HH:mm"               
+            }
             // pcp 初始設定
             vm.pixiInit()
             //儲存所有圖形數據的容器
             vm.ctn = {}
             vm.ctn.axis = []
-            // console.log(vm.eventBus.data)
-            // console.log(vm.eventBus.lossdf)
             //繪製軸線
             vm.eventBus.columns.forEach((item,i) => {
                 //得到原始 dimension index
@@ -215,15 +257,12 @@ export default{
                 vm.addAxis(item, i, dim_index)
             })
             //調整視窗大小,座標軸分佈
-            vm.handleResize()
         },
 
         pixiInit(){
             let vm = this
             let pixi = vm.$PIXI
-            let moment = vm.$moment
-            let level = vm.eventBus.calLevel
-
+            //圖像基礎參數設定
             vm.init_alpha = 0.4 
             vm.min_axis_gap = 40
             vm.plot_height = 190
@@ -234,7 +273,7 @@ export default{
             vm.margin = 60
             vm.filterbox_width = 10
             vm.init_color = 0xff0000
-
+            vm.time_axis_ticks_nums = 10
             //移除 pixi-application 下的 children
             vm.app.stage.removeChildren()
             //最外層的包裝紙
@@ -247,14 +286,6 @@ export default{
             //pcp 軸的容器
             vm.ctn_axis = new pixi.Container()
             vm.wrapper.addChild(vm.ctn_axis)
-            //時間標題繪製
-            let start = moment(vm.start_time).format(vm.ticksRange[level])
-            let end = moment(vm.end_time).format(vm.ticksRange[level])
-            vm.time_title = new pixi.Text(start+' ~ '+end, 
-            {fontFamily : vm.font, fontSize: 18, fill : 0x000000, align : 'center'})
-            vm.time_title.x = 0
-            vm.time_title.y = 0
-            vm.wrapper.addChild(vm.time_title)
         },
 
         addAxis(axis_name,index,dim_index){
@@ -268,18 +299,18 @@ export default{
             let label = vm.drawLabel(axis_name)
             grp_axis.addChild(label)
             //軸線拖動設定
-            label.on('rightdown', e => vm.axisStartDrag(e,grp_axis))
-            label.on('mousemove', e => vm.axisDragging(e,grp_axis))
-            label.on('rightup', e => vm.axisStopDrag(gr_axis))
+            // label.on('rightdown', e => vm.axisStartDrag(e,grp_axis))
+            // label.on('mousemove', e => vm.axisDragging(e,grp_axis))
+            // label.on('rightup', e => vm.axisStopDrag(gr_axis))
             //指示符
             let indicator = vm.drawIndicator(index,label)
             grp_axis.addChild(indicator)
             //軸線
             let axis_line = vm.drawAxisLine(indicator)
             //設定線條過濾滑塊
-            axis_line.on('mouseodown', e => vm.drawFilterStart(e,axis_line,grp_axis))
-            axis_line.on('mousemove', e => vm.selectingRange(e,axis_line,grp_axis))
-            axis_line.on('mousemove', e => vm.drawFilterEnd(e,axis_line,grp_axis))
+            // axis_line.on('mouseodown', e => vm.drawFilterStart(e,axis_line,grp_axis))
+            // axis_line.on('mousemove', e => vm.selectingRange(e,axis_line,grp_axis))
+            // axis_line.on('mousemove', e => vm.drawFilterEnd(e,axis_line,grp_axis))
             grp_axis.addChild(axis_line)
             //刻度指示符
             let ctn_ticks = new pixi.Container()
@@ -315,11 +346,9 @@ export default{
             
             return label
         },    
-
-        axisStartDrag(axis, grp_axis){},
-        axisDragging(axis,grp_axis){},
-        axisStopDrag(grp_axis){},
-
+        // axisStartDrag(axis, grp_axis){},
+        // axisDragging(axis,grp_axis){},
+        // axisStopDrag(grp_axis){},
         drawIndicator(index,label){
             let vm = this
             let pixi = vm.$PIXI 
@@ -356,25 +385,9 @@ export default{
             axis_line.box = []
             return axis_line
         },
-
-        drawFilterStart(e,axis_line,grp_axis){},
-        selectingRange(e,axis_line,grp_axis){},
-        drawFilterEnd(e,axis_line,grp_axis){},
-        //繪製線條
-        drawDataLine(){
-            let vm = this
-            vm.eventBus.data.forEach(item => {
-                if(item.pcp){
-                    let line = item.pcp
-                    //清除 canvas renderer 等信息
-                    line.clear()
-                    //0xffffff 表示的是白色
-                    line.lineStyle(2, 0xFFFFFF)
-                    line.tint = vm.init_color
-
-                }
-            })
-        }
+        // drawFilterStart(e,axis_line,grp_axis){},
+        // selectingRange(e,axis_line,grp_axis){},
+        // drawFilterEnd(e,axis_line,grp_axis){},
     },
     //启动呼叫
     mounted(){
