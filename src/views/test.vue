@@ -104,7 +104,7 @@ export default{
             vm.$refs.pcp.drawChartTitle(start_time,end_time)
             vm.$refs.pcp.adjustTicks(vm.eventBus.data)
             vm.$refs.pcp.drawPCPLines(vm.eventBus.data)
-            vm.$refs.pcp.HighlightByTime(data,selected_date)
+            vm.$refs.pcp.HighlightByTime2(data,selected_date)
         },
 
         getTimeRange(){

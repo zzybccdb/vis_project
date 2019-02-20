@@ -91,6 +91,36 @@ export default{
             })
         },
 
+        HighlightByTime2(data=undefined,query=undefined){
+            if(data === undefined || query === undefined){
+                console.error("Data or Query Missing")
+                return
+            }
+            let vm = this
+            let moment = vm.$moment
+            let pixi = vm.$PIXI
+            let level = vm.eventBus.calLevel
+            let format = vm.timeformat[level]
+
+            let g = new pixi.Graphics()
+            g.lineStyle(5,0xFFFFFF)
+            g.lineStyle(3,0x000000)
+            let texture = g.generateCanvasTexture()
+
+            query = moment(query).format(format)
+            data.forEach(d => {
+                let date = moment(d[0]).format(format)
+                if(query === date){
+                    let line = new pixi.Graphics()
+                    line.clear()
+                    line.lineTextureStyle(2,texture)
+                    // line.lineTextureStyle(5,texture,0)
+                    vm.connectionLine(d,line)
+                    vm.ctn_lines.addChild(line)
+                }
+            })
+        },
+
         adjustTicks(data=undefined){
             if(data === undefined){
                 console.error("Ticks error:Data is undefined")
@@ -149,30 +179,37 @@ export default{
                 let first = true
                 line.clear()
                 line.lineStyle(2,0xFFFFFF,0.5)
-                d.forEach((dim,i) => {
-                    let axis = vm.ctn.axis[i]
-                    let x = axis.grp.x
-                    let y = undefined
-                    //時間維度需要轉換資料型別到時間形態.不然就會error
-                    if(axis.name === 'Time'){
-                        y = axis.scale(moment(dim)) + axis.grp.y
-                    }else{
-                        y = axis.scale(dim) + axis.grp.y
-                    }
-                    if(first){
-                        line.moveTo(x,y)
-                    }else{
-                        line.lineTo(x,y)
-                    }
-                    first = false
-                })
+                vm.connectionLine(d,line)
                 //設定line的顏色
                 line.tint = 0xC5DBE7
-                line.alpha = 0.1
+                line.alpha = 0.3
                 d.pcp = line
                 vm.ctn_lines.addChild(line)
             })
         },
+        //負責處理將每個座標軸的點連接起來
+        connectionLine(data,line){
+            let vm = this
+            let moment = vm.$moment
+            let first = true
+            data.forEach((dim,i) => {
+                let axis = vm.ctn.axis[i]
+                let x = axis.grp.x
+                let y = undefined
+                //d3 在 timescale 的時候需要注意必須爲時間格式
+                if(axis.name === 'Time'){
+                    y = axis.scale(moment(dim)) + axis.grp.y
+                }else{
+                    y = axis.scale(dim) + axis.grp.y
+                }
+                if(first){
+                    line.moveTo(x,y)
+                }else{
+                    line.lineTo(x,y)
+                }
+                first = false 
+            })
+        },  
 
         drawTimeTicks(ticks,axis){
             let vm = this 
@@ -224,9 +261,7 @@ export default{
             })      
         },
 
-        drawFilterbox(){
-
-        },
+        drawFilterbox(){},
 
         init(){
             let vm =this
@@ -286,6 +321,12 @@ export default{
             //pcp 軸的容器
             vm.ctn_axis = new pixi.Container()
             vm.wrapper.addChild(vm.ctn_axis)
+            //highlight 線條的容器
+            vm.thick = new pixi.Container()
+            vm.thick.name = "thick"
+            vm.wrapper.addChild(vm.thick)
+            vm.thick_line = new pixi.Graphics()
+            vm.thick.addChild(vm.thick_line)
         },
 
         addAxis(axis_name,index,dim_index){
