@@ -18,15 +18,37 @@ export default{
     },
     //所有需要呼叫的function放在这里
     methods:{
-        handleResize(){
+        //調整視窗大小
+        handleResize(listener=true){
             let vm = this
             let width = vm.$refs.main.clientWidth
             let height = vm.$refs.main.clientHeight
             //重置 pixi application 的長寬
             vm.app.renderer.resize(width,height)
+            console.log(listener)
+            if(listener){
+                vm.drawPCP()
+                console.log("Resize the window")
+            }
+        },   
+        //畫出整張圖像.
+        drawPCP(start_time=undefined,end_time=undefined){
+            let vm = this
+            if(vm.data === undefined){
+                console.error("PCP missing data")
+                return
+            }
+            let data = vm.data
+            if(start_time === undefined || end_time === undefined){
+                console.error("Can not draw the title. Missing the time range")
+            }else{
+                vm.drawChartTitle(start_time,end_time)
+            }
             vm.adjustAxisPosition()
-            vm.eventBus.root.drawPCP()
-        },    
+            vm.adjustTicks(data)
+            vm.drawPCPLines(data)
+        },
+
         //調整每個軸線的位置
 		adjustAxisPosition() {
             let vm = this            
@@ -74,49 +96,26 @@ export default{
             vm.wrapper.addChild(title)
         },
 
-        HighlightByTime(data,query){
-            let vm = this
-            let moment = vm.$moment
-            let level = vm.eventBus.calLevel
-            let format = vm.timeformat[level]
-            query = moment(query).format(format)
-            data.forEach(d => {
-                let date = moment(d[0]).format(format)
-                if(query === date){
-                    d.pcp.alpha = 1.0
-                    d.pcp.tint = 0x000000
-                }else{
-                    d.pcp.alpha = 0.3
-                }
-            })
-        },
-
-        HighlightByTime2(data=undefined,query=undefined){
+        HighlightByTime(data=undefined,query=undefined){
             if(data === undefined || query === undefined){
                 console.error("Data or Query Missing")
                 return
             }
             let vm = this
             let moment = vm.$moment
-            let pixi = vm.$PIXI
             let level = vm.eventBus.calLevel
             let format = vm.timeformat[level]
-
-            let g = new pixi.Graphics()
-            g.lineStyle(5,0xFFFFFF)
-            g.lineStyle(3,0x000000)
-            let texture = g.generateCanvasTexture()
 
             query = moment(query).format(format)
             data.forEach(d => {
                 let date = moment(d[0]).format(format)
                 if(query === date){
-                    let line = new pixi.Graphics()
+                    let line = vm.thick_line
                     line.clear()
-                    line.lineTextureStyle(2,texture)
-                    // line.lineTextureStyle(5,texture,0)
+                    line.lineStyle(5,0xffffff)
                     vm.connectionLine(d,line)
-                    vm.ctn_lines.addChild(line)
+                    line.lineStyle(3,0x000000)
+                    vm.connectionLine(d,line)
                 }
             })
         },
@@ -171,12 +170,10 @@ export default{
             }
             let vm = this
             let pixi = vm.$PIXI
-            let moment = vm.$moment
             vm.ctn_lines.removeChildren()
             //對每一筆資料繪製 PCP 線條
             data.forEach(d => {
                 let line = new pixi.Graphics()
-                let first = true
                 line.clear()
                 line.lineStyle(2,0xFFFFFF,0.5)
                 vm.connectionLine(d,line)
@@ -263,8 +260,9 @@ export default{
 
         drawFilterbox(){},
 
-        init(){
+        init(data){
             let vm =this
+            vm.data = data
             vm.timeslot = {
                 'year':"MM.DD",
                 'month':"DD.HH",
@@ -291,7 +289,6 @@ export default{
                 let dim_index = vm.eventBus.org_columns.indexOf(item)
                 vm.addAxis(item, i, dim_index)
             })
-            //調整視窗大小,座標軸分佈
         },
 
         pixiInit(){
@@ -449,6 +446,7 @@ export default{
         window.addEventListener('resize', vm.handleResize)
         //配置信息加載完畢,向上呼叫完成
         window.pcp = vm
+        vm.data = undefined
         vm.$emit('loaded')
     },
     //离开时执行的内容

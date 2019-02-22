@@ -82,14 +82,14 @@ export default{
         checkInit(){
             let vm = this
             if(vm.allInited()){
-                vm.eventBus.pcp.handleResize()
-                // vm.drawPCP()
+                vm.eventBus.pcp.handleResize(false)
+                vm.drawPCP()
             }
         },
-
+        //檢查各個圖表是否完成初始化
         allInited(){
             let vm = this
-            vm.$refs.pcp.init()
+            vm.$refs.pcp.init(vm.eventBus.data)
             return true
         },
 
@@ -101,10 +101,8 @@ export default{
             let end_time = vm.eventBus.data[length-1][0]
             let data = vm.eventBus.data
             let selected_date = vm.eventBus.selected_date
-            vm.$refs.pcp.drawChartTitle(start_time,end_time)
-            vm.$refs.pcp.adjustTicks(vm.eventBus.data)
-            vm.$refs.pcp.drawPCPLines(vm.eventBus.data)
-            vm.$refs.pcp.HighlightByTime2(data,selected_date)
+            vm.$refs.pcp.drawPCP(start_time,end_time)
+            vm.$refs.pcp.HighlightByTime(data,selected_date)
         },
 
         getTimeRange(){
@@ -114,7 +112,6 @@ export default{
             let level = vm.eventBus.calLevel
             let slot = vm.timeSlot[level][0]
             let format = vm.timeFormat[level]
-            let slot_level = vm.timeSlot[level][1]
             let time1 = temp.add(-slot,level).format(format)
             let time2 = temp.add(slot*2,level).format(format)
             let range = [time1,time2]

@@ -371,7 +371,7 @@ export default {
 					if (data && sp.tint != 0xFFFFFF) {
 						sp.buttonMode = true
 						vm.tooltip.alpha = 1
-						vm.tooltip_label.setText(data.datetime.format(date_format))
+						vm.tooltip_label.text = data.datetime.format(date_format)
 						vm.tooltip_box.clear()
 						vm.tooltip_box.lineStyle(1, 0x0)
 						vm.tooltip_box.beginFill(0x0, 0.5)
@@ -737,7 +737,7 @@ export default {
 					if (data && sp.tint != 0xFFFFFF) {
 						sp.buttonMode = true
 						vm.tooltip.alpha = 1
-						vm.tooltip_label.setText(data.datetime.format(date_format))
+						vm.tooltip_label.text = data.datetime.format(date_format)
 						vm.tooltip_box.clear()
 						vm.tooltip_box.lineStyle(1, 0x0)
 						vm.tooltip_box.beginFill(0x0, 0.5)
@@ -1033,7 +1033,7 @@ export default {
 					let data = sp.data
 					if (data) {
 						vm.tooltip.alpha = 1
-						vm.tooltip_label.setText(data.datetime.format(date_format))
+						vm.tooltip_label.text = data.date
 						vm.tooltip_box.clear()
 						vm.tooltip_box.lineStyle(1, 0x0)
 						vm.tooltip_box.beginFill(0x0, 0.5)

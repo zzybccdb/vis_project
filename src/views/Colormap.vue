@@ -336,11 +336,11 @@ export default {
 			console.log("mask mode")
 			vm.eventBus.cm.maskSelect()
 		},
-		changeCalendarMode() {
-			var vm = this
-			let mode = ['tooltip', 'box_select', 'zoom'][vm.calendar_mode]
-			// vm.eventBus.cal.switchMode(mode)
-		},
+		// changeCalendarMode() {
+		// 	var vm = this
+		// 	// let mode = ['tooltip', 'box_select', 'zoom'][vm.calendar_mode]
+		// 	// vm.eventBus.cal.switchMode(mode)
+		// },
 		onStartDatePicked() {
 			var vm = this
 			vm.$refs.startDateMenu.save(vm.startDate)
@@ -552,7 +552,7 @@ export default {
 		vm.$refs.cal.$el.style.height = fixed_bottom_height + 'px'
 		vm.$refs.leftpanel.style.height = fixed_bottom_height + 10 + 'px'
 		// init loading here
-		vm.changeCalendarMode()
+		// vm.changeCalendarMode()
 		// vm.eventBus.calLevel = 'month'
 		// vm.loadData('2 hour', "2017-01-01 00:00:00", "2017-12-31 00:00:00")
 		vm.eventBus.calLevel = 'year'

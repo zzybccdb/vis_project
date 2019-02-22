@@ -12,23 +12,20 @@
     -->
     <v-container ref='home' style="margin:0; max-width:1920px;padding-top:0px" fluid fill-height>
         <v-layout column>
-            <v-flex class="card" fluid>
-                <PCP ref='pcp' @loaded='onPCPLoaded'></PCP>
-            </v-flex>
             <v-flex xs12 style="background:white" class="card" fluid>
-                <StackedAreaChart ref='sac'></StackedAreaChart>
+                <handsontable />
             </v-flex>
-            <!-- <v-flex xs4 style="background:blue" fluid>
-            </v-flex> -->
         </v-layout>
     </v-container>
 </template>
 
 <script>
-const EventBus = {}
+// const EventBus = {}
+import handsontable from '@/components/handsontable.vue'
 export default{
     //需要使用到的组件
     components:{
+        handsontable
     },
     //全局监听的变量
     data:() => {
@@ -42,7 +39,7 @@ export default{
     },
     //启动呼叫
     mounted(){
-        let vm = this   
+        // let vm = this   
     },
     //离开时执行的内容
     beforeDestroy(){

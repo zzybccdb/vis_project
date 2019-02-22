@@ -558,8 +558,8 @@ export default {
 			vm.dim_font_size = 14
             vm.tick_length = 5
             vm.indicator_radius = 5 
-
-    		vm.normalizedby = 'each dimension'
+			
+			vm.normalizedby = 'each dimension'
             vm.normalizedin = 'view region'
 
 			vm.app.stage.removeChildren()

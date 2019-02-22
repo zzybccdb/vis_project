@@ -11,9 +11,7 @@
 </template>
 
 <script>
-const EventBus = {
-
-}
+// const EventBus = {}
 export default{
     //需要使用到的组件
     components:{
@@ -38,20 +36,20 @@ export default{
                 "minute":"YYYY-MM-DD HH:mm:00",
             }
             //测试资料
-            let data = [
-            { date: "2006", redDelicious: "10", mcintosh: "15", oranges: "9", pears: "6" },
-            { date: "2007", redDelicious: "12", mcintosh: "18", oranges: "9", pears: "4" },
-            { date: "2008", redDelicious: "05", mcintosh: "20", oranges: "8", pears: "2" },
-            // { date: "2006", redDelicious: "-10", mcintosh: "-15", oranges: "-9", pears: "-6" },
-            // { date: "2007", redDelicious: "-12", mcintosh: "-18", oranges: "-9", pears: "-4" },
-            // { date: "2008", redDelicious: "-05", mcintosh: "-20", oranges: "-8", pears: "-2" },   
-            ];
+            // let data = [
+            // { date: "2006", redDelicious: "10", mcintosh: "15", oranges: "9", pears: "6" },
+            // { date: "2007", redDelicious: "12", mcintosh: "18", oranges: "9", pears: "4" },
+            // { date: "2008", redDelicious: "05", mcintosh: "20", oranges: "8", pears: "2" },
+            // // { date: "2006", redDelicious: "-10", mcintosh: "-15", oranges: "-9", pears: "-6" },
+            // // { date: "2007", redDelicious: "-12", mcintosh: "-18", oranges: "-9", pears: "-4" },
+            // // { date: "2008", redDelicious: "-05", mcintosh: "-20", oranges: "-8", pears: "-2" },   
+            // ];
 
-            let data2 = [
-                { date: "2006", redDelicious: "-10", mcintosh: "-15", oranges: "-9", pears: "-6" },
-                { date: "2007", redDelicious: "-12", mcintosh: "-18", oranges: "-9", pears: "-4" },
-                { date: "2008", redDelicious: "-05", mcintosh: "-20", oranges: "-8", pears: "-2" },
-            ]
+            // let data2 = [
+            //     { date: "2006", redDelicious: "-10", mcintosh: "-15", oranges: "-9", pears: "-6" },
+            //     { date: "2007", redDelicious: "-12", mcintosh: "-18", oranges: "-9", pears: "-4" },
+            //     { date: "2008", redDelicious: "-05", mcintosh: "-20", oranges: "-8", pears: "-2" },
+            // ]
             //vm.keys = undefined
             vm.keys = ["redDelicious","mcintosh","oranges","pears"]
             // vm.StacedArea(vm.keys,data,data2)
@@ -130,7 +128,7 @@ export default{
         },
 
         setAxisDomain(axis, domain=[0,1]){
-            let vm = this
+            // let vm = this
             axis.domain(domain)
         },
 
@@ -160,7 +158,7 @@ export default{
                 .attr("height", height)
         },
         
-        drawStackGraph(main, layers, class_name="layer", area, fill_color, point_event, opacity=1, mask=false){
+        drawStackGraph(main, layers, class_name="layer", area, fill_color, point_event, opacity=1){
             main.selectAll("."+class_name)
                 .data(layers)
                 .enter().append("path")
@@ -170,7 +168,7 @@ export default{
                 .attr("id", (d)=>{
                     return d.key
                 })
-                .attr("key",function(d,i){
+                .attr("key",function(d){
                     return d.key;
                 })
                 .attr("d",area)
@@ -184,7 +182,7 @@ export default{
         },
 
         reRangeFakeLayer(real,fake){
-            let vm = this
+            // let vm = this
             let newfake = []
             real.forEach(r => {
                 let a = fake.filter(f => r.key === f.key)

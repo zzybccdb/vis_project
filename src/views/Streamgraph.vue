@@ -39,7 +39,7 @@
 const EventBus = {
 
 }
-import { mapGetters } from 'vuex'
+// import { mapGetters } from 'vuex'
 import Colormap from '@/components/Colormap.vue'
 export default {   
     components: {
@@ -55,7 +55,7 @@ export default {
     methods:{
         initial(){
             let vm = this
-            let d3 = vm.$d3
+            // let d3 = vm.$d3
             let query = {"level":"day"}
 
             vm.zoomlevel = "day"
@@ -85,7 +85,7 @@ export default {
        
         Status(item){
             let vm = this
-            let d3 = vm.$d3
+            // let d3 = vm.$d3
             if(item != 2){
                 let event = (item === 1)?"none":"all"
                 vm.maskv.select(".overlay").attr("pointer-events",event);
@@ -93,8 +93,7 @@ export default {
         },
 
         onColormapLoaded() {
-            console.log("colormap point loader")
-			let vm = this
+            // console.log("colormap point loader")
             // vm.$refs.cm.updateData()
         },
                 
@@ -255,8 +254,8 @@ export default {
 
         checkMaskRange(time_start, time_end){
             let vm = this
-            let d3 = vm.$d3
-            let moment = vm.$moment
+            // let d3 = vm.$d3
+            // let moment = vm.$moment
             let drawed = false, time_range = {"start":time_start, "end":time_end}
 
             for(let item in vm.mask_temp[vm.zoomlevel]){
@@ -279,7 +278,7 @@ export default {
 
         cancelMask(time){
             let vm = this
-            let d3 = vm.$d3
+            // let d3 = vm.$d3
             let moment = vm.$moment
             let format = vm.timeformat[vm.zoomlevel]
 
@@ -297,7 +296,7 @@ export default {
 
         pixiInit(){
             let vm = this
-            let canvas = vm.$refs.legend
+            // let canvas = vm.$refs.legend
             let g = new vm.$PIXI.Graphics();
             g.lineStyle(1, 0x000000,1);
             g.beginFill(0xFFFFFF);
@@ -326,7 +325,7 @@ export default {
 
         initData(query={"level":"day"}){
             let vm = this
-            let moment = vm.$moment
+            // let moment = vm.$moment
             vm.$axios.post(vm.$api + '/analysis/dim_loss',query).then((data)=>{
                 let temp = {}
                 temp.columns = data.data.columns
@@ -351,7 +350,7 @@ export default {
 
         changeData(query, transform, start, end){
             let vm = this 
-            let d3 = vm.$d3
+            // let d3 = vm.$d3
             let moment = vm.$moment
             vm.$axios.post(vm.$api + '/analysis/dim_loss',query).then((data)=>{
                 let temp = {}
@@ -402,7 +401,7 @@ export default {
             vm.focusv.select(".brush").call(vm.brush.move, vm.x.range().map(transform.invertX, transform));
         },
 
-        drawLegend(legends, totalsize){
+        drawLegend(legends){
             //Labels
             let vm = this
             vm.legend_container = new vm.$PIXI.Container();
@@ -449,7 +448,7 @@ export default {
 
         disableLine(line_id, item){
             let vm = this
-            let d3 = vm.$d3
+            // let d3 = vm.$d3
 
             if( vm.selection.select("#"+line_id) === undefined )
                 return console.error("NO selection layer")
@@ -487,7 +486,6 @@ export default {
 
         titleClick(){
             let vm = this
-            let d3 = vm.$d3
 
             vm.layers.selectAll(".layer")
             .attr("opacity", 1)
@@ -512,17 +510,17 @@ export default {
             vm.select_label = label
 
             vm.layers.selectAll(".layer")
-            .attr("opacity", function(layer, j){
+            .attr("opacity", function(layer){
                 return layer.key != label? 0.3:1 
             })
-            .classed("hover", function(layer, j){
+            .classed("hover", function(layer){
                 return layer.key != label? false:true
             })
-            .attr("stroke-width", function(layer, j){
+            .attr("stroke-width", function(layer){
                 return layer.key != label? "0px":"1px";
             })
 
-            vm.legend_container.children.forEach((item, j) => {
+            vm.legend_container.children.forEach(item => {
                 if( item.text != undefined && item.text === label )
                     item.alpha = 1
                 else 
@@ -595,7 +593,7 @@ export default {
 
         organizeMaskData(mask_data){
             let vm = this
-            let d3 = vm.$d3
+            // let d3 = vm.$d3
             let moment = vm.$moment
             let format = vm.timeformat[vm.zoomlevel]
 
@@ -632,7 +630,7 @@ export default {
         
             vm.mask_temp[vm.zoomlevel][class_name] = {"start":temp_start, "end":temp_end}
             
-            vm.temp_layers.forEach((item,index)=>{
+            vm.temp_layers.forEach((item)=>{
                 let a = moment(moment(item.date).format(format)).valueOf()
                 if(a >= temp_start && a <= temp_end){
                     datetime_arr.push(item)
@@ -671,7 +669,7 @@ export default {
                 .attr("x",x)
         },
 
-        drawD3Rect(main, class_name, translate="translate(0,0)", width, height){
+        drawD3Rect(main, class_name, translate="translate(0,0)"){
             main.append("rect")
                 .attr("class", "label_rect")
                 .attr("transform", translate)
@@ -728,7 +726,7 @@ export default {
                     else
                         return d.key
                 })
-                .attr("key",function(d,i){
+                .attr("key",function(d){
                     return d.key;
                 })
                 .attr("d",area)
@@ -776,13 +774,13 @@ export default {
                 let format = vm.timeformat[vm.zoomlevel]
                 
                 let mouseX = d3.mouse(this)[0]
-                let mouseY = d3.mouse(this)[1]
+                // let mouseY = d3.mouse(this)[1]
 
                 let invertedX = vm.x.invert(mouseX)
                 invertedX = moment(invertedX).format(format)
                 
                 let dt_arr = []
-                d.forEach( (item,i) => {
+                d.forEach(item => {
                     dt_arr.push(moment(item.date).format(format))
                 })
                 let index = dt_arr.indexOf(invertedX)
@@ -811,7 +809,7 @@ export default {
             let format = vm.timeformat[vm.zoomlevel]
 
             let mouseX = d3.mouse(current_layer)[0]
-            let mouseY = d3.mouse(current_layer)[1]
+            // let mouseY = d3.mouse(current_layer)[1]
             let rect_color = vm.z(i)
             let invertedX = vm.x.invert(mouseX)
             invertedX = moment(invertedX).format(format)
@@ -832,9 +830,8 @@ export default {
                 vm.changeD3InforBox("visible",rect_color, invertedX, data.key, "Loss value: "+label_value, mouseX-200, mouseX-200, mouseX-170, mouseX-200)
         },
         
-        layerMouseout(d, i){
+        layerMouseout(){
             let vm = this
-            let d3 = vm.$d3
             vm.changeD3InforBox("hidden","white")
         },
 
@@ -919,7 +916,6 @@ export default {
         },
 
         setAxisDomain(axis, domain=[0,1]){
-            let vm = this
             axis.domain(domain)
         },
 
@@ -1013,8 +1009,6 @@ export default {
 
         D3zooming(transform){
             let vm = this 
-            let d3 = vm.$d3 
-            let moment = vm.$moment
 
             vm.setAxisDomain(vm.x, transform.rescaleX(vm.x2).domain())
             vm.redrawD3Axis(vm.svg, "xaxis", vm.xAxis)
