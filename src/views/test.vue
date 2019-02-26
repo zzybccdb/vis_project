@@ -74,7 +74,7 @@ export default{
 			vm.$axios.post(vm.$api + '/inference/loss', param)
 			.then(vm.onDataLoaded)
 			.catch(error => {
-				window.error = error
+                window.error = error
 				console.error(error)
             })
         },
@@ -123,6 +123,7 @@ export default{
             vm.$route.params.columns.splice(0,0,'Time')
             vm.eventBus.columns = vm.$route.params.columns
             vm.eventBus.data = responese.data.data
+            console.log(vm.eventBus.data)
             vm.eventBus.lossdf = responese.data.lossdf
             vm.eventBus.org_columns = vm.$route.params.org_columns
             vm.checkInit()

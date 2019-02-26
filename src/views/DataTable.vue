@@ -12,14 +12,31 @@
     -->
     <v-container ref='home' grid-list-md style="margin:0; max-width:1920px;padding:10px;overflow:hidden" fluid fill-height>
         <v-layout column>
-            <v-flex lg1 fluid fill-height>
-                <v-text-field
-                    label="Outline"
-                    placeholder="formula"
-                ></v-text-field>
-            </v-flex>            
-            <v-flex lg11 class="card" style='overflow:auto'>   
+            <v-flex style="height:60px">
+                <v-layout style='overflow:hidden' row>
+                    <v-flex lg11 fluid fill-height>
+                        <v-text-field
+                            label="Outline"
+                            placeholder="formula"
+                        ></v-text-field>
+                    </v-flex>
+                    <!-- fab對應的圓形按鈕 -->
+                    <v-btn style="transform:translateY(15px)" fab small flat color='blue'>
+                        <v-icon>check</v-icon>    
+                    </v-btn>
+                </v-layout> 
+            </v-flex>           
+            <v-flex lg11 class="card" style='overflow:auto'> 
                 <handsontable ref='table'/>
+                <!-- <v-layout column>
+                    <v-flex style="height:50px;width:150px">
+                        <v-select v-model='slot_value' :items='timeslots'>
+                        </v-select>  
+                    </v-flex>
+                    <v-flex lg12> 
+                        <handsontable ref='table'/>
+                    </v-flex>
+                </v-layout> -->
             </v-flex>
             <v-flex  class="card" style="height:50px;">
                 <!--前後翻頁-->
@@ -30,9 +47,16 @@
                     <v-btn fab small>
                     <v-icon @click='nextPage()'>keyboard_arrow_right</v-icon>
                     </v-btn>
-                    <v-select ref='current_page' style='padding-left:50px;width:50px;height:30px' 
-                    v-model="value" :items="items" @change='pageChange()'>
-                    </v-select>   
+                    <v-flex lg1>
+                        <v-select ref='current_page' style='padding-left:50px;width:50px;height:30px' 
+                        v-model='value' :items='items' @change='pageChange()'>
+                        </v-select>
+                    </v-flex>
+                    <v-flex lg1>
+                        <v-select ref='interval' style='padding-left:50px;width:200px;height:30px' 
+                        v-model='interval_value' :items='interval_items' @change='intervalChange'>
+                        </v-select>
+                    </v-flex>                      
                     <v-card-text style='padding:20px;font-size:16px'>
                         <p ref='entries' class="text-lg-center"></p>
                     </v-card-text>
@@ -56,7 +80,13 @@ export default{
             value: 1,
             items: [
                 { text: 1, value: 1 },
-            ]            
+            ],
+            interval_value: 1,
+            interval_items:[
+                {text:'1 day',value: 1},
+                {text:'2 hour', value: 2},
+                {text:'5 minute', value: 3}
+            ]           
         }
     },
     //
@@ -78,6 +108,15 @@ export default{
                 window.error = error
                 console.error(error)
             })
+        },
+        intervalChange(item){
+            let vm = this
+            let moment = vm.$moment
+            vm.interval = vm.interval_items.filter( d => {
+                return d.value === item
+            })[0].text
+            console.log(vm.interval)
+        // vm.loadData(vm.interval)
         },
         onDataLoaded(response){
             let vm = this
@@ -164,7 +203,7 @@ export default{
             },300)
 
             vm.bottomInfo([end-49, end], total)
-        }
+        },
     },
     //启动呼叫
     mounted(){
