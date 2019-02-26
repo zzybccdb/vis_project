@@ -446,7 +446,7 @@ export default {
 				// endDate
 				date_range,
 			})
-
+			// console.log(interval)
 			vm.init.me = false
 			// vm.$refs.sld.clearData()
 			if (vm.init.cm) {

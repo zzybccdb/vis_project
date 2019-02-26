@@ -1,29 +1,88 @@
 <template>
-  <hot-table :settings="settings"></hot-table>
+  <hot-table ref="hot" :settings="settings"></hot-table>
 </template>
-
 <script>
-  import { HotTable } from '@handsontable/vue';
-
-  export default {
-    data: function() {
-      return {
-        settings: {
-          data: [
-            ["", "Ford", "Volvo", "Toyota", "Honda"],
-            ["2016", 10, 11, 12, 13],
-            ["2017", 20, 11, 14, 13],
-            ["2018", 30, 15, 12, 13]
-          ],
-          colHeaders: true,
-          rowHeaders: true,
-        }
-      };
-    },
+import { HotTable } from '@handsontable/vue';
+export default {
     components: {
-      HotTable
+        HotTable
+    },
+    data: () => {
+        return {
+            settings: {
+                data: [
+                    //資料格式
+                    // {
+                    //     'date':'2018/03/05',
+                    //     'Ford':"abad",
+                    // },
+                ],
+                columns:[
+                    //欄位設定
+                    // {
+                    //     data:'date',
+                    //     type:'numeric',
+                    // },
+                ],
+                colHeaders: [
+                    //欄位名稱設定
+                    // 'date',
+                    // 'Ford',
+                ],
+                columnSorting: true,
+                rowHeaders: true,
+                autoColumnSize: true,
+                autoRowSize:true,
+                contextMenu:true,
+                stretchH: 'all',
+            },
+        };
+    },
+    created(){
+    },
+    methods:{
+        setCols(columns){
+            let vm = this
+            vm.settings.colHeaders = columns
+            vm.colSetting(columns)
+        },
+        changeData(data){
+            let vm = this
+            vm.settings.data = data
+        },
+        clearData(){
+            let vm = this
+            vm.settings.data.slice(0,1)
+        },
+        colSetting(columns){
+            let vm = this
+            columns.forEach(item => {
+                let temp = {}
+                // temp.data = item
+                if(item === 'date'){
+                    temp.type = 'text'
+                    temp.readOnly = true
+                }else{
+                    temp.type = 'numeric'
+                    temp.numericFormat = {
+                        pattern: '0.000'
+                    }
+                }
+                vm.settings.columns.push(temp)
+            })
+        },
+        sortByindex(index,sortConfig){
+            let vm = this
+            let table = vm.$refs.hot
+            table.hotInstance.getPlugin('columnSorting').sort({
+                column:index,
+                sortOrder:sortConfig
+            })
+        }
+    },
+    mounted(){  
     }
-  }
+}
 </script>
 
-<style src="../node_modules/handsontable/dist/handsontable.full.css"></style>
+<style src="./css/handsontable.full.css"></style>

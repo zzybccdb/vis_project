@@ -10,17 +10,40 @@
     v-layout 可以控制 v-flex的分布状况, v-container 并不能控制 row/column 的布局分布
     v-flex  是最基础的区块单位    
     -->
-    <v-container ref='home' style="margin:0; max-width:1920px;padding-top:0px" fluid fill-height>
+    <v-container ref='home' grid-list-md style="margin:0; max-width:1920px;padding:10px;overflow:hidden" fluid fill-height>
         <v-layout column>
-            <v-flex xs12 style="background:white" class="card" fluid>
-                <handsontable />
+            <v-flex lg1 fluid fill-height>
+                <v-text-field
+                    label="Outline"
+                    placeholder="formula"
+                ></v-text-field>
+            </v-flex>            
+            <v-flex lg11 class="card" style='overflow:auto'>   
+                <handsontable ref='table'/>
+            </v-flex>
+            <v-flex  class="card" style="height:50px;">
+                <!--前後翻頁-->
+                <v-layout row nowrap>
+                    <v-btn fab small>
+                    <v-icon @click='priviousPage()'>keyboard_arrow_left</v-icon>
+                    </v-btn>
+                    <v-btn fab small>
+                    <v-icon @click='nextPage()'>keyboard_arrow_right</v-icon>
+                    </v-btn>
+                    <v-select ref='current_page' style='padding-left:50px;width:50px;height:30px' 
+                    v-model="value" :items="items" @change='pageChange()'>
+                    </v-select>   
+                    <v-card-text style='padding:20px;font-size:16px'>
+                        <p ref='entries' class="text-lg-center"></p>
+                    </v-card-text>
+                </v-layout>
             </v-flex>
         </v-layout>
     </v-container>
 </template>
 
 <script>
-// const EventBus = {}
+const EventBus = {}
 import handsontable from '@/components/handsontable.vue'
 export default{
     //需要使用到的组件
@@ -29,21 +52,141 @@ export default{
     },
     //全局监听的变量
     data:() => {
-        return{}
+        return{
+            value: 1,
+            items: [
+                { text: 1, value: 1 },
+            ]            
+        }
     },
     //
     created(){
+        let vm = this
+        vm.timeformat = {
+            '1 day':'MM/DD/YYYY',
+            '2 hour':'MM/DD/YYYY/HH:00',
+            '5 minute':'MM/DD/YYYY/HH:mm'
+        }
     },
     //所有需要呼叫的function放在这里
     methods:{
+        loadData(interval){
+            let vm = this
+            vm.$axios.post(vm.$api+'/inference/latent',{interval})
+            .then(vm.onDataLoaded)
+            .catch(error => {
+                window.error = error
+                console.error(error)
+            })
+        },
+        onDataLoaded(response){
+            let vm = this
+            let date_index = response.data.columns.indexOf('date')
+            let start_data = response.data.data.slice(0,50)
+            let total_nums = response.data.data.length
+            let total_page =  Math.ceil(total_nums / 50)
+
+            vm.columns = response.data.columns.slice(date_index)
+            vm.total_nums = total_nums
+            //把資料加入表格中
+            vm.$refs.table.setCols(vm.columns)
+            vm.$refs.table.clearData()
+            vm.$refs.table.changeData(vm.dataSetting(start_data,date_index))
+            //重整表格
+            setTimeout(() => {
+                vm.$refs.table.sortByindex(0,'asc')
+            }, 300)
+            
+            vm.data = response.data.data
+            vm.date_index = date_index
+            vm.total_page = total_page
+            // vm.current_page = 1
+            window.response = response
+            //底部信息設定
+            vm.bottomSetting(total_page)
+            vm.bottomInfo([1,50],total_nums)
+        },
+        dataSetting(page_data,date_index){
+            let vm = this 
+            let moment = vm.$moment
+            let format = vm.timeformat[vm.interval]
+            let data = []
+            page_data.forEach(d => {
+                d = d.slice(date_index)
+                d[0] = moment(d[0]).format(format)
+                data.push(d)
+            })
+            return data
+        },
+        bottomSetting(total_page){
+            let vm = this
+            let temp =[]
+            //設定select
+            for(let i = 1 ; i <= total_page; i++){
+                let obj = {}
+                obj.value = i
+                obj.text = i
+                temp.push(obj)
+            }
+            vm.items = temp
+        },
+        bottomInfo(items,total_nums){
+            let vm = this
+            let entries = vm.$refs.entries
+            entries.innerHTML = items[0] + ' - ' + items[1] + ' of ' + total_nums 
+        },
+        nextPage(){
+            let vm = this
+            if( vm.value + 1 <= vm.total_page){
+                vm.value += 1
+                vm.pageChange()
+            }
+        },
+        priviousPage(){
+            let vm = this
+            if( vm.value - 1 > 0 ){
+                vm.value -= 1
+                vm.pageChange()
+            }    
+        },
+        pageChange(){
+            let vm = this
+            let page = vm.value
+            let end = page * 50
+            let total = vm.total_nums
+            let date_index = vm.date_index
+
+            let page_data = vm.data.slice(end-50,end)
+            vm.$refs.table.changeData(vm.dataSetting(page_data,date_index))
+
+            setTimeout(() => {
+                vm.$refs.table.sortByindex(0,'asc')
+            },300)
+
+            vm.bottomInfo([end-49, end], total)
+        }
     },
     //启动呼叫
     mounted(){
-        // let vm = this   
+        let vm = this
+        vm.interval = '1 day'
+        vm.$refs.table.EventBus = EventBus
+        vm.EventBus = EventBus
+        EventBus.table = vm.$refs.table  
+        EventBus.root = vm
+        if(typeof $route != 'undefined'){
+            EventBus.currentDate = $route.params.currentDate
+            vm.interval = $route.params.interval
+        }else{
+            EventBus.currentDate = undefined
+        }
+        vm.loadData(vm.interval)
+        window.table = vm.$refs.table
+
+        vm.$refs.home.addEventListener("contextmenu", e => {e.preventDefault()})
     },
     //离开时执行的内容
     beforeDestroy(){
-
     }
 }
 </script>
