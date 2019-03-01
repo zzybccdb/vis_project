@@ -97,12 +97,22 @@ export default{
             '2 hour':'MM/DD/YYYY/HH:00',
             '5 minute':'MM/DD/YYYY/HH:mm'
         }
+        // vm.intervalformat = {
+        //     '1 day':''
+        // }
+        vm.date_format = 'YYYY-MM-DD HH:mm:ss'
     },
     //所有需要呼叫的function放在这里
     methods:{
-        loadData(interval){
+        loadData(interval,date_range=undefined){
             let vm = this
-            vm.$axios.post(vm.$api+'/inference/latent',{interval})
+            let param = {
+                interval
+            }
+            if(date_range != undefined){
+                param.date_range = date_range
+            }
+            vm.$axios.post(vm.$api+'/inference/latent',param)
             .then(vm.onDataLoaded)
             .catch(error => {
                 window.error = error
@@ -112,11 +122,32 @@ export default{
         intervalChange(item){
             let vm = this
             let moment = vm.$moment
+            let length = vm.total_nums - 1
+            let format = vm.date_format
+
+            let start = moment(vm.data[0][vm.date_index]).year()
+            let end = moment(vm.data[length][vm.date_index]).year()
+
+            let sd = moment.utc().year(start).dayOfYear(1).hour(0).minute(0).second(0)
+            let ed = moment.utc().year(end+1).dayOfYear(1).hour(0).minute(0).second(0).add(-1, 'second')
+            
             vm.interval = vm.interval_items.filter( d => {
                 return d.value === item
             })[0].text
-            console.log(vm.interval)
-        // vm.loadData(vm.interval)
+        
+            switch(item){
+                case 1:
+                    vm.loadData(vm.interval)
+                    break
+                case 2:
+                    vm.loadData(vm.interval,[sd.format(format),ed.format(format)])
+                   break
+                case 3:
+                    vm.loadData(vm.interval,[sd.format(format),ed.format(format)])                    
+                    break
+                default:
+                    console.error("Interval changing is error check it!")
+            }
         },
         onDataLoaded(response){
             let vm = this
@@ -152,7 +183,7 @@ export default{
             let data = []
             page_data.forEach(d => {
                 d = d.slice(date_index)
-                d[0] = moment(d[0]).format(format)
+                d[0] = moment.utc(d[0]).format(format)
                 data.push(d)
             })
             return data
