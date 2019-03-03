@@ -85,7 +85,6 @@ export default {
             let vm = this
             let table = vm.$refs.hot
             table.hotInstance.selectRows(index)
-            console.log(index)
         }
     },
     mounted(){  

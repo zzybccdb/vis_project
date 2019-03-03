@@ -97,13 +97,11 @@ export default{
             '2 hour':'MM/DD/YYYY/HH:00',
             '5 minute':'MM/DD/YYYY/HH:mm'
         }
-        // vm.intervalformat = {
-        //     '1 day':''
-        // }
         vm.date_format = 'YYYY-MM-DD HH:mm:ss'
     },
     //所有需要呼叫的function放在这里
     methods:{
+        //呼叫后端,进行资料加载.载入资料后执行 this.onDataLoaded
         loadData(interval,date_range=undefined){
             let vm = this
             let param = {
@@ -119,6 +117,7 @@ export default{
                 console.error(error)
             })
         },
+        //资料的时间间隔变换
         intervalChange(item){
             let vm = this
             let moment = vm.$moment
@@ -149,6 +148,7 @@ export default{
                     console.error("Interval changing is error check it!")
             }
         },
+        //从后端获得response后实际进行处理
         onDataLoaded(response){
             let vm = this
             let date_index = response.data.columns.indexOf('date')
@@ -173,13 +173,14 @@ export default{
             // vm.current_page = 1
             window.response = response
             //底部信息設定
-            vm.bottomSetting(total_page)
+            vm.pageSelect(total_page)
             vm.bottomInfo([1,50],total_nums)
             //b
             if(vm.EventBus.currentDate_index != undefined){
                 vm.highLightDate(vm.EventBus.currentDate_index)
             }
         },
+        //对资料进行预处理,处理成表格接收的内容
         dataSetting(page_data,date_index){
             let vm = this 
             let moment = vm.$moment
@@ -192,7 +193,8 @@ export default{
             })
             return data
         },
-        bottomSetting(total_page){
+        //页面底部页面选择器设定
+        pageSelect(total_page){
             let vm = this
             let temp =[]
             //設定select
@@ -204,11 +206,13 @@ export default{
             }
             vm.items = temp
         },
+        //页面底部信息宣告
         bottomInfo(items,total_nums){
             let vm = this
             let entries = vm.$refs.entries
             entries.innerHTML = items[0] + ' - ' + items[1] + ' of ' + total_nums 
         },
+        //下一页
         nextPage(){
             let vm = this
             if( vm.page + 1 <= vm.total_page){
@@ -216,13 +220,15 @@ export default{
                 vm.pageChange()
             }
         },
+        //上一页
         priviousPage(){
             let vm = this
             if( vm.page - 1 > 0 ){
                 vm.page -= 1
                 vm.pageChange()
             }    
-        },
+        },  
+        //翻页
         pageChange(index=undefined){
             let vm = this
             let page = vm.page
@@ -242,9 +248,11 @@ export default{
 
             vm.bottomInfo([end-49, end], total)
         },
+        //标注特定的item
         highLightDate(index){
             let vm = this
             let remainder = index % 50
+            //获取当前资料在具体哪一页
             vm.page = Math.ceil(index/50)
             vm.pageChange(remainder)
         },
@@ -263,12 +271,13 @@ export default{
 
         EventBus.table = vm.$refs.table  
         EventBus.root = vm
-        
+
         if(vm.$route.params.push === 'other'){
             EventBus.currentDate_index = vm.$route.params.index
             vm.interval = cal_level[vm.$route.params.cal_level]
         }else{
             EventBus.date = undefined
+            EventBus.currentDate_index = undefined
         }
         vm.loadData(vm.interval)
         window.table = vm.$refs.table
@@ -276,6 +285,7 @@ export default{
     },
     //离开时执行的内容
     beforeDestroy(){
+
     }
 }
 </script>

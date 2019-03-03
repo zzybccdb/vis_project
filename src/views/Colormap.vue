@@ -566,7 +566,6 @@ export default {
 			vm.columns_all = response.data.columns_all.slice()
 			vm.columns = response.data.columns.slice()
 			vm.columns_train = response.data.columns.slice()
-			console.log(vm.columns_train)
 			vm.dataset_errors = []
 		}).catch(error => {
 			vm.dataset_errors = [error.response.data]
