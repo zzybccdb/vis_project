@@ -49,7 +49,7 @@
                     </v-btn>
                     <v-flex lg1>
                         <v-select ref='current_page' style='padding-left:50px;width:50px;height:30px' 
-                        v-model='value' :items='items' @change='pageChange()'>
+                        v-model='page' :items='items' @change='pageChange()'>
                         </v-select>
                     </v-flex>
                     <v-flex lg1>
@@ -77,7 +77,7 @@ export default{
     //全局监听的变量
     data:() => {
         return{
-            value: 1,
+            page: 1,
             items: [
                 { text: 1, value: 1 },
             ],
@@ -130,7 +130,7 @@ export default{
 
             let sd = moment.utc().year(start).dayOfYear(1).hour(0).minute(0).second(0)
             let ed = moment.utc().year(end+1).dayOfYear(1).hour(0).minute(0).second(0).add(-1, 'second')
-            
+
             vm.interval = vm.interval_items.filter( d => {
                 return d.value === item
             })[0].text
@@ -175,6 +175,10 @@ export default{
             //底部信息設定
             vm.bottomSetting(total_page)
             vm.bottomInfo([1,50],total_nums)
+            //b
+            if(vm.EventBus.currentDate_index != undefined){
+                vm.highLightDate(vm.EventBus.currentDate_index)
+            }
         },
         dataSetting(page_data,date_index){
             let vm = this 
@@ -207,21 +211,21 @@ export default{
         },
         nextPage(){
             let vm = this
-            if( vm.value + 1 <= vm.total_page){
-                vm.value += 1
+            if( vm.page + 1 <= vm.total_page){
+                vm.page += 1
                 vm.pageChange()
             }
         },
         priviousPage(){
             let vm = this
-            if( vm.value - 1 > 0 ){
-                vm.value -= 1
+            if( vm.page - 1 > 0 ){
+                vm.page -= 1
                 vm.pageChange()
             }    
         },
-        pageChange(){
+        pageChange(index=undefined){
             let vm = this
-            let page = vm.value
+            let page = vm.page
             let end = page * 50
             let total = vm.total_nums
             let date_index = vm.date_index
@@ -231,28 +235,43 @@ export default{
 
             setTimeout(() => {
                 vm.$refs.table.sortByindex(0,'asc')
+                if(index != undefined){
+                    vm.$refs.table.highLightItem(index)
+                }
             },300)
 
             vm.bottomInfo([end-49, end], total)
+        },
+        highLightDate(index){
+            let vm = this
+            let remainder = index % 50
+            vm.page = Math.ceil(index/50)
+            vm.pageChange(remainder)
         },
     },
     //启动呼叫
     mounted(){
         let vm = this
+        let cal_level = {
+            'year':'1 day', 
+            'month':'2 hour',
+            'minute':'5 minute'
+        }
         vm.interval = '1 day'
         vm.$refs.table.EventBus = EventBus
         vm.EventBus = EventBus
+
         EventBus.table = vm.$refs.table  
         EventBus.root = vm
-        if(typeof $route != 'undefined'){
-            EventBus.currentDate = $route.params.currentDate
-            vm.interval = $route.params.interval
+        
+        if(vm.$route.params.push === 'other'){
+            EventBus.currentDate_index = vm.$route.params.index
+            vm.interval = cal_level[vm.$route.params.cal_level]
         }else{
-            EventBus.currentDate = undefined
+            EventBus.date = undefined
         }
         vm.loadData(vm.interval)
         window.table = vm.$refs.table
-
         vm.$refs.home.addEventListener("contextmenu", e => {e.preventDefault()})
     },
     //离开时执行的内容

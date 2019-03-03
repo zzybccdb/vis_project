@@ -281,6 +281,16 @@ export default {
 			g.endFill()
 			return g
 		},
+		
+		checkDateIndex(date){
+			let vm = this 
+			let index = undefined
+			vm.eventBus.data.filter((item,i) => {
+				if(item.datetime === date)
+					index = i
+			})
+			return index
+		},
 
 		addYear(year) {
 			var vm = this
@@ -436,13 +446,20 @@ export default {
 
 				sp.rightdown = function(){
 					let date = sp.data.datetime
+					let index = vm.checkDateIndex(date)
 					vm.$router.push({
-						name:'TestView',
+						// name:'TestView',
+						// params:{
+						// 	date:date.format(date_format),
+						// 	calLevel:vm.eventBus.calLevel,
+						// 	columns:vm.eventBus.root.columns_train,
+						// 	org_columns:vm.eventBus.columns,
+						// }
+						name:'DataTable',
 						params:{
-							date:date.format(date_format),
-							calLevel:vm.eventBus.calLevel,
-							columns:vm.eventBus.root.columns_train,
-							org_columns:vm.eventBus.columns,
+							index:index,
+							cal_level:vm.eventBus.calLevel,
+							push:'other'
 						}
 					})
 					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){

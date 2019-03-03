@@ -35,6 +35,7 @@ export default {
                 autoRowSize:true,
                 contextMenu:true,
                 stretchH: 'all',
+                currentRowClassName: 'currentRow',
             },
         };
     },
@@ -78,6 +79,13 @@ export default {
                 column:index,
                 sortOrder:sortConfig
             })
+            // table.hotInstance.selectRows(2)
+        },
+        highLightItem(index){
+            let vm = this
+            let table = vm.$refs.hot
+            table.hotInstance.selectRows(index)
+            console.log(index)
         }
     },
     mounted(){  
@@ -86,3 +94,8 @@ export default {
 </script>
 
 <style src="./css/handsontable.full.css"></style>
+<style scoped>
+.currentRow {
+  background-color: #F9F9FB !important;
+}
+</style>
