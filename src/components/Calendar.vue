@@ -459,7 +459,7 @@ export default {
 						params:{
 							index:index,
 							cal_level:vm.eventBus.calLevel,
-							push:'other'
+							push:'calender'
 						}
 					})
 					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){

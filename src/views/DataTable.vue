@@ -123,6 +123,9 @@ export default{
             let moment = vm.$moment
             let length = vm.total_nums - 1
             let format = vm.date_format
+    
+            vm.EventBus.date = undefined
+            vm.EventBus.currentDate_index = undefined
 
             let start = moment(vm.data[0][vm.date_index]).year()
             let end = moment(vm.data[length][vm.date_index]).year()
@@ -266,15 +269,18 @@ export default{
             'minute':'5 minute'
         }
         vm.interval = '1 day'
-        vm.$refs.table.EventBus = EventBus
+        //table本身自帶一個EventBus
+        vm.$refs.table.eventbus = EventBus
         vm.EventBus = EventBus
 
         EventBus.table = vm.$refs.table  
         EventBus.root = vm
 
-        if(vm.$route.params.push === 'other'){
+        if(vm.$route.params.push === 'calender'){
             EventBus.currentDate_index = vm.$route.params.index
             vm.interval = cal_level[vm.$route.params.cal_level]
+        }if(vm.$route.params.push === 'fresh'){
+            vm.interval = vm.$route.params.interval
         }else{
             EventBus.date = undefined
             EventBus.currentDate_index = undefined
