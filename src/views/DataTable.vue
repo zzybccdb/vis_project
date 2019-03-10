@@ -110,12 +110,19 @@ export default{
             if(date_range != undefined){
                 param.date_range = date_range
             }
-            vm.$axios.post(vm.$api+'/inference/latent',param)
+            // vm.$axios.post(vm.$api+'/inference/latent',param)
+            // .then(vm.onDataLoaded)
+            // .catch(error => {
+            //     window.error = error
+            //     console.error(error)
+            // })
+            vm.$axios.post(vm.$api+'/inference/rawdata',param)
             .then(vm.onDataLoaded)
             .catch(error => {
                 window.error = error
                 console.error(error)
             })
+
         },
         //资料的时间间隔变换
         intervalChange(item){
@@ -162,8 +169,8 @@ export default{
             vm.columns = response.data.columns.slice(date_index)
             vm.total_nums = total_nums
             //把資料加入表格中
-            vm.$refs.table.setCols(vm.columns)
             vm.$refs.table.clearData()
+            vm.$refs.table.setCols(vm.columns)
             vm.$refs.table.changeData(vm.dataSetting(start_data,date_index))
             //重整表格
             setTimeout(() => {
@@ -279,8 +286,6 @@ export default{
         if(vm.$route.params.push === 'calender'){
             EventBus.currentDate_index = vm.$route.params.index
             vm.interval = cal_level[vm.$route.params.cal_level]
-        }if(vm.$route.params.push === 'fresh'){
-            vm.interval = vm.$route.params.interval
         }else{
             EventBus.date = undefined
             EventBus.currentDate_index = undefined

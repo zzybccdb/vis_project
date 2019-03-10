@@ -447,21 +447,21 @@ export default {
 				sp.rightdown = function(){
 					let date = sp.data.datetime
 					let index = vm.checkDateIndex(date)
-					vm.$router.push({
-						// name:'TestView',
-						// params:{
-						// 	date:date.format(date_format),
-						// 	calLevel:vm.eventBus.calLevel,
-						// 	columns:vm.eventBus.root.columns_train,
-						// 	org_columns:vm.eventBus.columns,
-						// }
-						name:'DataTable',
-						params:{
-							index:index,
-							cal_level:vm.eventBus.calLevel,
-							push:'calender'
-						}
-					})
+					// vm.$router.push({
+					// 	// name:'TestView',
+					// 	// params:{
+					// 	// 	date:date.format(date_format),
+					// 	// 	calLevel:vm.eventBus.calLevel,
+					// 	// 	columns:vm.eventBus.root.columns_train,
+					// 	// 	org_columns:vm.eventBus.columns,
+					// 	// }
+					// 	name:'DataTable',
+					// 	params:{
+					// 		index:index,
+					// 		cal_level:vm.eventBus.calLevel,
+					// 		push:'calender'
+					// 	}
+					// })
 					if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
 						vm.message = vm.notice[vm.keyDown]
 						vm.color = "black"

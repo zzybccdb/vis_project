@@ -45,20 +45,45 @@
 							</v-chip>
 							</template>
 						</v-combobox>
-						<v-text-field
-						:error-messages="learning_rate_errors"
-						:disabled="disableForm"
-						v-model="learning_rate"
-						label="Learning Rate"
-						@change="updateParam(onLearningRateChange)"
-						></v-text-field>
-						<v-text-field
-						:error-messages="batch_size_errors"
-						:disabled="disableForm"
-						v-model="batch_size"
-						label="Batch Size"
-						@change="updateParam(onBatchSizeChange)"
-						></v-text-field>
+						<!-- Learning Rate, Batch Size, Loss Weight -->
+						<v-layout>
+							<v-text-field
+							:error-messages="learning_rate_errors"
+							:disabled="disableForm"
+							v-model="learning_rate"
+							label="Learning Rate"
+							@change="updateParam(onLearningRateChange)"
+							></v-text-field>
+							<v-text-field
+							:error-messages="batch_size_errors"
+							:disabled="disableForm"
+							v-model="batch_size"
+							label="Batch Size"
+							@change="updateParam(onBatchSizeChange)"
+							></v-text-field>
+							<v-text-field
+							:error-messages="loss_weight_errors"
+							:disabled="disableForm"
+							v-model="loss_weight"
+							label="Loss Weight"
+							@change="onLossWeightChange">
+							</v-text-field>
+						</v-layout>
+						<!-- Window Input Output -->
+						<v-layout>
+							<v-text-field label="Input Window Size"
+							:error-messages="input_window_errors"
+							:disabled="disableForm"
+							v-model="input_window"
+							@change="onWindowSizeChange">
+							</v-text-field>
+							<v-text-field label="Output Window Size"
+							:error-messages="output_window_errors"
+							:disabled="disableForm"
+							v-model="output_window"
+							@change="onWindowSizeChange">
+							</v-text-field>
+						</v-layout>
 						<v-btn :loading="requesting == 'newTrain'" color="primary" :disabled="disableNewTrainBtn" @click="onNewTrain">
 							<v-icon>add_box</v-icon>
 							New Training
@@ -126,11 +151,18 @@ export default {
 		columns_errors: [],
 		learning_rate: 0.0001,
 		learning_rate_errors: [],
+		input_window_errors:[],
+		output_window_errors:[],
+		loss_weight_errors:[],
 		batch_size: 64,
 		batch_size_errors: [],
 		loaded: false,
 		requesting: 'none',
 		switch_dataset: false,
+		input_window:1,
+		output_window:1,
+		loss_weight:1.00,
+
 	}),
 	computed: {
 		anyError() {
@@ -139,6 +171,9 @@ export default {
 				this.columns_errors.length > 0 ||
 				this.learning_rate_errors.length > 0 ||
 				this.batch_size_errors.length > 0 ||
+				this.input_window_errors.length > 0 ||
+				this.output_window_errors.length > 0 ||
+				this.loss_weight_errors.length > 0 ||
 				this.requesting !== 'none'
 		},
 		disableForm() {
@@ -167,12 +202,16 @@ export default {
 			var vm = this
 			vm.requesting = 'newTrain'
 			// this.$axios.post(this.$api + '/train/start_new', {
+			console.log(vm.learning_rate,vm.batch_size,vm.loss_weight)
 			this.$axios.post(this.$api + '/train/start', {
 				'network': vm.network,
 				'dataset': vm.dataset,
 				'columns': vm.columns,
-				'learning_rate': vm.learning_rate,
-				'batch_size': vm.batch_size,
+				'learning_rate': Number(vm.learning_rate),
+				'batch_size': Number(vm.batch_size),
+				'loss_weight':Number(vm.loss_weight),
+				// 'input_window':vm.input_window,
+				// 'outpu_window':vm.output_window
 			}).then(response => {
 				vm.state = response.data.state
 			}).catch(error => {
@@ -316,7 +355,32 @@ export default {
 			}).catch(error => {
 				vm.batch_size_errors = [error.response.data]
 			})
-		}
+		},
+		onWindowSizeChange(){
+			let vm = this
+			vm.$axios.post(this.$api + '/train/set_param',{
+				'input_window':Number(vm.input_window),
+				'output_window':Number(vm.output_window)
+			}).then(res => {
+				vm.state = res.data.state
+				vm.input_window_errors = []
+				vm.output_window_errors = []
+			}).catch(error => {
+				vm.input_window_errors = [error.response.data]
+				vm.output_window_errors = [error.response.data]
+			})
+		},
+		onLossWeightChange(){
+			let vm = this
+			vm.$axios.post(this.$api + '/train/set_param',{	
+				'loss_weight':Number(vm.loss_weight)
+			}).then(res => {
+				vm.state = res.data.state
+				vm.loss_weight_errors = []
+			}).catch(error => {
+				vm.loss_weight_errors = [error.response.data]
+			})
+		},
 	},
 	mounted() {
 		var vm = this;

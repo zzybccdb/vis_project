@@ -3,7 +3,7 @@
 </template>
 <script>
 import { HotTable } from '@handsontable/vue';
-const EventBus = {}
+const hotInstance = {}
 export default {
     components: {
         HotTable
@@ -34,85 +34,104 @@ export default {
                 rowHeaders: true,
                 autoColumnSize: true,
                 autoRowSize:true,
-                stretchH: 'all',
                 currentRowClassName: 'currentRow',
+                stretchH: 'all',
                 // contextMenu:true
                 contextMenu:{
                     items:{
                         'insertNewColAdd':{
                             name:"Add a new Column by selected Columns (addition)",
                             callback:() => {
-                                let vm = EventBus.root
+                                let vm = hotInstance.root
+                                let root = vm.eventbus.root
                                 let params = {
-                                    columns:vm.selectedCol
+                                    columns:vm.selectedCol,
+                                    op:'add'
                                 }
-                                vm.$router.push({
-                                    name:'DataTable',
-                                    params:{
-                                        push:'fresh',
-                                        interval:vm.interval                                        
-                                    }
+                                console.log(params)
+                                vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
+                                    root.loadData(root.interval)
+                                }).catch(error => {
+                                    window.error = error
+                                    console.error(error)
                                 })
-                            }
+                            }       
                         },
                         'insertNewColSub':{
                             name:"Add a new Column by selected Columns (Subtraction)",
                             callback:() => {
-                                let vm = EventBus.root
-                                vm.$router.push({
-                                    name:'DataTable',
-                                    params:{
-                                        push:'fresh',
-                                        interval:vm.interval                                        
-                                    }
+                                let vm = hotInstance.root
+                                let root = vm.eventbus.root
+                                let params = {
+                                    columns:vm.selectedCol,
+                                    op:'sub'
+                                }
+                                console.log(params)
+                                vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
+                                    root.loadData(root.interval)
+                                }).catch(error => {
+                                    window.error = error
+                                    console.error(error)
                                 })
-                            }                        
+                            }                       
                         },
                         'insertNewColMul':{
                             name:"Add a new Column by selected Columns (multiplication)",
                             callback:() => {
-                                let vm = EventBus.root
-                                vm.$router.push({
-                                    name:'DataTable',
-                                    params:{
-                                        push:'fresh',
-                                        interval:vm.interval                                        
-                                    }
+                                let vm = hotInstance.root
+                                let root = vm.eventbus.root
+                                let params = {
+                                    columns:vm.selectedCol,
+                                    op:'mult'
+                                }
+                                console.log(params)
+                                vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
+                                    root.loadData(root.interval)
+                                }).catch(error => {
+                                    window.error = error
+                                    console.error(error)
                                 })
-                            }                        
+                            }                         
                         },
                         'insertNewColDiv':{
-                            name:"Add a new Column by selected Columns (Division)",
-                            callback:() => {
-                                let vm = EventBus.root
-                                vm.$router.push({
-                                    name:'DataTable',
-                                    params:{
-                                        push:'fresh',
-                                        interval:vm.interval                                        
-                                    }
+                            name:"Add a new Column by selected Columns (Division)<hr/>",
+                              callback:() => {
+                                let vm = hotInstance.root
+                                let root = vm.eventbus.root
+                                let params = {
+                                    columns:vm.selectedCol,
+                                    op:'div'
+                                }
+                                console.log(params)
+                                vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
+                                    root.loadData(root.interval)
+                                }).catch(error => {
+                                    window.error = error
+                                    console.error(error)
                                 })
-                            }
+                            }       
                         },
-                        // 'separator': EventBus.root.$refs.hot.hotInstance.getPlugin('ContextMenu').SEPARATOR,
-                        'delCol':{
-                            name:'Delete selected Columns',
+                        'dropCol':{
+                            name:'Drop selected Columns',
                             callback:() => {
-                                let vm = EventBus.root
-                                vm.$router.push({
-                                    name:'DataTable',
-                                    params:{
-                                        push:'fresh',
-                                        interval:vm.interval                                        
-                                    }
+                                let vm = hotInstance.root
+                                let root = vm.eventbus.root
+                                let params = {
+                                    col_name:vm.selectedCol[0]
+                                }
+                                vm.$axios.post(vm.$api+'/dataset/drop',params).then(() => {
+                                    root.loadData(root.interval)
+                                }).catch(error => {
+                                    window.error = error
+                                    console.error(error)
                                 })
                             }
                         },
                         // 'separator': Handsontable.plugins.ContextMenu.SEPARATOR,
                     }
                 },
-                afterSelectionEnd:(row,col,row2,col2,selectionLayerLevel) => {
-                    let vm = EventBus.root  
+                afterSelectionEnd:(row,col,row2,col2) => {
+                    let vm = hotInstance.root  
                     vm.selectionEnd(col, col2)
                 }
             },
@@ -134,7 +153,9 @@ export default {
         //清除資料
         clearData(){
             let vm = this
-            vm.settings.data.slice(0,1)
+            vm.settings.data = []
+            vm.settings.columns = []
+            vm.settings.colHeaders = []
         },
         //設定每一個維度
         colSetting(columns){
@@ -173,15 +194,19 @@ export default {
         //左鍵選定結束後
         selectionEnd(col,col2){ 
             let vm = this
-            vm.selectedCol = vm.settings.colHeaders.slice(col,col2+1)
+            if(col2 > col){
+                vm.selectedCol = vm.settings.colHeaders.slice(col,col2+1)
+            }else{
+                vm.selectedCol = vm.settings.colHeaders.slice(col2,col+1)
+            }
+            console.log(vm.selectedCol)
         }   
-},
+    },
     mounted(){  
         let vm = this
         vm.selectedCol = undefined
-        EventBus.root = vm
-        vm.EventBus = EventBus
-        // console.log(vm.$refs.hot.hotInstance.getPlugin('ContextMenu'))
+        hotInstance.root = vm
+        window.hot = vm
     }
 }
 </script>
