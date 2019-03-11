@@ -390,10 +390,17 @@ export default {
 			vm.response = response
 			window.response = response
 			// console.log('success')
+			// console.log(response.data)
+			// response.data = JSON.parse(response.data)
+
+			// console.log(response)
+			// console.log("what happen")
+
 			vm.eventBus.mask = response.data.mask
 			vm.eventBus.columns = response.data.columns
 			vm.eventBus.std = response.data.std
 			let date_idx = response.data.columns.indexOf('date')
+
 			let error_idx = response.data.columns.indexOf('error')
 			vm.eventBus.date_idx = date_idx
 
