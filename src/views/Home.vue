@@ -202,7 +202,6 @@ export default {
 			var vm = this
 			vm.requesting = 'newTrain'
 			// this.$axios.post(this.$api + '/train/start_new', {
-			console.log(vm.learning_rate,vm.batch_size,vm.loss_weight)
 			this.$axios.post(this.$api + '/train/start', {
 				'network': vm.network,
 				'dataset': vm.dataset,
@@ -210,8 +209,8 @@ export default {
 				'learning_rate': Number(vm.learning_rate),
 				'batch_size': Number(vm.batch_size),
 				'loss_weight':Number(vm.loss_weight),
-				// 'input_window':vm.input_window,
-				// 'outpu_window':vm.output_window
+				'input_window':Number(vm.input_window),
+				'output_window':Number(vm.output_window),
 			}).then(response => {
 				vm.state = response.data.state
 			}).catch(error => {
@@ -446,6 +445,9 @@ export default {
 				'learning_rate',
 				'batch_size',
 				'state',
+				'loss_weight',
+				'input_window',
+				'output_window',
 			// ]
 		// }).then((response) => {
 		]).then((response) => {
@@ -458,6 +460,9 @@ export default {
 			vm.columns_all = response.data.columns_all
 			vm.learning_rate = response.data.learning_rate
 			vm.batch_size = response.data.batch_size
+			vm.loss_weight = response.data.loss_weight
+			vm.input_window = response.data.input_window
+			vm.output_window = response.data.output_window
 			vm.$nextTick(function() {
 				vm.loaded = true
 			})
