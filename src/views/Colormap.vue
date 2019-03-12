@@ -389,16 +389,10 @@ export default {
 			var vm = this
 			vm.response = response
 			window.response = response
-			// console.log('success')
-			// console.log(response.data)
-			// response.data = JSON.parse(response.data)
-
-			// console.log(response)
-			// console.log("what happen")
-
 			vm.eventBus.mask = response.data.mask
 			vm.eventBus.columns = response.data.columns
 			vm.eventBus.std = response.data.std
+			// console.log(response.data)
 			let date_idx = response.data.columns.indexOf('date')
 
 			let error_idx = response.data.columns.indexOf('error')
@@ -484,7 +478,7 @@ export default {
 
 			// param.other_dims = vm.columns
 			// vm.$axios.post(vm.$api + '/model/latent', param)
-
+			// console.log("Load data")
 			vm.$axios.post(vm.$api + '/inference/latent', param)
 			.then(vm.onDataLoaded)
 			.catch(error => {
