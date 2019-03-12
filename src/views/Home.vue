@@ -106,7 +106,10 @@
 							</span>
 						</v-btn>
 					</v-form>
-					<canvas id="loss"></canvas>
+					<v-layout column>
+						<canvas style="height:450px" id="loss"></canvas>
+						<canvas style="height:450px" id="dis_loss"></canvas>
+					</v-layout>
 					<div style="width: 100%;">
 						<!-- <box-plot
 						v-if="showAnalysis"
@@ -217,9 +220,15 @@ export default {
 				console.log('something went wrong!', error.response.data)
 			}).finally(() => {
 				vm.requesting = 'none'
+
 				vm.config.data.labels = []
 				vm.config.data.datasets[0].data = []
 				vm.loss_plot.update()
+
+				vm.dis_config.data.labels = []
+				vm.dis_config.data.datasets[0].data = []
+				vm.dis_loss_plot.update()
+				
 			})
 		},
 		onContinue() {
@@ -244,23 +253,32 @@ export default {
 				vm.requesting = 'none'
 			})
 		},
-		addLoss(loss, step) {
-			var vm = this;
+		addLoss(rec_loss,dis_loss,step) {
+			let vm = this;
 			vm.config.data.labels.push(String(step));
-			vm.config.data.datasets[0].data.push(loss);
+			vm.config.data.datasets[0].data.push(rec_loss);
 			if (vm.config.data.labels.length > 100) {
 				vm.config.data.labels.shift();
 				vm.config.data.datasets[0].data.shift();
 			}
-			vm.loss_plot.update();
+
+			vm.dis_config.data.labels.push(String(step));
+			vm.dis_config.data.datasets[0].data.push(dis_loss);
+			if (vm.dis_config.data.labels.length > 100) {
+				vm.dis_config.data.labels.shift();
+				vm.dis_config.data.datasets[0].data.shift();
+			}
+
+			vm.dis_loss_plot.update()
+			vm.loss_plot.update()	
 		},
 		getProgress() {
 			var vm = this
 			if (vm.state == 'training' && vm.requesting == 'none') {
 				this.$axios.post(this.$api + '/train/progress').then(response => {
 					vm.state = response.data.state
-					if(response.data.loss){
-						vm.addLoss(response.data.loss, response.data.step)
+					if(response.data.rec_loss && response.data.dis_loss){
+						vm.addLoss(response.data.rec_loss,response.data.dis_loss,response.data.step)
 					}
 				}).catch(error => {
 					console.log('something went wrong!', error.response.data)
@@ -403,7 +421,54 @@ export default {
 				responsive: true,
 				title: {
 					display: true,
-					text: 'Loss'
+					text: 'Reconstruction Loss'
+				},
+				tooltips: {
+					mode: 'index',
+					intersect: false,
+				},
+				hover: {
+					mode: 'nearest',
+					intersect: true
+				},
+				scales: {
+					xAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Gradient Step'
+						}
+					}],
+					yAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Value'
+						}
+					}]
+				}
+			}
+		}
+		vm.dis_config = {
+			type: 'line',
+			data: {
+				labels: [],
+				datasets: [{
+					label: '',
+					backgroundColor: 'rgb(99, 132, 255)',
+					borderColor: 'rgb(99, 132, 255)',
+					data: [],
+					fill: false,
+				}]
+			},
+			options: {
+				legend: {
+					display: false
+				},
+				responsive: true,
+				title: {
+					display: true,
+					text: 'Distance Loss'
 				},
 				tooltips: {
 					mode: 'index',
@@ -433,6 +498,8 @@ export default {
 		}
 		var ctx = document.getElementById('loss').getContext('2d');
 		vm.loss_plot = new Chart(ctx, vm.config)
+		let dis = document.getElementById('dis_loss').getContext('2d')
+		vm.dis_loss_plot = new Chart(dis,vm.dis_config)
 		// this.$axios.post(this.$api + '/train/get_param', {
 		// 	'param': [
 		this.$axios.post(this.$api + '/train/get_param', [
