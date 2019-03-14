@@ -445,8 +445,8 @@ export default {
 				}
 
 				sp.rightdown = function(){
-					let date = sp.data.datetime
-					let index = vm.checkDateIndex(date)
+					// let date = sp.data.datetime
+					// let index = vm.checkDateIndex(date)
 					// vm.$router.push({
 					// 	// name:'TestView',
 					// 	// params:{
