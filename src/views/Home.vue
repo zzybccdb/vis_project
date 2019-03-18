@@ -223,12 +223,12 @@ export default {
 
 				vm.config.data.labels = []
 				vm.config.data.datasets[0].data = []
+
 				vm.loss_plot.update()
 
 				vm.dis_config.data.labels = []
 				vm.dis_config.data.datasets[0].data = []
 				vm.dis_loss_plot.update()
-				
 			})
 		},
 		onContinue() {
@@ -257,6 +257,7 @@ export default {
 			let vm = this;
 			vm.config.data.labels.push(String(step));
 			vm.config.data.datasets[0].data.push(rec_loss);
+			console.log(step,rec_loss)
 			if (vm.config.data.labels.length > 100) {
 				vm.config.data.labels.shift();
 				vm.config.data.datasets[0].data.shift();
@@ -275,14 +276,17 @@ export default {
 		getProgress() {
 			var vm = this
 			if (vm.state == 'training' && vm.requesting == 'none') {
-				this.$axios.post(this.$api + '/train/progress').then(response => {
+				this.$axios.post(this.$api + '/train/progress',{'start':vm.start}).then(response => {
 					vm.state = response.data.state
+					console.log(response.data)
 					if(response.data.rec_loss && response.data.dis_loss){
 						vm.addLoss(response.data.rec_loss,response.data.dis_loss,response.data.step)
 					}
+					
 				}).catch(error => {
 					console.log('something went wrong!', error.response.data)
 				})
+				vm.start = false
 			}
 		},
 		remove (item) {
@@ -496,6 +500,7 @@ export default {
 				}
 			}
 		}
+		vm.start = true
 		var ctx = document.getElementById('loss').getContext('2d');
 		vm.loss_plot = new Chart(ctx, vm.config)
 		let dis = document.getElementById('dis_loss').getContext('2d')
@@ -534,7 +539,7 @@ export default {
 				vm.loaded = true
 			})
 		})
-
+		// 一秒鐘詢問一次當前的 loss數值
 		vm.timer = setInterval(vm.getProgress.bind(vm), 1000)
 	},
 
