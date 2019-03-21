@@ -216,6 +216,7 @@ export default {
 				'output_window':Number(vm.output_window),
 			}).then(response => {
 				vm.state = response.data.state
+				vm.start = true
 			}).catch(error => {
 				console.log('something went wrong!', error.response.data)
 			}).finally(() => {
