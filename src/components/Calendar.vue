@@ -222,7 +222,9 @@ export default {
 			g.endFill()
 			vm.cellTexture = g.generateCanvasTexture()
 			vm.cellMaskTexture = vm.maskBox().generateCanvasTexture()
+			// 選中後的圓圈
 			vm.cellFilterTexture = vm.filterBox().generateCanvasTexture()
+			// 選中後的左上三角形
 			vm.cellTextureSelected = vm.selectedBox().generateCanvasTexture()
 
 			vm.$emit('loaded')
