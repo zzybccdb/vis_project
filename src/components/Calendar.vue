@@ -222,7 +222,9 @@ export default {
 			g.endFill()
 			vm.cellTexture = g.generateCanvasTexture()
 			vm.cellMaskTexture = vm.maskBox().generateCanvasTexture()
+			// 選中後的圓圈
 			vm.cellFilterTexture = vm.filterBox().generateCanvasTexture()
+			// 選中後的左上三角形
 			vm.cellTextureSelected = vm.selectedBox().generateCanvasTexture()
 
 			vm.$emit('loaded')
@@ -256,16 +258,16 @@ export default {
 			g.lineStyle(1,0x000000)
 			g.beginFill(0x000000)
 			g.moveTo(0,0)
-			g.lineTo(0,7.5)
-			g.lineTo(7.5,0)
+			g.lineTo(0,3.75)
+			g.lineTo(3.75,0)
 			g.lineTo(0,0)
 			g.endFill()
 			g.beginFill(0xFFFFFF)
 			g.moveTo(0,15)
 			g.lineTo(15,15)
 			g.lineTo(15,0)
-			g.lineTo(7.5,0)
-			g.lineTo(0,7.5)
+			g.lineTo(3.75,0)
+			g.lineTo(0,3.75)
 			g.lineTo(0,15)
 			g.endFill()
 			return g
