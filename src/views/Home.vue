@@ -204,6 +204,7 @@ export default {
 		onNewTrain() {
 			var vm = this
 			vm.requesting = 'newTrain'
+			vm.start = true
 			// this.$axios.post(this.$api + '/train/start_new', {
 			this.$axios.post(this.$api + '/train/start', {
 				'network': vm.network,
@@ -216,7 +217,6 @@ export default {
 				'output_window':Number(vm.output_window),
 			}).then(response => {
 				vm.state = response.data.state
-				vm.start = true
 			}).catch(error => {
 				console.log('something went wrong!', error.response.data)
 			}).finally(() => {
@@ -313,6 +313,7 @@ export default {
 		onDatasetChange() {
 			var vm = this
 			console.log(vm.dataset)
+			vm.start = true
 			this.$axios.post(this.$api + '/train/change_dataset', {
 				'name': vm.dataset
 			}).then(response => {
@@ -501,7 +502,7 @@ export default {
 				}
 			}
 		}
-		vm.start = true
+		// vm.start = true
 		var ctx = document.getElementById('loss').getContext('2d');
 		vm.loss_plot = new Chart(ctx, vm.config)
 		let dis = document.getElementById('dis_loss').getContext('2d')
