@@ -9,7 +9,7 @@ import * as PIXI from 'pixi.js'
 import * as d3 from 'd3'
 import * as moment from 'moment'
 
-const api_port = process.env.VUE_APP_APIPORT || 5004
+const api_port = process.env.VUE_APP_APIPORT || 5000
 console.log(api_port,process.env)
 Vue.prototype.$moment = moment
 Vue.prototype.$d3 = d3

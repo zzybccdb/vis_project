@@ -97,6 +97,18 @@ export default {
 			let y_extent = vm.$d3.extent(data.map(d => {return parseFloat(d.raw[1])}))
 			let x_range = x_extent[1] - x_extent[0]
 			let y_range = y_extent[1] - y_extent[0]
+
+			//////////////////////////
+			/// draw the (3,3) point
+			//////////////////////////
+			// let test = new vm.$PIXI.Point(0,0)
+			// let sp = new vm.$PIXI.Sprite(vm.dotTexture)
+			// sp.alpha = 1.0
+			// sp.tint="0xff0"
+			// sp.x = 3
+			// sp.y = 3
+			// vm.ctn_points.addChild(sp)
+
 			data.forEach(d => {
 				let p = new vm.$PIXI.Point(parseFloat(d.raw[0]), parseFloat(d.raw[1]))
 				let sp = new vm.$PIXI.Sprite(vm.dotTexture)
@@ -334,7 +346,25 @@ export default {
 		},
 
 		switchZoom() {
-            var vm = this;
+			let vm = this;
+
+			//////////////////////
+			//auto rotation
+			/////////////////////
+			// vm.app.stage.mousedown = function(e){
+			// 	vm.rotating = true
+			// 	vm.ang1 = Math.atan2(e.data.global.y - 128, e.data.global.x - 128)
+			// }
+
+			// autoRotate = ()=>{
+			// 	if(vm.rotating){
+			// 		vm.rotation = Math.atan2(e.data.global.y - 128, e.data.global.x - 128) - vm.ang1 + vm.rotation_acc
+			// 		vm.rotate(vm.rotation)
+			// 	}else{
+			// 		return
+			// 	}
+			// }
+
 			vm.app.stage.rightdown = function(e) {
 				vm.rotating = true
 				vm.ang1 = Math.atan2(e.data.global.y - 128, e.data.global.x - 128)
