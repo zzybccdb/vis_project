@@ -1313,7 +1313,7 @@ export default {
 			cellDistance.sort((a,b) => {
 				return a.dis - b.dis
 			})
-			cellDistance = cellDistance.slice(0,30)	
+			cellDistance = cellDistance.slice(0,51)	
 			cellDistance.forEach( item => {
 				item.cell.texture = vm.cellTextureSelected
 				item.cell.selected = true
@@ -1345,8 +1345,8 @@ export default {
 			vm.root_colunms.forEach(item => {
 				let i = item.idx
 				let dis = pcp_axis[i].extent[1]-pcp_axis[i].extent[0]
-				let a = item1[i]/dis
-				let b = item2[i]/dis
+				let a = (item1[i]-pcp_axis[i].extent[0]) / dis
+				let b = (item2[i]-pcp_axis[i].extent[0]) / dis
 				sum.push(Math.pow(a-b,2))
 			});
 			// item1.forEach((dim, i) => {
