@@ -37,6 +37,7 @@ export default {
                 currentRowClassName: 'currentRow',
                 stretchH: 'all',
                 // contextMenu:true
+                // 右鍵菜單設定
                 contextMenu:{
                     items:{
                         'insertNewColAdd':{
@@ -93,24 +94,24 @@ export default {
                                 })
                             }                         
                         },
-                        'insertNewColDiv':{
-                            name:"Add a new Column by selected Columns (Division)<hr/>",
-                              callback:() => {
-                                let vm = hotInstance.root
-                                let root = vm.eventbus.root
-                                let params = {
-                                    columns:vm.selectedCol,
-                                    op:'div'
-                                }
-                                console.log(params)
-                                vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
-                                    root.loadData(root.interval)
-                                }).catch(error => {
-                                    window.error = error
-                                    console.error(error)
-                                })
-                            }       
-                        },
+                        // 'insertNewColDiv':{
+                        //     name:"Add a new Column by selected Columns (Division)<hr/>",
+                        //       callback:() => {
+                        //         let vm = hotInstance.root
+                        //         let root = vm.eventbus.root
+                        //         let params = {
+                        //             columns:vm.selectedCol,
+                        //             op:'div'
+                        //         }
+                        //         console.log(params)
+                        //         vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
+                        //             root.loadData(root.interval)
+                        //         }).catch(error => {
+                        //             window.error = error
+                        //             console.error(error)
+                        //         })
+                        //     }       
+                        // },
                         'dropCol':{
                             name:'Drop selected Columns',
                             callback:() => {

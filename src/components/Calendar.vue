@@ -1313,8 +1313,15 @@ export default {
 			cellDistance.sort((a,b) => {
 				return a.dis - b.dis
 			})
-			cellDistance = cellDistance.slice(0,51)	
-			cellDistance.forEach( item => {
+
+			// cellDistance = cellDistance.slice(0,51);
+
+			let num = cellDistance.filter((item)=>{
+				return item.dis < 0.2
+			})
+			console.log(num)
+			// cellDistance = cellDistance.slice(0,51)	
+			num.forEach( item => {
 				item.cell.texture = vm.cellTextureSelected
 				item.cell.selected = true
 				item.cell.neibor = true
