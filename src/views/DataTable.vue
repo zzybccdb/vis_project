@@ -16,13 +16,14 @@
                 <v-layout style='overflow:hidden' row>
                     <v-flex lg11 fluid fill-height>
                         <v-text-field
+                            v-model="formula"
                             label="Outline"
                             placeholder="formula"
                         ></v-text-field>
                     </v-flex>
                     <!-- fab對應的圓形按鈕 -->
                     <v-btn style="transform:translateY(15px)" fab small flat color='blue'>
-                        <v-icon>check</v-icon>    
+                        <v-icon @click="checkformula()">check</v-icon>    
                     </v-btn>
                 </v-layout> 
             </v-flex>           
@@ -77,6 +78,7 @@ export default{
     //全局监听的变量
     data:() => {
         return{
+            formula:undefined,
             page: 1,
             items: [
                 { text: 1, value: 1 },
@@ -266,9 +268,30 @@ export default{
             vm.page = Math.ceil(index/50)
             vm.pageChange(remainder)
         },
+        //公式处理
+        checkformula(){
+            let vm = this;
+            let regex = /([+,\-,,*,\/,(,),=])/
+            let content = vm.formula.split(regex).filter(t=>{return t!=''})
+            //这里使用 split 分割公式，这里注意一点，（）内表示的是需要利用它切割，但是需要保留下来。
+            //- 和 / 都是特殊字元，需要加 \，同时这里没有考虑到加入（ 或 ）后有空格的情况，所以用 filter 过滤
+            let newcol = content[0]
+            let params = {
+                'newcol':newcol,
+                'formula':vm.formula,
+            }
+            console.log(params)
+            // vm.$axios.post(vm.$api+'/dataset/NewCol',params).then(() => {
+            //     root.loadData(root.interval)
+            // }).catch(error => {
+            //     window.error = error
+            //     console.error(error)
+            // })            
+        }
     },
     //启动呼叫
     mounted(){
+        console.log("OM_test")
         let vm = this
         let cal_level = {
             'year':'1 day', 
