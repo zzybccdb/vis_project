@@ -281,12 +281,12 @@ export default{
                 'formula':vm.formula,
             }
             console.log(params)
-            // vm.$axios.post(vm.$api+'/dataset/NewCol',params).then(() => {
-            //     root.loadData(root.interval)
-            // }).catch(error => {
-            //     window.error = error
-            //     console.error(error)
-            // })            
+            vm.$axios.post(vm.$api+'/dataset/NewCol',params).then(() => {
+                vm.loadData(vm.interval)
+            }).catch(error => {
+                window.error = error
+                console.error(error)
+            })            
         }
     },
     //启动呼叫
