@@ -83,8 +83,9 @@ export default{
             items: [
                 { text: 1, value: 1 },
             ],
-            interval_value: 1,
+            interval_value: 0,
             interval_items:[
+                {text:'Raw Data',value: 0},
                 {text:'1 day',value: 1},
                 {text:'2 hour', value: 2},
                 {text:'5 minute', value: 3}
@@ -95,9 +96,10 @@ export default{
     created(){
         let vm = this
         vm.timeformat = {
+            'Raw Data':'MM/DD/YYYY/HH:mm',
             '1 day':'MM/DD/YYYY',
             '2 hour':'MM/DD/YYYY/HH:00',
-            '5 minute':'MM/DD/YYYY/HH:mm'
+            '5 minute':'MM/DD/YYYY/HH:mm',
         }
         vm.date_format = 'YYYY-MM-DD HH:mm:ss'
     },
@@ -112,12 +114,7 @@ export default{
             if(date_range != undefined){
                 param.date_range = date_range
             }
-            // vm.$axios.post(vm.$api+'/inference/latent',param)
-            // .then(vm.onDataLoaded)
-            // .catch(error => {
-            //     window.error = error
-            //     console.error(error)
-            // })
+            //加载dataset
             vm.$axios.post(vm.$api+'/inference/rawdata',param)
             .then(vm.onDataLoaded)
             .catch(error => {
@@ -147,6 +144,9 @@ export default{
             })[0].text
         
             switch(item){
+                case 0:
+                    vm.loadData(vm.interval)
+                    break;
                 case 1:
                     vm.loadData(vm.interval)
                     break
@@ -271,7 +271,7 @@ export default{
         //公式处理
         checkformula(){
             let vm = this;
-            let regex = /([+,\-,,*,\/,(,),=])/
+            let regex = /([+,\-,,*,/,(,),=])/
             let content = vm.formula.split(regex).filter(t=>{return t!=''})
             //这里使用 split 分割公式，这里注意一点，（）内表示的是需要利用它切割，但是需要保留下来。
             //- 和 / 都是特殊字元，需要加 \，同时这里没有考虑到加入（ 或 ）后有空格的情况，所以用 filter 过滤
@@ -294,11 +294,13 @@ export default{
         console.log("OM_test")
         let vm = this
         let cal_level = {
+            'Raw Data':'Raw Data',
             'year':'1 day', 
             'month':'2 hour',
             'minute':'5 minute'
         }
-        vm.interval = '1 day'
+        // vm.interval = '1 day'
+        vm.interval = 'Raw Data'
         //table本身自帶一個EventBus
         vm.$refs.table.eventbus = EventBus
         vm.EventBus = EventBus
@@ -313,6 +315,7 @@ export default{
             EventBus.date = undefined
             EventBus.currentDate_index = undefined
         }
+        console.log(vm.interval)
         vm.loadData(vm.interval)
         window.table = vm.$refs.table
         vm.$refs.home.addEventListener("contextmenu", e => {e.preventDefault()})
