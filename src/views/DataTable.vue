@@ -12,32 +12,37 @@
     -->
     <v-container ref='home' grid-list-md style="margin:0; max-width:1920px;padding:10px;overflow:hidden" fluid fill-height>
         <v-layout column>
-            <v-flex style="height:60px">
+            <v-flex style="height:60px;margin:10px">
+                <!--錯誤提示符號-->
+                <v-layout>
+                    <v-flex>
+                        <v-alert
+                            v-model="alert"
+                            dismissible
+                            type="error"
+                        >
+                        {{errorMessage}}
+                        </v-alert>
+                    </v-flex>
+                </v-layout>
                 <v-layout style='overflow:hidden' row>
                     <v-flex lg11 fluid fill-height>
+                        <!-- 利用 v-on:key-up.enter 執行enter後的事件 -->
                         <v-text-field
                             v-model="formula"
                             label="Outline"
                             placeholder="formula"
+                            v-on:keyup.enter="checkFormula"
                         ></v-text-field>
                     </v-flex>
                     <!-- fab對應的圓形按鈕 -->
                     <v-btn style="transform:translateY(15px)" fab small flat color='blue'>
-                        <v-icon @click="checkformula()">check</v-icon>    
+                        <v-icon @click="checkFormula()">check</v-icon>    
                     </v-btn>
                 </v-layout> 
             </v-flex>           
-            <v-flex lg11 class="card" style='overflow:auto'> 
+            <v-flex lg11 class="card" style='overflow-x:auto;overflow-y:hidden'> 
                 <handsontable ref='table'/>
-                <!-- <v-layout column>
-                    <v-flex style="height:50px;width:150px">
-                        <v-select v-model='slot_value' :items='timeslots'>
-                        </v-select>  
-                    </v-flex>
-                    <v-flex lg12> 
-                        <handsontable ref='table'/>
-                    </v-flex>
-                </v-layout> -->
             </v-flex>
             <v-flex  class="card" style="height:50px;">
                 <!--前後翻頁-->
@@ -60,7 +65,7 @@
                     </v-flex>                      
                     <v-card-text style='padding:20px;font-size:16px'>
                         <p ref='entries' class="text-lg-center"></p>
-                    </v-card-text>
+                    </v-card-text>   
                 </v-layout>
             </v-flex>
         </v-layout>
@@ -89,7 +94,8 @@ export default{
                 {text:'1 day',value: 1},
                 {text:'2 hour', value: 2},
                 {text:'5 minute', value: 3}
-            ]           
+            ],
+            alert:false,
         }
     },
     //
@@ -102,6 +108,7 @@ export default{
             '5 minute':'MM/DD/YYYY/HH:mm',
         }
         vm.date_format = 'YYYY-MM-DD HH:mm:ss'
+        vm.errorMessage = 'Operation Error, May be Column have 0'
     },
     //所有需要呼叫的function放在这里
     methods:{
@@ -269,8 +276,9 @@ export default{
             vm.pageChange(remainder)
         },
         //公式处理
-        checkformula(){
-            let vm = this;
+        checkFormula(){
+            let vm = this
+            let hot_table = vm.$refs.table
             let regex = /([+,\-,,*,/,(,),=])/
             let content = vm.formula.split(regex).filter(t=>{return t!=''})
             //这里使用 split 分割公式，这里注意一点，（）内表示的是需要利用它切割，但是需要保留下来。
@@ -280,18 +288,21 @@ export default{
                 'newcol':newcol,
                 'formula':vm.formula,
             }
-            console.log(params)
-            vm.$axios.post(vm.$api+'/dataset/NewCol',params).then(() => {
+            // 直接處理公式，並且生成新的資料欄位
+            vm.$axios.post(vm.$api+'/dataset/NewColByFormat',params).then(() => {
                 vm.loadData(vm.interval)
             }).catch(error => {
                 window.error = error
-                console.error(error)
+                hot_table.deleteCol(newcol)
+                vm.alert = true
+                setTimeout(() => {
+                    vm.alert = false
+                }, 2000);
             })            
         }
     },
     //启动呼叫
     mounted(){
-        console.log("OM_test")
         let vm = this
         let cal_level = {
             'Raw Data':'Raw Data',
@@ -315,7 +326,7 @@ export default{
             EventBus.date = undefined
             EventBus.currentDate_index = undefined
         }
-        console.log(vm.interval)
+        // console.log(vm.interval)
         vm.loadData(vm.interval)
         window.table = vm.$refs.table
         vm.$refs.home.addEventListener("contextmenu", e => {e.preventDefault()})

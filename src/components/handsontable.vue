@@ -116,16 +116,7 @@ export default {
                             name:'Drop selected Columns',
                             callback:() => {
                                 let vm = hotInstance.root
-                                let root = vm.eventbus.root
-                                let params = {
-                                    col_name:vm.selectedCol[0]
-                                }
-                                vm.$axios.post(vm.$api+'/dataset/drop',params).then(() => {
-                                    root.loadData(root.interval)
-                                }).catch(error => {
-                                    window.error = error
-                                    console.error(error)
-                                })
+                                vm.deleteCol(vm.selectedCol[0])
                             }
                         },
                         // 'separator': Handsontable.plugins.ContextMenu.SEPARATOR,
@@ -141,6 +132,21 @@ export default {
     created(){
     },
     methods:{
+        // 刪除特定欄位
+        deleteCol(col_name){
+            let vm = this
+            let root = vm.eventbus.root
+            let params = {
+                col_name: col_name,
+            }
+            vm.$axios.post(vm.$api+'/dataset/drop',params).then(() => {
+                root.loadData(root.interval)
+            }).catch(error => {
+                window.error = error
+                console.error(error)
+            })            
+        },
+
         setCols(columns){
             let vm = this
             vm.settings.colHeaders = columns
