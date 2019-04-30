@@ -30,7 +30,7 @@ export default {
                     // 'date',
                     // 'Ford',
                 ],
-                columnSorting: true,
+                columnSorting:false,
                 rowHeaders: true,
                 autoColumnSize: true,
                 autoRowSize:true,
@@ -40,78 +40,57 @@ export default {
                 // 右鍵菜單設定
                 contextMenu:{
                     items:{
+                        'sort':{
+                            name:'Sort DESC',
+                            callback:()=>{
+                                let vm = hotInstance.root
+                                vm.globalSort(vm.selectedCol[0])
+                            }
+                        },
                         'insertNewColAdd':{
                             name:"Add a new Column by selected Columns (addition)",
                             callback:() => {
                                 let vm = hotInstance.root
-                                let root = vm.eventbus.root
                                 let params = {
                                     columns:vm.selectedCol,
                                     op:'add'
                                 }
-                                console.log(params)
-                                vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
-                                    root.loadData(root.interval)
-                                }).catch(error => {
-                                    window.error = error
-                                    console.error(error)
-                                })
+                                vm.excuteOpt(params)
                             }       
                         },
                         'insertNewColSub':{
                             name:"Add a new Column by selected Columns (Subtraction)",
                             callback:() => {
                                 let vm = hotInstance.root
-                                let root = vm.eventbus.root
                                 let params = {
                                     columns:vm.selectedCol,
                                     op:'sub'
                                 }
-                                console.log(params)
-                                vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
-                                    root.loadData(root.interval)
-                                }).catch(error => {
-                                    window.error = error
-                                    console.error(error)
-                                })
+                                vm.excuteOpt(params)
                             }                       
                         },
                         'insertNewColMul':{
                             name:"Add a new Column by selected Columns (multiplication)",
                             callback:() => {
                                 let vm = hotInstance.root
-                                let root = vm.eventbus.root
                                 let params = {
                                     columns:vm.selectedCol,
                                     op:'mult'
                                 }
-                                console.log(params)
-                                vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
-                                    root.loadData(root.interval)
-                                }).catch(error => {
-                                    window.error = error
-                                    console.error(error)
-                                })
+                                vm.excuteOpt(params)        
                             }                         
                         },
-                        // 'insertNewColDiv':{
-                        //     name:"Add a new Column by selected Columns (Division)<hr/>",
-                        //       callback:() => {
-                        //         let vm = hotInstance.root
-                        //         let root = vm.eventbus.root
-                        //         let params = {
-                        //             columns:vm.selectedCol,
-                        //             op:'div'
-                        //         }
-                        //         console.log(params)
-                        //         vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
-                        //             root.loadData(root.interval)
-                        //         }).catch(error => {
-                        //             window.error = error
-                        //             console.error(error)
-                        //         })
-                        //     }       
-                        // },
+                        'insertNewColDiv':{
+                            name:"Add a new Column by selected Columns (Division)<hr/>",
+                              callback:() => {
+                                let vm = hotInstance.root
+                                let params = {
+                                    columns:vm.selectedCol,
+                                    op:'div'
+                                }
+                                vm.excuteOpt(params)
+                            }       
+                        },
                         'dropCol':{
                             name:'Drop selected Columns',
                             callback:() => {
@@ -125,7 +104,7 @@ export default {
                 afterSelectionEnd:(row,col,row2,col2) => {
                     let vm = hotInstance.root  
                     vm.selectionEnd(col, col2)
-                }
+                },
             },
         };
     },
@@ -146,7 +125,7 @@ export default {
                 console.error(error)
             })            
         },
-
+        // 給定資料欄位名稱
         setCols(columns){
             let vm = this
             vm.settings.colHeaders = columns
@@ -190,7 +169,23 @@ export default {
                 column:index,
                 sortOrder:sortConfig
             })
-            // table.hotInstance.selectRows(2)
+        },
+        //全局排序
+        globalSort(column){
+            let vm = this
+            let root = vm.eventbus.root
+            if(root.sort_col !== column){
+                root.sort_col = column
+                root.loadData(root.interval,column)
+            }
+            else{
+                let temp = root.reorder
+                root.loadData(root.interval,column,temp)
+                root.reorder = root.order
+                root.order = temp
+                vm.settings.contextMenu.items.sort.name = "Sort "+root.reorder
+            }
+            // root.pageChange(root.page)
         },
         //標註特定的item
         highLightItem(index){
@@ -206,8 +201,23 @@ export default {
             }else{
                 vm.selectedCol = vm.settings.colHeaders.slice(col2,col+1)
             }
-            console.log(vm.selectedCol)
-        }   
+            if(vm.selectedCol.length === 1){
+                // vm.globalSort(vm.selectedCol[0])
+            }
+        },
+        //執行運算指令
+        excuteOpt(params){
+            let vm = this
+            let root = vm.eventbus.root
+            vm.$axios.post(vm.$api+'/dataset/Operation',params).then(() => {
+                root.loadData(root.interval)
+            }).catch(error => {
+                window.error = error
+                console.error(error)
+                root.errorMessage('Operation Error, May be Column have 0')
+            })            
+        }
+
     },
     mounted(){  
         let vm = this

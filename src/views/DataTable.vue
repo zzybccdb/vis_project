@@ -84,6 +84,7 @@ export default{
     data:() => {
         return{
             formula:undefined,
+            // page跟v-model有双向绑定，所以变动page，自动执行换页行为
             page: 1,
             items: [
                 { text: 1, value: 1 },
@@ -109,15 +110,21 @@ export default{
         }
         vm.date_format = 'YYYY-MM-DD HH:mm:ss'
         vm.errorMessage = 'Operation Error, May be Column have 0'
+        // 宣告當前排序的維度
+        vm.sort_col = 'date'
+        vm.order = 'ASC'
+        vm.reorder = 'DESC'
     },
     //所有需要呼叫的function放在这里
     methods:{
         //呼叫后端,进行资料加载.载入资料后执行 this.onDataLoaded
-        loadData(interval,date_range=undefined){
+        loadData(interval,sort='date',order='ASC',date_range=undefined){
             let vm = this
             let param = {
-                interval
+                interval,
             }
+            param.sort = sort
+            param.order = order
             if(date_range != undefined){
                 param.date_range = date_range
             }
@@ -158,10 +165,10 @@ export default{
                     vm.loadData(vm.interval)
                     break
                 case 2:
-                    vm.loadData(vm.interval,[sd.format(format),ed.format(format)])
+                    vm.loadData(vm.interval,vm.sort_col,vm.order,[sd.format(format),ed.format(format)])
                    break
                 case 3:
-                    vm.loadData(vm.interval,[sd.format(format),ed.format(format)])                    
+                    vm.loadData(vm.interval,vm.sort_col,vm.order,[sd.format(format),ed.format(format)])                    
                     break
                 default:
                     console.error("Interval changing is error check it!")
@@ -182,9 +189,9 @@ export default{
             vm.$refs.table.setCols(vm.columns)
             vm.$refs.table.changeData(vm.dataSetting(start_data,date_index))
             //重整表格
-            setTimeout(() => {
-                vm.$refs.table.sortByindex(0,'asc')
-            }, 300)
+            // setTimeout(() => {
+            //     vm.$refs.table.sortByindex(vm.sort_col,vm.order)
+            // }, 300)
             
             vm.data = response.data.data
             vm.date_index = date_index
@@ -198,6 +205,7 @@ export default{
             if(vm.EventBus.currentDate_index != undefined){
                 vm.highLightDate(vm.EventBus.currentDate_index)
             }
+            vm.pageChange(vm.page)
         },
         //对资料进行预处理,处理成表格接收的内容
         dataSetting(page_data,date_index){
@@ -236,7 +244,6 @@ export default{
             let vm = this
             if( vm.page + 1 <= vm.total_page){
                 vm.page += 1
-                vm.pageChange()
             }
         },
         //上一页
@@ -244,7 +251,6 @@ export default{
             let vm = this
             if( vm.page - 1 > 0 ){
                 vm.page -= 1
-                vm.pageChange()
             }    
         },  
         //翻页
@@ -254,16 +260,14 @@ export default{
             let end = page * 50
             let total = vm.total_nums
             let date_index = vm.date_index
-
             let page_data = vm.data.slice(end-50,end)
             vm.$refs.table.changeData(vm.dataSetting(page_data,date_index))
-
-            setTimeout(() => {
-                vm.$refs.table.sortByindex(0,'asc')
-                if(index != undefined){
-                    vm.$refs.table.highLightItem(index)
-                }
-            },300)
+            // setTimeout(() => {
+            //     vm.$refs.table.sortByindex(vm.sort_col,vm.order)
+            //     if(index != undefined){
+            //         vm.$refs.table.highLightItem(index)
+            //     }
+            // },300)
 
             vm.bottomInfo([end-49, end], total)
         },
@@ -288,17 +292,24 @@ export default{
                 'newcol':newcol,
                 'formula':vm.formula,
             }
-            // 直接處理公式，並且生成新的資料欄位
+            //直接處理公式，並且生成新的資料欄位
             vm.$axios.post(vm.$api+'/dataset/NewColByFormat',params).then(() => {
                 vm.loadData(vm.interval)
             }).catch(error => {
-                window.error = error
                 hot_table.deleteCol(newcol)
-                vm.alert = true
-                setTimeout(() => {
-                    vm.alert = false
-                }, 2000);
+                vm.errorMessage('Operation Error, May be Column have 0')
+                console.log(error)
             })            
+        },
+        //錯誤提示
+        errorMessage(err){
+            let vm = this
+            let hot_table = vm.$refs.table
+            window.error = error
+            vm.alert = true
+            setTimeout(() => {
+                vm.alert = false
+            }, 2000);
         }
     },
     //启动呼叫
@@ -326,7 +337,6 @@ export default{
             EventBus.date = undefined
             EventBus.currentDate_index = undefined
         }
-        // console.log(vm.interval)
         vm.loadData(vm.interval)
         window.table = vm.$refs.table
         vm.$refs.home.addEventListener("contextmenu", e => {e.preventDefault()})
