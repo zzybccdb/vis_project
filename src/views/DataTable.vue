@@ -114,6 +114,7 @@ export default{
         vm.sort_col = 'date'
         vm.order = 'ASC'
         vm.reorder = 'DESC'
+        vm.change_interval = false
     },
     //所有需要呼叫的function放在这里
     methods:{
@@ -143,7 +144,8 @@ export default{
             let moment = vm.$moment
             let length = vm.total_nums - 1
             let format = vm.date_format
-    
+
+            vm.change_interval = true
             vm.EventBus.date = undefined
             vm.EventBus.currentDate_index = undefined
 
@@ -205,7 +207,13 @@ export default{
             if(vm.EventBus.currentDate_index != undefined){
                 vm.highLightDate(vm.EventBus.currentDate_index)
             }
-            vm.pageChange(vm.page)
+            if(vm.change_interval){
+                vm.change_interval = false
+                vm.page = 1
+            }
+            else{
+                vm.pageChange(vm.page)
+            }
         },
         //对资料进行预处理,处理成表格接收的内容
         dataSetting(page_data,date_index){
