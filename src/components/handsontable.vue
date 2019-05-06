@@ -115,13 +115,15 @@ export default {
                     vm.selectionEnd(col, col2)
                 },
                 // afterRenderer 在每一個data cell 繪製完成後都會觸發一次
-                afterRenderer:(TD,row,column,prop,value,cellProperties) => {
+                afterRenderer:(TD,row,column,prop,value) => {
                     let vm = hotInstance.root
                     vm.table_render_row = column
                     let c = "rgb(255,255,255)"
-                    if(vm.heat &&　column!==0){
-                        let scale = vm.color_scale[column-1]
-                        c = scale(value)
+                    if(vm.heat && column!==0){
+                        if( column-1 in Object.keys(vm.color_scale)){
+                            let scale = vm.color_scale[column-1]
+                            c = scale(value)
+                        }
                     }
                     TD.style.backgroundColor = c
                 },
@@ -138,7 +140,6 @@ export default {
         // 將cell 調整爲 heatmap
         cell_heatMap(heat){
             let vm = this
-            let d3 = vm.$d3
             let hot = vm.$refs.hot.hotInstance
             vm.heat = heat
             hot.render()
@@ -173,7 +174,6 @@ export default {
         setColorScale(){
             let vm = this
             let d3 = vm.$d3
-            let extent = vm.col_extent
             vm.color_scale = []
             let length = vm.settings.colHeaders.length
             for(let i = 1; i < length; i++){
