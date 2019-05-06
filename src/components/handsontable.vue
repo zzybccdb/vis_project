@@ -31,11 +31,16 @@ export default {
                     // 'Ford',
                 ],
                 columnSorting:false,
+                // 開啓了虛擬渲染行，handsontable在渲染的時候爲了效能，只會渲染出窗口範圍內的內容。
+                // 開啓後，會保留之前渲染過的內容，但是依舊無法在一開始就直接加載全部的內容
+                renderAllRows: true,
                 rowHeaders: true,
+                // columnsSize 設定的是所有cell的寬度
                 autoColumnSize: true,
-                autoRowSize:true,
+                // rowSize 設定的是所有cell的高度
+                autoRowSize:false,
                 currentRowClassName: 'currentRow',
-                stretchH: 'all',
+                // stretchH: 'all',
                 // contextMenu:true
                 // 右鍵菜單設定
                 contextMenu:{
@@ -105,51 +110,34 @@ export default {
                     let vm = hotInstance.root  
                     vm.selectionEnd(col, col2)
                 },
+                // afterRenderer 在每一個data cell 繪製完成後都會觸發一次
+                afterRenderer:(TD,row,column,prop,value,cellProperties) => {
+                    let vm = hotInstance.root
+                    vm.table_render_row = column
+                    let c = "rgb(255,255,255)"
+                    if(vm.heat &&　column!==0){
+                        let scale = vm.color_scale[column-1]
+                        c = scale(value)
+                    }
+                    TD.style.backgroundColor = c
+                },
             },
         };
     },
     created(){
         let vm = this
         vm.col_extent = undefined
-        vm.heat = false
+        vm.heat = undefined
+        vm.table_render_row = undefined
     },
     methods:{
         // 將cell 調整爲 heatmap
-        cell_heatMap(){
+        cell_heatMap(heat){
             let vm = this
             let d3 = vm.$d3
-            let columns = vm.settings.colHeaders
-            let data = vm.settings.data
-            let length = data.length
-            vm.heat = !vm.heat
-            if(vm.heat){ 
-                for(let i = 1; i < length; i++ ){
-                    let min = vm.col_extent[1][i-1]
-                    let max = vm.col_extent[0][i-1]
-                    let color_scale = d3.scaleLinear().domain([min,max]).range(['yellow','red'])
-                    for(let j = 0; j < length; j++){
-                        let c = color_scale(data[j][i])
-                        vm.changeCellColor(j,i,c)
-                    }
-                }
-            }
-            else{
-                for(let i = 1; i < length; i++ ){
-                    for(let j = 0; j < length; j++){
-                        vm.changeCellColor(j,i)
-                    }
-                }                
-            }
-        },
-        // 改變 cell 顏色, 輸入座標x，y
-        changeCellColor(x=1,y=1,c="rgb(255,255,255)"){
-            let vm = this
-            let hot = vm.$refs.hot
-            let cell = hot.hotInstance.getCell(x,y)
-            cell.style.backgroundColor = c
-            // let d3 = vm.$d3
-            // vm.colorScale = d3.scaleLinear().domain([1,10]).range(['yellow','red'])
-            // console.log(vm.colorScale(4))   
+            let hot = vm.$refs.hot.hotInstance
+            vm.heat = heat
+            hot.render()
         },
         // 刪除特定欄位
         deleteCol(col_name){
@@ -175,20 +163,35 @@ export default {
         setExtent(extent){
             let vm = this
             vm.col_extent = extent
+            vm.setColorScale()
         },
-        //改變資料
+        // 設定 color scale
+        setColorScale(){
+            let vm = this
+            let d3 = vm.$d3
+            let extent = vm.col_extent
+            vm.color_scale = []
+            let length = vm.settings.colHeaders.length
+            for(let i = 1; i < length; i++){
+                let min = vm.col_extent[1][i-1]
+                let max = vm.col_extent[0][i-1]
+                let temp = d3.scaleLinear().domain([min,max]).range(['yellow','red'])     
+                vm.color_scale.push(temp)           
+            }
+        },
+        // 改變資料
         changeData(data){
             let vm = this
             vm.settings.data = data
         },
-        //清除資料
+        // 清除資料
         clearData(){
             let vm = this
             vm.settings.data = []
             vm.settings.columns = []
             vm.settings.colHeaders = []
         },
-        //設定每一個維度
+        // 設定每一個維度
         colSetting(columns){
             let vm = this
             columns.forEach(item => {
@@ -206,21 +209,20 @@ export default {
                 vm.settings.columns.push(temp)
             })
         },
-        //對特定維度進行排序 
+        // 對特定維度進行排序 
         sortByindex(index){
             let vm = this
-            // let table = vm.$refs.hot
-            // SQL直接sort
+            // 傳遞SQL指令進行sort
             vm.globalSort(vm.selectedCol[index])
+            // let table = vm.$refs.hot
             // handsontable 自帶的sort api
             // table.hotInstance.getPlugin('columnSorting').sort({
             //     column:index,
             //     sortOrder:sortConfig
             // })
         },
-        //全局排序 input column string
+        // 全局排序 input column string
         globalSort(column){
-            console.log(column)
             let vm = this
             let root = vm.eventbus.root
             if(root.sort_col !== column){
@@ -234,15 +236,14 @@ export default {
                 root.order = temp
                 vm.settings.contextMenu.items.sort.name = "Sort "+root.reorder
             }
-            // root.pageChange(root.page)
         },
-        //標註特定的item
+        // 標註特定的item
         highLightItem(index){
             let vm = this
             let table = vm.$refs.hot
             table.hotInstance.selectRows(index)
         },
-        //左鍵選定結束後
+        // 左鍵選定結束後
         selectionEnd(col,col2){ 
             let vm = this
             if(col2 > col){
@@ -250,11 +251,8 @@ export default {
             }else{
                 vm.selectedCol = vm.settings.colHeaders.slice(col2,col+1)
             } 
-            // let hot = vm.$refs.hot
-            // let cell = hot.hotInstance.getCell(2,2)
-            // cell.style.backgroundColor = 'rgb(255,255,1)'
         },
-        //執行運算指令
+        // 執行運算指令
         excuteOpt(params){
             let vm = this
             let root = vm.eventbus.root

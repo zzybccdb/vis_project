@@ -40,12 +40,14 @@
                         <v-icon @click="checkFormula()">check</v-icon>    
                     </v-btn>
                     <v-btn style="transform:translateY(15px)" fab small flat color='blue'>
-                        <v-icon @click="heatMap()">info</v-icon>    
+                        <v-icon v-model='heat_map' @click="heatMap()">info</v-icon>    
                     </v-btn>
                 </v-layout> 
             </v-flex>           
-            <v-flex lg11 class="card" style='overflow-x:auto;overflow-y:hidden'> 
-                <handsontable ref='table'/>
+            <v-flex lg11 class="card" style='overflow:hidden'> 
+                <div style='overflow-x:auto;overflow-y:hidden;height:110%'>
+                    <handsontable ref='table'/>
+                </div>
             </v-flex>
             <v-flex  class="card" style="height:50px;">
                 <!--前後翻頁-->
@@ -100,6 +102,7 @@ export default{
                 {text:'5 minute', value: 3}
             ],
             alert:false,
+            heat_map:false,
         }
     },
     //
@@ -124,7 +127,8 @@ export default{
         heatMap(){
             let vm = this
             let table = vm.$refs.table
-            table.cell_heatMap()
+            table.cell_heatMap(!vm.heat_map)
+            vm.heat_map = !vm.heat_map
         },
         //呼叫后端,进行资料加载.载入资料后执行 this.onDataLoaded
         loadData(interval,sort='date',order='ASC',date_range=undefined){
@@ -200,11 +204,6 @@ export default{
             vm.$refs.table.clearData()
             vm.$refs.table.setCols(vm.columns)
             vm.$refs.table.setExtent(extent)
-            // vm.$refs.table.changeData(vm.dataSetting(start_data,date_index))
-            //重整表格
-            // setTimeout(() => {
-            //     vm.$refs.table.sortByindex(vm.sort_col,vm.order)
-            // }, 300)
             
             vm.data = response.data.data
             vm.date_index = date_index
@@ -285,13 +284,6 @@ export default{
             // let page_data = vm.data.slice(end-50,end)
             let page_data = vm.data.slice(end-33,end)
             vm.$refs.table.changeData(vm.dataSetting(page_data,date_index))
-            // setTimeout(() => {
-            //     vm.$refs.table.sortByindex(vm.sort_col,vm.order)
-            //     if(index != undefined){
-            //         vm.$refs.table.highLightItem(index)
-            //     }
-            // },300)
-
             // vm.bottomInfo([end-49, end], total)
             vm.bottomInfo([end-32, end], total)
         },
