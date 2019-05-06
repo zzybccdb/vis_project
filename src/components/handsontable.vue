@@ -40,62 +40,66 @@ export default {
                 // rowSize 設定的是所有cell的高度
                 autoRowSize:false,
                 currentRowClassName: 'currentRow',
-                // stretchH: 'all',
+                stretchH: 'none',
                 // contextMenu:true
                 // 右鍵菜單設定
                 contextMenu:{
                     items:{
                         'sort':{
-                            name:'Sort DESC',
+                            // 在name 後插入<hr/>既可以在contextmenu中出現水平分割線
+                            // name:'Sort DESC',
+                            name:'Sort<hr/>',
                             callback:()=>{
                                 let vm = hotInstance.root
                                 vm.globalSort(vm.selectedCol[0])
                             }
                         },
-                        'insertNewColAdd':{
-                            name:"Add a new Column by selected Columns (addition)",
-                            callback:() => {
-                                let vm = hotInstance.root
-                                let params = {
-                                    columns:vm.selectedCol,
-                                    op:'add'
-                                }
-                                vm.excuteOpt(params)
-                            }       
-                        },
-                        'insertNewColSub':{
-                            name:"Add a new Column by selected Columns (Subtraction)",
-                            callback:() => {
-                                let vm = hotInstance.root
-                                let params = {
-                                    columns:vm.selectedCol,
-                                    op:'sub'
-                                }
-                                vm.excuteOpt(params)
-                            }                       
-                        },
-                        'insertNewColMul':{
-                            name:"Add a new Column by selected Columns (multiplication)",
-                            callback:() => {
-                                let vm = hotInstance.root
-                                let params = {
-                                    columns:vm.selectedCol,
-                                    op:'mult'
-                                }
-                                vm.excuteOpt(params)        
-                            }                         
-                        },
-                        'insertNewColDiv':{
-                            name:"Add a new Column by selected Columns (Division)<hr/>",
-                              callback:() => {
-                                let vm = hotInstance.root
-                                let params = {
-                                    columns:vm.selectedCol,
-                                    op:'div'
-                                }
-                                vm.excuteOpt(params)
-                            }       
-                        },
+                        // 'insertNewColAdd':{
+                        //     name:"Add a new Column by selected Columns (addition)",
+                        //     callback:() => {
+                        //         let vm = hotInstance.root
+                        //         let params = {
+                        //             columns:vm.selectedCol,
+                        //             op:'add'
+                        //         }
+                        //         vm.excuteOpt(params)
+                        //     }       
+                        // },
+                        // 'insertNewColSub':{
+                        //     name:"Add a new Column by selected Columns (Subtraction)",
+                        //     callback:() => {
+                        //         let vm = hotInstance.root
+                        //         let params = {
+                        //             columns:vm.selectedCol,
+                        //             op:'sub'
+                        //         }
+                        //         vm.excuteOpt(params)
+                        //     }                       
+                        // },
+                        // 'insertNewColMul':{
+                        //     name:"Add a new Column by selected Columns (multiplication)",
+                        //     callback:() => {
+                        //         let vm = hotInstance.root
+                        //         let params = {
+                        //             columns:vm.selectedCol,
+                        //             op:'mult'
+                        //         }
+                        //         vm.excuteOpt(params)        
+                        //     }                         
+                        // },
+
+                        // 'insertNewColDiv':{
+                        //     // 在name 後插入<hr/>既可以在contextmenu中出現水平分割線
+                        //     name:"Add a new Column by selected Columns (Division)<hr/>",
+                        //       callback:() => {
+                        //         let vm = hotInstance.root
+                        //         let params = {
+                        //             columns:vm.selectedCol,
+                        //             op:'div'
+                        //         }
+                        //         vm.excuteOpt(params)
+                        //     }       
+                        // },
                         'dropCol':{
                             name:'Drop selected Columns',
                             callback:() => {
@@ -234,7 +238,7 @@ export default {
                 root.loadData(root.interval,column,temp)
                 root.reorder = root.order
                 root.order = temp
-                vm.settings.contextMenu.items.sort.name = "Sort "+root.reorder
+                // vm.settings.contextMenu.items.sort.name = "Sort "+root.reorder
             }
         },
         // 標註特定的item
