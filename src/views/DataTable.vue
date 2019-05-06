@@ -45,9 +45,9 @@
                 </v-layout> 
             </v-flex>           
             <v-flex lg11 class="card" style='overflow:hidden'> 
-                <div style='overflow-x:auto;overflow-y:hidden;height:110%'>
-                    <handsontable ref='table'/>
-                </div>
+                <!-- <div style='overflow:hidden;height:100%'> -->
+                <handsontable ref='table'/>
+                <!-- </div> -->
             </v-flex>
             <v-flex  class="card" style="height:50px;">
                 <!--前後翻頁-->
@@ -364,3 +364,9 @@ export default{
     }
 }
 </script>
+
+<style>
+.ht_master .wtHolder{
+    overflow-y: hidden;
+}
+</style>

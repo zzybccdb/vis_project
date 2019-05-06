@@ -271,6 +271,11 @@ export default {
         vm.selectedCol = undefined
         hotInstance.root = vm
         window.hot = vm
+        // 監聽網頁size的變化，重整表格
+        window.addEventListener('resize', ()=>{
+            let hot = vm.$refs.hot.hotInstance
+            hot.render()
+        })
     }
 }
 </script>
