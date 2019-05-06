@@ -109,8 +109,48 @@ export default {
         };
     },
     created(){
+        let vm = this
+        vm.col_extent = undefined
+        vm.heat = false
     },
     methods:{
+        // 將cell 調整爲 heatmap
+        cell_heatMap(){
+            let vm = this
+            let d3 = vm.$d3
+            let columns = vm.settings.colHeaders
+            let data = vm.settings.data
+            let length = data.length
+            vm.heat = !vm.heat
+            if(vm.heat){ 
+                for(let i = 1; i < length; i++ ){
+                    let min = vm.col_extent[1][i-1]
+                    let max = vm.col_extent[0][i-1]
+                    let color_scale = d3.scaleLinear().domain([min,max]).range(['yellow','red'])
+                    for(let j = 0; j < length; j++){
+                        let c = color_scale(data[j][i])
+                        vm.changeCellColor(j,i,c)
+                    }
+                }
+            }
+            else{
+                for(let i = 1; i < length; i++ ){
+                    for(let j = 0; j < length; j++){
+                        vm.changeCellColor(j,i)
+                    }
+                }                
+            }
+        },
+        // 改變 cell 顏色, 輸入座標x，y
+        changeCellColor(x=1,y=1,c="rgb(255,255,255)"){
+            let vm = this
+            let hot = vm.$refs.hot
+            let cell = hot.hotInstance.getCell(x,y)
+            cell.style.backgroundColor = c
+            // let d3 = vm.$d3
+            // vm.colorScale = d3.scaleLinear().domain([1,10]).range(['yellow','red'])
+            // console.log(vm.colorScale(4))   
+        },
         // 刪除特定欄位
         deleteCol(col_name){
             let vm = this
@@ -130,6 +170,11 @@ export default {
             let vm = this
             vm.settings.colHeaders = columns
             vm.colSetting(columns)
+        },
+        // 設定資料欄位的 extent
+        setExtent(extent){
+            let vm = this
+            vm.col_extent = extent
         },
         //改變資料
         changeData(data){
@@ -161,17 +206,21 @@ export default {
                 vm.settings.columns.push(temp)
             })
         },
-        //對特定維度進行排序
-        sortByindex(index,sortConfig){
+        //對特定維度進行排序 
+        sortByindex(index){
             let vm = this
-            let table = vm.$refs.hot
-            table.hotInstance.getPlugin('columnSorting').sort({
-                column:index,
-                sortOrder:sortConfig
-            })
+            // let table = vm.$refs.hot
+            // SQL直接sort
+            vm.globalSort(vm.selectedCol[index])
+            // handsontable 自帶的sort api
+            // table.hotInstance.getPlugin('columnSorting').sort({
+            //     column:index,
+            //     sortOrder:sortConfig
+            // })
         },
-        //全局排序
+        //全局排序 input column string
         globalSort(column){
+            console.log(column)
             let vm = this
             let root = vm.eventbus.root
             if(root.sort_col !== column){
@@ -200,10 +249,10 @@ export default {
                 vm.selectedCol = vm.settings.colHeaders.slice(col,col2+1)
             }else{
                 vm.selectedCol = vm.settings.colHeaders.slice(col2,col+1)
-            }
-            if(vm.selectedCol.length === 1){
-                // vm.globalSort(vm.selectedCol[0])
-            }
+            } 
+            // let hot = vm.$refs.hot
+            // let cell = hot.hotInstance.getCell(2,2)
+            // cell.style.backgroundColor = 'rgb(255,255,1)'
         },
         //執行運算指令
         excuteOpt(params){

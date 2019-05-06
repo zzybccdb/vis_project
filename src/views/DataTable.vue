@@ -39,6 +39,9 @@
                     <v-btn style="transform:translateY(15px)" fab small flat color='blue'>
                         <v-icon @click="checkFormula()">check</v-icon>    
                     </v-btn>
+                    <v-btn style="transform:translateY(15px)" fab small flat color='blue'>
+                        <v-icon @click="heatMap()">info</v-icon>    
+                    </v-btn>
                 </v-layout> 
             </v-flex>           
             <v-flex lg11 class="card" style='overflow-x:auto;overflow-y:hidden'> 
@@ -118,6 +121,11 @@ export default{
     },
     //所有需要呼叫的function放在这里
     methods:{
+        heatMap(){
+            let vm = this
+            let table = vm.$refs.table
+            table.cell_heatMap()
+        },
         //呼叫后端,进行资料加载.载入资料后执行 this.onDataLoaded
         loadData(interval,sort='date',order='ASC',date_range=undefined){
             let vm = this
@@ -180,16 +188,19 @@ export default{
         onDataLoaded(response){
             let vm = this
             let date_index = response.data.columns.indexOf('date')
-            let start_data = response.data.data.slice(0,50)
+            // let start_data = response.data.data.slice(0,50)
             let total_nums = response.data.data.length
-            let total_page =  Math.ceil(total_nums / 50)
-
+            // let total_page =  Math.ceil(total_nums / 50)
+            let total_page =  Math.ceil(total_nums / 33)
+            let extent = response.data.extent
+            console.log(extent)
             vm.columns = response.data.columns.slice(date_index)
             vm.total_nums = total_nums
             //把資料加入表格中
             vm.$refs.table.clearData()
             vm.$refs.table.setCols(vm.columns)
-            vm.$refs.table.changeData(vm.dataSetting(start_data,date_index))
+            vm.$refs.table.setExtent(extent)
+            // vm.$refs.table.changeData(vm.dataSetting(start_data,date_index))
             //重整表格
             // setTimeout(() => {
             //     vm.$refs.table.sortByindex(vm.sort_col,vm.order)
@@ -202,11 +213,13 @@ export default{
             window.response = response
             //底部信息設定
             vm.pageSelect(total_page)
-            vm.bottomInfo([1,50],total_nums)
+            // vm.bottomInfo([1,50],total_nums)
+            vm.bottomInfo([1,33],total_nums)
             //b
             if(vm.EventBus.currentDate_index != undefined){
                 vm.highLightDate(vm.EventBus.currentDate_index)
             }
+            // 每次修改page 這樣就會呼叫到同時綁定的pageChange（）
             if(vm.change_interval){
                 vm.change_interval = false
                 vm.page = 1
@@ -261,14 +274,16 @@ export default{
                 vm.page -= 1
             }    
         },  
-        //翻页
-        pageChange(index=undefined){
+        //翻页 該 function 跟 page是雙向綁定
+        pageChange(){
             let vm = this
             let page = vm.page
-            let end = page * 50
+            // let end = page * 50
+            let end = page * 33
             let total = vm.total_nums
             let date_index = vm.date_index
-            let page_data = vm.data.slice(end-50,end)
+            // let page_data = vm.data.slice(end-50,end)
+            let page_data = vm.data.slice(end-33,end)
             vm.$refs.table.changeData(vm.dataSetting(page_data,date_index))
             // setTimeout(() => {
             //     vm.$refs.table.sortByindex(vm.sort_col,vm.order)
@@ -277,14 +292,17 @@ export default{
             //     }
             // },300)
 
-            vm.bottomInfo([end-49, end], total)
+            // vm.bottomInfo([end-49, end], total)
+            vm.bottomInfo([end-32, end], total)
         },
         //标注特定的item
         highLightDate(index){
             let vm = this
-            let remainder = index % 50
+            // let remainder = index % 50
+            let remainder = index % 33
             //获取当前资料在具体哪一页
-            vm.page = Math.ceil(index/50)
+            // vm.page = Math.ceil(index/50)
+            vm.page = Math.ceil(index/33)
             vm.pageChange(remainder)
         },
         //公式处理
@@ -312,8 +330,7 @@ export default{
         //錯誤提示
         errorMessage(err){
             let vm = this
-            let hot_table = vm.$refs.table
-            window.error = error
+            window.error = err
             vm.alert = true
             setTimeout(() => {
                 vm.alert = false
