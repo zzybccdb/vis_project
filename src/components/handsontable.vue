@@ -54,54 +54,8 @@ export default {
                                 vm.globalSort(vm.selectedCol[0])
                             }
                         },
-                        // 'insertNewColAdd':{
-                        //     name:"Add a new Column by selected Columns (addition)",
-                        //     callback:() => {
-                        //         let vm = hotInstance.root
-                        //         let params = {
-                        //             columns:vm.selectedCol,
-                        //             op:'add'
-                        //         }
-                        //         vm.excuteOpt(params)
-                        //     }       
-                        // },
-                        // 'insertNewColSub':{
-                        //     name:"Add a new Column by selected Columns (Subtraction)",
-                        //     callback:() => {
-                        //         let vm = hotInstance.root
-                        //         let params = {
-                        //             columns:vm.selectedCol,
-                        //             op:'sub'
-                        //         }
-                        //         vm.excuteOpt(params)
-                        //     }                       
-                        // },
-                        // 'insertNewColMul':{
-                        //     name:"Add a new Column by selected Columns (multiplication)",
-                        //     callback:() => {
-                        //         let vm = hotInstance.root
-                        //         let params = {
-                        //             columns:vm.selectedCol,
-                        //             op:'mult'
-                        //         }
-                        //         vm.excuteOpt(params)        
-                        //     }                         
-                        // },
-
-                        // 'insertNewColDiv':{
-                        //     // 在name 後插入<hr/>既可以在contextmenu中出現水平分割線
-                        //     name:"Add a new Column by selected Columns (Division)<hr/>",
-                        //       callback:() => {
-                        //         let vm = hotInstance.root
-                        //         let params = {
-                        //             columns:vm.selectedCol,
-                        //             op:'div'
-                        //         }
-                        //         vm.excuteOpt(params)
-                        //     }       
-                        // },
                         'dropCol':{
-                            name:'Drop selected Columns',
+                            name:'Delete selected Columns',
                             callback:() => {
                                 let vm = hotInstance.root
                                 vm.deleteCol(vm.selectedCol[0])
@@ -218,12 +172,6 @@ export default {
             let vm = this
             // 傳遞SQL指令進行sort
             vm.globalSort(vm.selectedCol[index])
-            // let table = vm.$refs.hot
-            // handsontable 自帶的sort api
-            // table.hotInstance.getPlugin('columnSorting').sort({
-            //     column:index,
-            //     sortOrder:sortConfig
-            // })
         },
         // 全局排序 input column string
         globalSort(column){
