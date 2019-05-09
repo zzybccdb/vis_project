@@ -76,11 +76,12 @@ export default {
                     if(vm.heat && column!==0){
                         if( column-1 in Object.keys(vm.color_scale)){
                             let scale = vm.color_scale[column-1]
-                            console.log(scale(value))
                             c = vm.color[parseInt(scale(value))]
                         }
                     }
-                    TD.style.fontStyle = 'blue'
+                    // 修改文字颜色
+                    // TD.style.color = 'blue'
+                    // 修改cell背景色
                     TD.style.backgroundColor = c
                 },
             },

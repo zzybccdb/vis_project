@@ -152,24 +152,24 @@ export default{
                     let r = data[((img.width * row) + 78) * 4];
                     let g = data[((img.width * row) + 78) * 4+1];
                     let b = data[((img.width * row) + 78) * 4+2];
-                    vm.color_stack.push("rgb("+r+","+g+","+b+")")
+                    vm.color_stack.push("rgba("+r+","+g+","+b+",0.7)")
                 }
                 for(let col=78; col<178; col++){
                     let r = data[((img.width * 78) + col) * 4];
                     let g = data[((img.width * 78) + col) * 4+1];
                     let b = data[((img.width * 78) + col) * 4+2];
-                    vm.color_stack.push("rgb("+r+","+g+","+b+")")
+                    vm.color_stack.push("rgba("+r+","+g+","+b+",0.7)")
                 }
                 for(let row=78; row<178; row++){
                     let r = data[((img.width * row) + 178) * 4];
                     let g = data[((img.width * row) + 178) * 4+1];
                     let b = data[((img.width * row) + 178) * 4+2];
-                    vm.color_stack.push("rgb("+r+","+g+","+b+")")
+                    vm.color_stack.push("rgba("+r+","+g+","+b+",0.7)")
                 }
                 for(let i=0; i<150; i++){
                     ctx.beginPath()
                     ctx.fillStyle = vm.color_stack[i*3]
-                    ctx.fillRect(28+i,0,1,40)
+                    ctx.fillRect(28+i,10,1,20)
                     ctx.closePath()
                 }
             }
