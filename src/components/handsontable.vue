@@ -76,9 +76,11 @@ export default {
                     if(vm.heat && column!==0){
                         if( column-1 in Object.keys(vm.color_scale)){
                             let scale = vm.color_scale[column-1]
-                            c = scale(value)
+                            console.log(scale(value))
+                            c = vm.color[parseInt(scale(value))]
                         }
                     }
+                    TD.style.fontStyle = 'blue'
                     TD.style.backgroundColor = c
                 },
             },
@@ -89,6 +91,7 @@ export default {
         vm.col_extent = undefined
         vm.heat = undefined
         vm.table_render_row = undefined
+        vm.color = undefined
     },
     methods:{
         // 將cell 調整爲 heatmap
@@ -119,21 +122,22 @@ export default {
             vm.colSetting(columns)
         },
         // 設定資料欄位的 extent
-        setExtent(extent){
+        setExtent(extent,color){
             let vm = this
             vm.col_extent = extent
-            vm.setColorScale()
+            vm.setColorScale(color)
         },
         // 設定 color scale
-        setColorScale(){
+        setColorScale(color){
             let vm = this
             let d3 = vm.$d3
             vm.color_scale = []
+            vm.color = color
             let length = vm.settings.colHeaders.length
             for(let i = 1; i < length; i++){
                 let min = vm.col_extent[1][i-1]
                 let max = vm.col_extent[0][i-1]
-                let temp = d3.scaleLinear().domain([min,max]).range(['yellow','red'])     
+                let temp = d3.scaleLinear().domain([min,max]).range([0,299])     
                 vm.color_scale.push(temp)           
             }
         },

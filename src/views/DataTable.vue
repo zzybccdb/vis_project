@@ -26,12 +26,12 @@
                     </v-flex>
                 </v-layout>
                 <v-layout style='overflow:hidden' row>
-                    <v-flex lg11 fluid fill-height>
+                    <v-flex lg8 fluid fill-height>
                         <!-- 利用 v-on:key-up.enter 執行enter後的事件 -->
                         <v-text-field
                             v-model="formula"
                             label="Outline"
-                            placeholder="formula"
+                            placeholder="newcol = col1 + col2"
                             v-on:keyup.enter="checkFormula"
                         ></v-text-field>
                     </v-flex>
@@ -42,6 +42,11 @@
                     <v-btn style="transform:translateY(15px)" fab small flat color='blue'>
                         <v-icon v-model='heat_map' @click="heatMap()">info</v-icon>    
                     </v-btn>
+                    <!-- 色碼条 -->
+                    <v-flex>
+                        <canvas ref='color_line' width=256px height=40px style="transform:translateY(16px);display:none"></canvas>
+                        <canvas ref='map' width=256px height=256px style="display:none"></canvas>
+                    </v-flex>
                 </v-layout> 
             </v-flex>           
             <v-flex lg11 class="card" style='overflow:hidden'> 
@@ -80,6 +85,7 @@
 <script>
 const EventBus = {}
 import handsontable from '@/components/handsontable.vue'
+import Colormap from '@/components/Colormap.vue'
 export default{
     //需要使用到的组件
     components:{
@@ -121,14 +127,65 @@ export default{
         vm.order = 'ASC'
         vm.reorder = 'DESC'
         vm.change_interval = false
+        vm.color_stack = []
     },
     //所有需要呼叫的function放在这里
     methods:{
+        // 绘制色碼条
+        colorLine(){
+            let vm = this
+            let ctx = vm.$refs.color_line.getContext('2d')
+            ctx.font = "12px serif"
+            ctx.fillText("Min", 0,25)
+            ctx.fillText("Max", 187,25)
+            vm.colortable(ctx)
+        },
+        //建立color table
+        colortable(ctx){
+            let vm = this;
+            let img = new Image()
+            let map = vm.$refs.map.getContext('2d')
+            img.onload = function(){
+                map.drawImage(img, 0, 0);
+                let data = map.getImageData(0,0,img.width,img.height).data
+                for(let row=178; row>78; row--){
+                    let r = data[((img.width * row) + 78) * 4];
+                    let g = data[((img.width * row) + 78) * 4+1];
+                    let b = data[((img.width * row) + 78) * 4+2];
+                    vm.color_stack.push("rgb("+r+","+g+","+b+")")
+                }
+                for(let col=78; col<178; col++){
+                    let r = data[((img.width * 78) + col) * 4];
+                    let g = data[((img.width * 78) + col) * 4+1];
+                    let b = data[((img.width * 78) + col) * 4+2];
+                    vm.color_stack.push("rgb("+r+","+g+","+b+")")
+                }
+                for(let row=78; row<178; row++){
+                    let r = data[((img.width * row) + 178) * 4];
+                    let g = data[((img.width * row) + 178) * 4+1];
+                    let b = data[((img.width * row) + 178) * 4+2];
+                    vm.color_stack.push("rgb("+r+","+g+","+b+")")
+                }
+                for(let i=0; i<150; i++){
+                    ctx.beginPath()
+                    ctx.fillStyle = vm.color_stack[i*3]
+                    ctx.fillRect(28+i,0,1,40)
+                    ctx.closePath()
+                }
+            }
+            img.src = 'map.png'
+        },
+        // 呼叫heat map执行
         heatMap(){
             let vm = this
             let table = vm.$refs.table
+            let ctx = vm.$refs.color_line
             table.cell_heatMap(!vm.heat_map)
             vm.heat_map = !vm.heat_map
+            if(vm.heat_map)
+                ctx.style.display = 'inline'
+            else
+                ctx.style.display = 'none'
         },
         //呼叫后端,进行资料加载.载入资料后执行 this.onDataLoaded
         loadData(interval,sort='date',order='ASC',date_range=undefined){
@@ -202,7 +259,7 @@ export default{
             //把資料加入表格中
             vm.$refs.table.clearData()
             vm.$refs.table.setCols(vm.columns)
-            vm.$refs.table.setExtent(extent)
+            vm.$refs.table.setExtent(extent,vm.color_stack)
             
             vm.data = response.data.data
             vm.date_index = date_index
@@ -358,6 +415,7 @@ export default{
             EventBus.date = undefined
             EventBus.currentDate_index = undefined
         }
+        vm.colorLine()
         vm.loadData(vm.interval)
         window.table = vm.$refs.table
         vm.$refs.home.addEventListener("contextmenu", e => {e.preventDefault()})
