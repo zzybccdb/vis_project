@@ -138,7 +138,7 @@ export default {
             for(let i = 1; i < length; i++){
                 let min = vm.col_extent[1][i-1]
                 let max = vm.col_extent[0][i-1]
-                let temp = d3.scaleLinear().domain([min,max]).range([0,299])     
+                let temp = d3.scaleLinear().domain([min,max]).range([0,149])     
                 vm.color_scale.push(temp)           
             }
         },

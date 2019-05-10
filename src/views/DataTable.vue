@@ -135,45 +135,29 @@ export default{
         colorLine(){
             let vm = this
             let ctx = vm.$refs.color_line.getContext('2d')
+            let gradient = ctx.createLinearGradient(28,10,150,30)
+            // rgb(132,174,209)
+            gradient.addColorStop(0,'rgba(132,174,209,1)')
+            // rgba(147,210,197,1)
+            gradient.addColorStop(0.33,'rgba(147,210,197,1)')
+            // rgb(255,255,177)
+            gradient.addColorStop(0.66,'moccasin') 
+            // rgb(243,127,115)
+            gradient.addColorStop(1,'salmon') 
+            ctx.fillStyle = gradient
+            ctx.fillRect(28,10,150,20)
+
             ctx.font = "12px serif"
             ctx.fillText("Min", 0,25)
             ctx.fillText("Max", 187,25)
-            vm.colortable(ctx)
-        },
-        //建立color table
-        colortable(ctx){
-            let vm = this;
-            let img = new Image()
-            let map = vm.$refs.map.getContext('2d')
-            img.onload = function(){
-                map.drawImage(img, 0, 0);
-                let data = map.getImageData(0,0,img.width,img.height).data
-                for(let row=178; row>78; row--){
-                    let r = data[((img.width * row) + 78) * 4];
-                    let g = data[((img.width * row) + 78) * 4+1];
-                    let b = data[((img.width * row) + 78) * 4+2];
-                    vm.color_stack.push("rgba("+r+","+g+","+b+",0.7)")
-                }
-                for(let col=78; col<178; col++){
-                    let r = data[((img.width * 78) + col) * 4];
-                    let g = data[((img.width * 78) + col) * 4+1];
-                    let b = data[((img.width * 78) + col) * 4+2];
-                    vm.color_stack.push("rgba("+r+","+g+","+b+",0.7)")
-                }
-                for(let row=78; row<178; row++){
-                    let r = data[((img.width * row) + 178) * 4];
-                    let g = data[((img.width * row) + 178) * 4+1];
-                    let b = data[((img.width * row) + 178) * 4+2];
-                    vm.color_stack.push("rgba("+r+","+g+","+b+",0.7)")
-                }
-                for(let i=0; i<150; i++){
-                    ctx.beginPath()
-                    ctx.fillStyle = vm.color_stack[i*3]
-                    ctx.fillRect(28+i,10,1,20)
-                    ctx.closePath()
-                }
+            // getImageData(x,y,width,height) => return rgba
+            let data = ctx.getImageData(28,10,150,30).data
+            for(let col=0; col<150; col++){
+                let r = data[((150 * 10) + col) * 4];
+                let g = data[((150 * 10) + col) * 4+1];
+                let b = data[((150 * 10) + col) * 4+2];
+                vm.color_stack.push("rgba("+r+","+g+","+b+",0.7)")                
             }
-            img.src = 'map.png'
         },
         // 呼叫heat map执行
         heatMap(){
