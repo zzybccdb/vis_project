@@ -45,11 +45,10 @@
                     <!-- 色碼条 -->
                     <v-flex>
                         <canvas ref='color_line' width=256px height=40px style="transform:translateY(16px);display:none"></canvas>
-                        <canvas ref='map' width=256px height=256px style="display:none"></canvas>
                     </v-flex>
                 </v-layout> 
             </v-flex>           
-            <v-flex lg11 class="card" style='overflow:hidden'> 
+            <v-flex ref="box" lg11 class="card" style='overflow:hidden'> 
                 <!-- <div style='overflow:hidden;height:100%'> -->
                 <handsontable ref='table'/>
                 <!-- </div> -->
@@ -85,7 +84,6 @@
 <script>
 const EventBus = {}
 import handsontable from '@/components/handsontable.vue'
-import Colormap from '@/components/Colormap.vue'
 export default{
     //需要使用到的组件
     components:{
@@ -128,9 +126,14 @@ export default{
         vm.reorder = 'DESC'
         vm.change_interval = false
         vm.color_stack = []
+        vm.per_page_rows = 0
     },
     //所有需要呼叫的function放在这里
     methods:{
+        test(){
+            let vm = this
+            console.log(vm.fake)
+        },
         // 绘制色碼条
         colorLine(){
             let vm = this
@@ -233,10 +236,8 @@ export default{
         onDataLoaded(response){
             let vm = this
             let date_index = response.data.columns.indexOf('date')
-            // let start_data = response.data.data.slice(0,50)
             let total_nums = response.data.data.length
-            // let total_page =  Math.ceil(total_nums / 50)
-            let total_page =  Math.ceil(total_nums / 33)
+            let total_page =  Math.ceil(total_nums / vm.per_page_rows)
             let extent = response.data.extent
             vm.columns = response.data.columns.slice(date_index)
             vm.total_nums = total_nums
@@ -249,12 +250,9 @@ export default{
             vm.date_index = date_index
             vm.total_page = total_page
             // vm.current_page = 1
-            window.response = response
             //底部信息設定
             vm.pageSelect(total_page)
-            // vm.bottomInfo([1,50],total_nums)
-            vm.bottomInfo([1,33],total_nums)
-            //b
+            vm.bottomInfo([1,vm.per_page_rows],total_nums)
             if(vm.EventBus.currentDate_index != undefined){
                 vm.highLightDate(vm.EventBus.currentDate_index)
             }
@@ -322,25 +320,24 @@ export default{
         pageChange(){
             let vm = this
             let page = vm.page
-            // let end = page * 50
-            let end = page * 33
+            let end = page * vm.per_page_rows
             let total = vm.total_nums
+            // 记录日期这个 column 的index
             let date_index = vm.date_index
-            // let page_data = vm.data.slice(end-50,end)
-            let page_data = vm.data.slice(end-33,end)
+
+            let page_data = vm.data.slice(end-vm.per_page_rows,end)
             vm.$refs.table.changeData(vm.dataSetting(page_data,date_index))
-            // vm.bottomInfo([end-49, end], total)
-            vm.bottomInfo([end-32, end], total)
+            // 底部信息
+            vm.bottomInfo([end-vm.per_page_rows-1, end], total)
         },
         //标注特定的item
         highLightDate(index){
             let vm = this
             // let remainder = index % 50
-            let remainder = index % 33
+            // let remainder = index % 33
             //获取当前资料在具体哪一页
             // vm.page = Math.ceil(index/50)
-            vm.page = Math.ceil(index/33)
-            vm.pageChange(remainder)
+            vm.page = Math.ceil(index/vm.per_page_rows)
         },
         //公式处理
         checkFormula(){
@@ -374,23 +371,33 @@ export default{
             }, 2000);
         }
     },
-    //启动呼叫
+    // 启动呼叫
+    // 初始状态下显示最底层时间维度资料
     mounted(){
         let vm = this
+        let table = vm.$refs.table
+        // 包装 table 的容器
+        let box = vm.$refs.box
         let cal_level = {
             'Raw Data':'Raw Data',
             'year':'1 day', 
             'month':'2 hour',
             'minute':'5 minute'
         }
-        // vm.interval = '1 day'
         vm.interval = 'Raw Data'
         //table本身自帶一個EventBus
-        vm.$refs.table.eventbus = EventBus
+        table.eventbus = EventBus
         vm.EventBus = EventBus
 
-        EventBus.table = vm.$refs.table  
+        EventBus.table = table  
         EventBus.root = vm
+
+        window.vm = vm 
+        window.table = table
+        window.box = box
+
+        let box_height = box.clientHeight
+        vm.per_page_rows = parseInt((box_height-25-24)/23 + 1)
 
         if(vm.$route.params.push === 'calender'){
             EventBus.currentDate_index = vm.$route.params.index
@@ -399,10 +406,21 @@ export default{
             EventBus.date = undefined
             EventBus.currentDate_index = undefined
         }
+
         vm.colorLine()
         vm.loadData(vm.interval)
-        window.table = vm.$refs.table
+        
+        // 取消chrome自带的右键选单 
         vm.$refs.home.addEventListener("contextmenu", e => {e.preventDefault()})
+        // 監聽網頁size的變化，重整表格
+        window.addEventListener('resize', ()=>{
+            let hot = vm.$refs.table.$refs.hot.hotInstance
+            box_height = box.clientHeight
+            vm.per_page_rows = parseInt((box_height-25-24)/23 + 1)
+
+            vm.pageChange()
+            hot.render()
+        })
     },
     //离开时执行的内容
     beforeDestroy(){
