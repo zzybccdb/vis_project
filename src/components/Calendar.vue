@@ -1,9 +1,14 @@
 <template>
-
 <div class="cal-wrapper" ref="home">
-	<v-alert ref="alert" :value="alert" :color="color" outline>
+	<!-- <v-alert ref="alert" :value="alert" :color="color" outline>
 	{{message}}
-	</v-alert>
+	</v-alert> -->
+	<v-text-field
+	v-model="model_path"
+	@change="changeModel"
+	lable="model path"
+	>
+	</v-text-field>
 </div>
 
 </template>
@@ -16,10 +21,30 @@ export default {
 		return{
 			alert:true,
 			message:"aaaa",
-			color:"white"
+			color:"white",
+			model_path:'False',
 		}
 	},
+	created(){
+		let vm = this
+		vm.old_model = vm.model_path
+	},
 	methods: {
+		// 加载特定的model weight
+		changeModel(){
+			let vm = this
+			if(vm.old_model !== vm.model_path){
+				console.log(vm.model_path)
+				vm.$axios.post(vm.$api+'/train/load_test_model',{
+					'model':vm.model_path,
+				}).then(()=>{
+					vm.eventBus.calLevel = 'year'
+					vm.eventBus.root.loadData('1 day',)
+				})
+				vm.old_model = vm.model_path
+			}
+		},
+		
 		handleResize() {
 			var vm = this;
 			let width = vm.$refs.home.clientWidth
@@ -63,6 +88,7 @@ export default {
 			let param = vm.eventBus.zoomHistory.pop()
 			vm.eventBus.calLevel = param.calLevel
 			// vm.eventBus.root.loadData(param.interval, param.startDate, param.endDate)
+			console.log(param.interval,param.date_range)
 			vm.eventBus.root.loadData(param.interval, param.date_range)
 		},
 
@@ -1415,6 +1441,7 @@ export default {
 		vm.$refs.home.appendChild(vm.app.view)
 
 		vm.init()
+		console.log("initial calendar")
 	},
 	beforeDestroy() {
 		var vm = this;

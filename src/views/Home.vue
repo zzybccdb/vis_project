@@ -68,9 +68,10 @@
 							label="Loss Weight"
 							@change="onLossWeightChange">
 							</v-text-field>
+							<!-- 选择测试模型范例 -->
 						</v-layout>
 						<!-- Window Input Output -->
-						<v-layout>
+						<!-- <v-layout>
 							<v-text-field label="Input Window Size"
 							:error-messages="input_window_errors"
 							:disabled="disableForm"
@@ -83,7 +84,7 @@
 							v-model="output_window"
 							@change="onWindowSizeChange">
 							</v-text-field>
-						</v-layout>
+						</v-layout> -->
 						<v-btn :loading="requesting == 'newTrain'" color="primary" :disabled="disableNewTrainBtn" @click="onNewTrain">
 							<v-icon>add_box</v-icon>
 							New Training
@@ -165,7 +166,6 @@ export default {
 		input_window:1,
 		output_window:1,
 		loss_weight:1.00,
-
 	}),
 	computed: {
 		anyError() {
@@ -258,7 +258,7 @@ export default {
 			let vm = this;
 			vm.config.data.labels.push(String(step));
 			vm.config.data.datasets[0].data.push(rec_loss);
-			console.log(step,rec_loss)
+			// console.log(step,rec_loss)
 			if (vm.config.data.labels.length > 100) {
 				vm.config.data.labels.shift();
 				vm.config.data.datasets[0].data.shift();

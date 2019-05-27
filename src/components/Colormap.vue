@@ -446,7 +446,7 @@ export default {
 
 			vm.$d3.select('#colormap').call(zoom)
 		},
-
+		// 负责处理在 color map 中选择 mask 模式下,右键进行圈选的行为 
 		maskSelect() {
 			let vm = this
 			let ctn_box = new vm.$PIXI.Container()

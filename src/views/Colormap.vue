@@ -287,7 +287,8 @@ export default {
 			var vm = this
 			if (vm.zoomMode) {
 				vm.$refs.cm.switchZoom()
-			} else {
+			} 
+			else {
 				vm.$refs.cm.maskSelect()
 			}
 		},
@@ -439,7 +440,7 @@ export default {
 		// loadData(interval, startDate, endDate) {
 		loadData(interval, date_range) {
 			var vm = this
-
+			// 防止切换测试 model 时保存到就得资料
 			vm.eventBus.zoomHistory.push({
 				calLevel: vm.eventBus.calLevel,
 				interval,
@@ -447,7 +448,10 @@ export default {
 				// endDate
 				date_range,
 			})
-			// console.log(interval)
+			if(interval === '1 day'){
+				vm.firstLoad = true
+			}
+			///////////////////////////////////////////////
 			vm.init.me = false
 			// vm.$refs.sld.clearData()
 			if (vm.init.cm) {
@@ -463,14 +467,6 @@ export default {
 			let param = {
 				interval
 			}
-
-			// if (startDate) {
-			// 	param.start_date = startDate
-			// }
-
-			// if (endDate) {
-			// 	param.end_date = endDate
-			// }
 
 			if(date_range){
 				param.date_range = date_range
