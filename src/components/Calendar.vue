@@ -51,12 +51,13 @@ export default {
 			vm.eventBus.calLevel = param.calLevel
 			vm.eventBus.root.loadData(param.interval, param.date_range)
 		},
-        // 更新右鍵藍色選框
+        // 更新右鍵選框
 		updateSelection(ctn_cells, ctn_box) {
 			ctn_cells.children.forEach(c => {
-				let pass = ctn_box.children.some(box => {
-					return vm.collision(c, box)
-				})
+				let pass = ctn_box.some(box => {
+                    // 判定當前 box 與 cell 是否歸屬於同一個 main ctn 之下
+					return box.class === c.class?vm.collision(c, box):false
+                })
 				if( c.data != undefined ){
 					if ((pass && !c.data.mask && c.tint != 0xCCCCCC) || (c.singSelected || c.neibor)) {
 						c.texture = vm.cellTextureSelected
@@ -69,7 +70,7 @@ export default {
 
 			})
 		},
-        // (有待回顧)
+        // 判定 cell 是否歸屬有被 selection box 選中
 		setBox(ctn_cells, ctn_box){
 			ctn_cells.children.forEach(c => {
 				ctn_box.children.some(box => {
@@ -80,7 +81,8 @@ export default {
 		},
         // 清除當前繪製內容
 		clearData() {
-			vm.wrapper.removeChildren()
+            vm.wrapper.removeChildren()
+            vm.ctn_box = []
 		},
         // 將 hex 的資料轉爲 rgb object
 		hexToRgb(hex){
@@ -217,6 +219,8 @@ export default {
             // 提示內容容器
             vm.ctn_tooltip = new PIXI.Container()
             vm.app.stage.addChild(vm.ctn_tooltip)
+            // 選擇框設定
+            vm.ctn_box = []
             // 提示設定
             vm.tooltipSetting()
             // 貼圖設定
@@ -405,6 +409,8 @@ export default {
             let [ctn_year,main_ctn,ctn_box,ctn_cells,ctn_border] = vm.containerInitial()
             // 标签容器宣告
             let label = vm.drawLabel(String(year),year)
+            // 將  main ctn 的名字獨立
+            main_ctn.name = String(year)
             // cells 主体向左移动 labels 的高度个单位 pixel
             main_ctn.x = label.height
             ctn_year.addChild(label)	
@@ -418,14 +424,16 @@ export default {
 				let y = date.day()
                 // 單個 cell 初始化
                 let sp = new PIXI.Sprite(vm.cellTexture)
+                // 將 sp 歸類到當前的 main ctn 下
+                sp.class = main_ctn.name
                 vm.spInitial(sp,x,y)
                 // 鼠標操作設定
                 // e 指向當前鼠標移動的這個事件的一些參數,包括現在的全局位置等等
                 // sp 指向當前這個 cell
-                sp.mouseover = (e) => { vm.spMouseOver(e,sp,ctn_box) }
-                sp.mouseout = () => { vm.spMouseOut(sp,ctn_box) }
-                sp.mousedown = () => {}
-                sp.rightdown = () => { vm.spRightDown(sp,ctn_box) }
+                sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
+                sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
+                sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
+                sp.rightdown = () => {vm.spRightDown(sp,ctn_box)}
                 // 建立 {date：sp} 的 object
                 vm.mapping[date.format(date_format)] = sp
 
@@ -523,6 +531,29 @@ export default {
                 }
             }
         },
+        // 鼠標左鍵點擊
+        spMouseDown(sp,ctn_box,ctn_cells){
+            if( sp.selected ){
+                // vm.eventBus.data.forEach( d => {
+                //     d.cal.singSelected = false
+                //     d.cal.neibor = false	
+                //     d.cal.texture = vm.cellTexture
+                //     d.cal.selected = false
+                // })		
+                ctn_cells.children.forEach( c => {
+                    c.singSelected = false	
+                    c.texture = vm.cellTexture
+                    c.selected = false
+                })		
+                ctn_box.removeChild(sp.box)
+                vm.ctn_box.splice(sp.box.index,1)
+                sp.box = null
+                vm.updateSelection(ctn_cells, vm.ctn_box)
+                vm.eventBus.pcp.clearData()
+                vm.eventBus.pcp.updateData()
+                vm.eventBus.cm.clearHighlight()
+            }            
+        },
         // 鼠標右鍵點擊 cell 觸發
         spRightDown(sp,ctn_box){
             if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
@@ -540,7 +571,8 @@ export default {
                 vm.Similar(sp)
             }
             else{
-                console.error("Key Invalid")
+                if(vm.keyDown != undefined)
+                    console.error("Key Invalid")
             }            
         },
         // ****** cell 單獨操作
@@ -549,11 +581,15 @@ export default {
         SelectionBoxStart(e,ctn_box,main_ctn){
             let p = e.data.getLocalPosition(main_ctn)
             let box = new PIXI.Graphics()
+            // 將 box 也綁定到當前的 main ctn 下
+            box.class = main_ctn.name
             box.x = p.x  
             box.y = p.y
+            box.index = vm.ctn_box.length
             box.start_p = p
             box.clear()
             ctn_box.addChild(box)
+            vm.ctn_box.push(box)
             ctn_box.selecting = true
         },
         SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn){
@@ -574,6 +610,7 @@ export default {
                         d.cal.selected = false
                     })
                 }
+                console.log(ctn_box.children.length)
                 let box = ctn_box.children[ctn_box.children.length-1]
                 let p = e.data.getLocalPosition(main_ctn)
                 let p_topleft = {
@@ -584,7 +621,6 @@ export default {
                     x: Math.max(p.x, box.start_p.x),
                     y: Math.max(p.y, box.start_p.y),
                 }
-
                 box.clear()
                 box.lineStyle(0.0, vm.selectionBoxColor)
                 box.beginFill(vm.selectionBoxColor, 0.01)
@@ -592,7 +628,7 @@ export default {
                 box.endFill()
                 box.x = p_topleft.x
                 box.y = p_topleft.y
-                vm.updateSelection(ctn_cells, ctn_box)
+                vm.updateSelection(ctn_cells, vm.ctn_box)
             }            
         },
         SelectionBoxEnd(e,ctn_box,ctn_cells){
@@ -601,8 +637,9 @@ export default {
             // 當繪製的選擇框太小就清除它
             if (box && box.height * box.width < (vm.cellSize * vm.cellSize) / 8) {
                 ctn_box.removeChild(box)
+                vm.ctn_box.splice(box.index,1)
             }
-            vm.updateSelection(ctn_cells, ctn_box)
+            vm.updateSelection(ctn_cells, vm.ctn_box)
             vm.setBox(ctn_cells, ctn_box)
             vm.adjustAxisOrder()
             vm.eventBus.pcp.clearData()
@@ -680,9 +717,8 @@ export default {
             ctn_year.name = 'ctn_year'
             // 主体容器
 			let main_ctn = new PIXI.Container()
-            main_ctn.name = 'main_ctn'
-			main_ctn.interactive = true
-            // 有待研究
+            main_ctn.interactive = true
+            // selection box 容器
             let ctn_box = new PIXI.Container()
             ctn_box.name = 'ctn_box'
             ctn_box.selecting = false
@@ -697,7 +733,6 @@ export default {
             let ctn_border = new PIXI.Container()
             ctn_border.name = 'ctn_border'
             // 将内容物绑定到 cell 的主体容器下
-            main_ctn.addChild(ctn_box)
             main_ctn.addChild(ctn_cells)
             main_ctn.addChild(ctn_border)
             // 将内容物绑定到 现在的内容物下
