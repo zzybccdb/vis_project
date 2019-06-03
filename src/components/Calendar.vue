@@ -729,8 +729,8 @@ export default {
         //     }
         // },
         // 绘制标签,输入一个 string
-        drawLabel(str,year,y,month=undefined){
-            let label = new PIXI.Text(str,{fontFamily : vm.pixi_font, fontSize: vm.pixi_font_size, fill : 0x000000, align : 'center'})
+        drawLabel(str,year,y,month=undefined,color=0x000000){
+            let label = new PIXI.Text(str,{fontFamily : vm.pixi_font, fontSize: vm.pixi_font_size, fill : color, align : 'center'})
             label.name = 'label'
             label.rotation = Math.PI / 2 * 3
             label.y = vm.cellSize * y / 2 + label.width / 2
@@ -738,7 +738,8 @@ export default {
             label.buttonMode = true
             // 标签点击事件宣告
             label.mousedown = ()=>{
-                if(!month){
+                console.log(month)
+                if(month === undefined){
                     console.log("load month data")
                     let sd = vm.$moment.utc().year(year).dayOfYear(1).hour(0).minute(0).second(0)
                     let ed = vm.$moment.utc().year(year+1).dayOfYear(1).hour(0).minute(0).second(0).add(-1, 'second')
