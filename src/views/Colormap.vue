@@ -438,8 +438,8 @@ export default {
 		// eslint-disable-next-line
 		// loadData(interval, startDate, endDate) {
 		loadData(interval, date_range) {
-			var vm = this
-
+			let vm = this
+			console.log(date_range)
 			vm.eventBus.zoomHistory.push({
 				calLevel: vm.eventBus.calLevel,
 				interval,
@@ -479,6 +479,7 @@ export default {
 			// param.other_dims = vm.columns
 			// vm.$axios.post(vm.$api + '/model/latent', param)
 			// console.log("Load data")
+			console.log(param)
 			vm.$axios.post(vm.$api + '/inference/latent', param)
 			.then(vm.onDataLoaded)
 			.catch(error => {
