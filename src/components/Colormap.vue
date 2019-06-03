@@ -39,8 +39,10 @@ export default {
 		clearHighlight(){
 			let vm = this
 			vm.eventBus.data.forEach(d => {
-				d.cm.texture = vm.dotTexture
-				d.cm.alpha = 0.3	
+				if(!d.cal.selected){
+					d.cm.texture = vm.dotTexture
+					d.cm.alpha = 0.3	
+				}
 			})
 		},
 
