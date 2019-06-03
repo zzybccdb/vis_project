@@ -406,7 +406,7 @@ export default {
         // level year 實際繪製代碼
         addYear(year){
             let [ctn_year,main_ctn,ctn_box,ctn_cells,ctn_border] = vm.containerInitial('ctn_year')
-            // 标签容器宣告,y 表示一組　main_ctn 的row 的個數
+            // 标签容器宣告,y 表示一組 main_ctn 的 row 的個數
             let y = 7
             let label = vm.drawLabel(String(year),year,y)
             // 將  main ctn 的名字獨立
@@ -434,7 +434,7 @@ export default {
                 sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
                 sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
                 sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
-                sp.rightdown = () => {vm.spRightDown(sp,ctn_box)}
+                sp.rightdown = () => {vm.spRightDown(sp)}
                 // 建立 {date：sp} 的 object
                 vm.mapping[date.format(date_format)] = sp
 
@@ -538,7 +538,7 @@ export default {
             }            
         },
         // 鼠標右鍵點擊 cell 觸發
-        spRightDown(sp,ctn_box){
+        spRightDown(sp){
             if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
                 vm.message = vm.notice[vm.keyDown]
                 vm.color = "black"
@@ -786,7 +786,7 @@ export default {
 
         addMonth(year, month){
             let date = vm.eventBus.startDate.clone().month(month).date(1)
-            let [ctn_month,main_ctn,ctn_box,ctn_cells,ctn_border] = vm.containerInitial("ctn_month")
+            let [ctn_month,main_ctn,ctn_box,ctn_cells] = vm.containerInitial("ctn_month")
             // 標籤容器宣告,繪製側邊月份信息
             let y = 12
             let label = vm.drawLabel(date.format('MMM'),year,y,month)
@@ -810,7 +810,7 @@ export default {
                 sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
                 sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
                 sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
-                sp.rightdown = () => {vm.spRightDown(sp,ctn_box)}                
+                sp.rightdown = () => {vm.spRightDown(sp)}                
 				vm.mapping[date.format(date_format)] = sp
 
 				let dayOfMonth = date.date()
@@ -836,27 +836,71 @@ export default {
         },
 
         dayChart(){
-			let vm = this
 			let year = vm.eventBus.startDate.year()
 			let month = vm.eventBus.startDate.month()
 			let startDay = vm.eventBus.startDate.date()
             let endDay = vm.eventBus.endDate.date()
-            
+            // 唯一存成
+            let gap_size = (vm.padding + vm.cellSize * 7)
             let height = undefined
-            // draw the graph every day
+            // 繪製 back button,回到上一個 level 的結果
+            let str = vm.eventBus.startDate.format('YYYY-MM')
+            vm.drawBackLabel(str)
+
+            // 繪製 level day 的具體 calender view
 			for(let d=startDay;d<=endDay;++d) {
 				let d_ctn = vm.addDay(year, month, d)
-				d_ctn.y = (d - startDay) * vm.gap_size + vm.padding + 20
-				height = d_ctn.y + vm.gap_size
+				d_ctn.y = (d - startDay) * gap_size + vm.padding + 20
+				height = d_ctn.y + gap_size
             }            
-            // draw back bottom for go back to the last page
-            let label = String(vm.eventBus.startDate.format('YYYY-MM'))
-            vm.drawBackLabel(label)
 
             return height
         },
 
-        addDay(){
+        addDay(year,month,day){
+			let date = vm.eventBus.startDate.clone().date(day)
+            let [ctn_day,main_ctn,ctn_box,ctn_cells,] = vm.containerInitial("ctn_day")
+            // day information 容器
+            let color = (date.day() === 6|| date.day() === 0)?0xff0000:0x000000
+            let y = 6
+            let label = vm.drawLabel(date.format('MMM-Do-ddd'),year,y,undefined,color)
+            main_ctn.name = date.format('MMM-Do-ddd')
+            main_ctn.x = label.height
+            ctn_day.addChild(label)
+            // hour 標籤容器
+			let ctn_label = new vm.$PIXI.Container()
+			ctn_label.name = 'ctn_label'
+			ctn_label.x = label.height
+			ctn_day.addChild(ctn_label)
+            // 判別時間使用
+			let lastHour = undefined
+			while(date.date() == day) {
+				let x = (date.hour()) * 2 + (date.minute() >= 30)
+				let y = ((date.minute()/5) % 6)
+                let sp = new vm.$PIXI.Sprite(vm.cellTexture)
+                sp.class = main_ctn.name
+                vm.spInitial(sp,x,y)
+                // cell 鼠標操作
+                sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
+                sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
+                sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
+                sp.rightdown = () => {vm.spRightDown(sp)}                 
+				vm.mapping[date.format(date_format)] = sp
+
+				let hourOfDay = date.hour()
+				if (lastHour != hourOfDay) {
+                    lastHour = hourOfDay
+					let label = new vm.$PIXI.Text(date.format('HH')
+					, {fontFamily : vm.pixi_font, fontSize: vm.pixi_font_size, fill : 0x000000, align : 'center'})
+					label.x = sp.x
+					label.y = -label.height - 3
+					ctn_label.addChild(label)
+				}
+
+				date.add(5, 'minute')
+				ctn_cells.addChild(sp)
+            }
+			return ctn_day
         },
 
         drawBackLabel(str){
