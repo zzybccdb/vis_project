@@ -308,16 +308,16 @@ export default {
 			g.lineStyle(1,0x000000)
 			g.beginFill(0x000000)
 			g.moveTo(0,0)
-			g.lineTo(0,7.5)
-			g.lineTo(7.5,0)
+			g.lineTo(0,3.25)
+			g.lineTo(3.25,0)
 			g.lineTo(0,0)
 			g.endFill()
 			g.beginFill(0xFFFFFF)
 			g.moveTo(0,15)
 			g.lineTo(15,15)
 			g.lineTo(15,0)
-			g.lineTo(7.5,0)
-			g.lineTo(0,7.5)
+			g.lineTo(3.25,0)
+			g.lineTo(0,3.25)
 			g.lineTo(0,15)
 			g.endFill()
 			return g
@@ -479,17 +479,6 @@ export default {
             if(!vm.highLightBlock){
                 sp.msover = true
                 sp.texture = vm.cellFilterTexture
-                if(vm.lastCell != undefined){
-                    if(vm.lastCell.selected){
-                        vm.lastCell.texture = vm.cellTextureSelected
-                    }
-                    else{
-                        vm.lastCell.texture = vm.cellTexture
-                    }
-                    vm.lastCell = sp 
-                }else{
-                    vm.lastCell = sp 
-                }	
             }
             // 繪製 tooltip
             if (data && sp.tint != 0xFFFFFF) {
@@ -507,8 +496,6 @@ export default {
 
             if( sp.selected && !ctn_box.selecting){
                 if(!vm.highLightBlock){
-                    sp.msover = true
-                    sp.texture = vm.cellFilterTexture
                     vm.eventBus.pcp.highLight();						
                 }
             }
@@ -533,13 +520,7 @@ export default {
         },
         // 鼠標左鍵點擊
         spMouseDown(sp,ctn_box,ctn_cells){
-            if( sp.selected ){
-                // vm.eventBus.data.forEach( d => {
-                //     d.cal.singSelected = false
-                //     d.cal.neibor = false	
-                //     d.cal.texture = vm.cellTexture
-                //     d.cal.selected = false
-                // })		
+            if( sp.selected ){		
                 ctn_cells.children.forEach( c => {
                     c.singSelected = false	
                     c.texture = vm.cellTexture
@@ -610,7 +591,6 @@ export default {
                         d.cal.selected = false
                     })
                 }
-                console.log(ctn_box.children.length)
                 let box = ctn_box.children[ctn_box.children.length-1]
                 let p = e.data.getLocalPosition(main_ctn)
                 let p_topleft = {
