@@ -357,10 +357,9 @@ export default {
 			let colunms = vm.eventBus.columns.slice(start_idx)
             let root_colunms = vm.eventBus.root.columns_train 
             let trainedColunms = []
-
 			colunms.forEach((item,i) => {
-				if(root_colunms.includes(item)){
-				    trainedColunms.push({idx:i,name:item})
+                if(root_colunms.includes(item)){
+                    trainedColunms.push({idx:i,name:item})
 				}
             })     
             return trainedColunms       
@@ -420,21 +419,13 @@ export default {
                 // 單個 cell 初始化
                 let sp = new PIXI.Sprite(vm.cellTexture)
                 vm.spInitial(sp,x,y)
-                // 鼠標移動到 cell 時觸發
-                sp.mouseover = (e) => {
-                    // e 指向當前鼠標移動的這個事件的一些參數
-                    // sp 指向當前這個 cell
-                    vm.spMouseOver(e,sp,ctn_box)
-                }
-                sp.mouseout = () => {
-
-                }
-                sp.mousedown = () => {
-
-                }
-                sp.rightdown = () => {
-
-                }
+                // 鼠標操作設定
+                // e 指向當前鼠標移動的這個事件的一些參數,包括現在的全局位置等等
+                // sp 指向當前這個 cell
+                sp.mouseover = (e) => { vm.spMouseOver(e,sp,ctn_box) }
+                sp.mouseout = () => { vm.spMouseOut(sp,ctn_box) }
+                sp.mousedown = () => {}
+                sp.rightdown = () => { vm.spRightDown(sp,ctn_box) }
                 // 建立 {date：sp} 的 object
                 vm.mapping[date.format(date_format)] = sp
 
@@ -452,15 +443,19 @@ export default {
 				if (date.month() != month) {
 					month = date.month()
                     week_of_month = 0
-                    // 邊緣繪製
+                    // 月份邊緣繪製
                     vm.yearChartStroke(month,days_in_month,ctn_border)
 					days_in_month = [[]]
                 }
                 // 將 sp 加入畫布容器中
                 ctn_cells.addChild(sp)
-            }            
+            }   
+			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
+            main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
+			main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
 			return ctn_year
         },
+        // ****** cell 單獨操作
         // cell sp 初始化設定
         spInitial(sp,x,y){
             // 設定 cell 的繪製位置，1 爲 margin 的大小 
@@ -470,6 +465,7 @@ export default {
             sp.buttonMode = true
             sp.msover = false
         },
+        // 鼠標移動到 cell 觸發
         spMouseOver(e,sp,ctn_box){
             let data = sp.data
             if(!vm.highLightBlock){
@@ -489,7 +485,7 @@ export default {
             }
             // 繪製 tooltip
             if (data && sp.tint != 0xFFFFFF) {
-                vm.drawTooltip(data.datetime.format(date_format))
+                vm.changeTooltip(data.datetime.format(date_format))
             } else {
                 vm.tooltip.alpha = 0
             }
@@ -514,8 +510,112 @@ export default {
                 }
             }            
         },
+        // 鼠標移出 cell 觸發
+        spMouseOut(sp,ctn_box){
+            if(!vm.highLightBlock){
+                sp.msover = false;
+                sp.texture = vm.cellTexture
+            }
+            if (sp.selected && !ctn_box.selecting) {
+                if(!vm.highLightBlock){
+                    sp.texture = vm.cellTextureSelected
+                    vm.eventBus.pcp.highLight();
+                }
+            }
+        },
+        // 鼠標右鍵點擊 cell 觸發
+        spRightDown(sp,ctn_box){
+            if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
+                vm.message = vm.notice[vm.keyDown]
+                vm.color = "black"
+                setTimeout(() => {
+                    vm.color = "white"
+                }, 1500);
+                sp.singSelected = true
+                if(!vm.highLightBlock){
+                    sp.msover = true
+                    sp.texture = vm.cellFilterTexture
+                }
+                sp.selected = true
+                vm.Similar(sp)
+            }
+            else{
+                console.error("Key Invalid")
+            }            
+        },
+        // ****** cell 單獨操作
+        // ****** 右鍵選擇框操作
+        // 右鍵選擇框設定
+        SelectionBoxStart(e,ctn_box,main_ctn){
+            let p = e.data.getLocalPosition(main_ctn)
+            let box = new PIXI.Graphics()
+            box.x = p.x  
+            box.y = p.y
+            box.start_p = p
+            box.clear()
+            ctn_box.addChild(box)
+            ctn_box.selecting = true
+        },
+        SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn){
+            // e.data.buttons 判定鼠標左右鍵
+            // 0 表示沒有按下鼠標，1 鼠標左鍵， 2 鼠標右鍵
+            if (e.data.buttons != 2) {
+                if (ctn_box.selecting) {
+                    vm.SelectionBoxEnd(e,ctn_box,ctn_cells)
+                }
+                return
+            }
+            if (ctn_box.selecting) {
+                if(vm.keyDown != undefined){
+                    vm.eventBus.data.forEach( d => {
+                        d.cal.singSelected = false
+                        d.cal.neibor = false	
+                        d.cal.texture = vm.cellTexture
+                        d.cal.selected = false
+                    })
+                }
+                let box = ctn_box.children[ctn_box.children.length-1]
+                let p = e.data.getLocalPosition(main_ctn)
+                let p_topleft = {
+                    x: Math.min(p.x, box.start_p.x),
+                    y: Math.min(p.y, box.start_p.y),
+                }
+                let p_bottomright = {
+                    x: Math.max(p.x, box.start_p.x),
+                    y: Math.max(p.y, box.start_p.y),
+                }
+
+                box.clear()
+                box.lineStyle(0.0, vm.selectionBoxColor)
+                box.beginFill(vm.selectionBoxColor, 0.01)
+                box.drawRect(0, 0, p_bottomright.x - p_topleft.x, p_bottomright.y - p_topleft.y)
+                box.endFill()
+                box.x = p_topleft.x
+                box.y = p_topleft.y
+                vm.updateSelection(ctn_cells, ctn_box)
+            }            
+        },
+        SelectionBoxEnd(e,ctn_box,ctn_cells){
+            let index = ctn_box.children.length-1
+            let box = ctn_box.children[index]
+            // 當繪製的選擇框太小就清除它
+            if (box && box.height * box.width < (vm.cellSize * vm.cellSize) / 8) {
+                ctn_box.removeChild(box)
+            }
+            vm.updateSelection(ctn_cells, ctn_box)
+            vm.setBox(ctn_cells, ctn_box)
+            vm.adjustAxisOrder()
+            vm.eventBus.pcp.clearData()
+            vm.eventBus.pcp.updateData()
+            if(!vm.highLightBlock){
+                vm.eventBus.pcp.highLight();
+            }
+            vm.eventBus.cm.highLightSelectedPoint()
+            ctn_box.selecting = false
+        },
+        // ****** 右鍵選擇框操作
         // 繪製 tooltip 上的內容
-        drawTooltip(str){
+        changeTooltip(str){
             vm.tooltip.alpha = 1
             vm.tooltip_label.text = str
             // 清除原本 tooltip 畫布上的內容
@@ -585,6 +685,7 @@ export default {
             // 有待研究
             let ctn_box = new PIXI.Container()
             ctn_box.name = 'ctn_box'
+            ctn_box.selecting = false
             // 具体 cell 的容器, 包含于 main_ctn之下
             let ctn_cells = new PIXI.Container()
             ctn_cells.name = 'ctn_cells'
@@ -703,6 +804,64 @@ export default {
 			}
         },
 
+		adjustAxisOrder() {
+			let boxes = []
+			let disableSort = true
+			if (disableSort) {
+				return
+			}
+			vm.wrapper.children.forEach(c => {
+				let main_ctn = c.getChildByName('main_ctn')
+				if (main_ctn) {
+					c.getChildByName('main_ctn').getChildByName('ctn_box').children.forEach(b => {
+						b.group = []
+						boxes.push(b)
+					})
+				}
+			})
+			if (boxes.length <= 1) {
+				vm.eventBus.pcp.state.axis.sort((x, y) => x.dim - y.dim)
+				vm.eventBus.pcp.adjustAxisPosition()
+				return
+			}
+			boxes.forEach(b => {
+				vm.eventBus.data.forEach(d => {
+					if (vm.collision(d.cal, b)) {
+						b.group.push(d)
+					}
+					d.in_group = false
+				})
+				b.group.forEach(g => {
+					vm.eventBus.data.forEach(n => {
+						if (vm.distance(g.cm.npos, n.cm.npos) < 0.1) {
+							n.in_group = true
+						}
+					})
+				})
+				let group = vm.eventBus.data.filter(d => {return d.in_group})
+
+				b.means = []
+				vm.eventBus.pcp.state.axis.forEach(a => {
+					let mean = 0
+					group.forEach(g => {
+						mean += g.raw[a.dim]
+					})
+					b.means.push(mean / group.length)
+				})
+			})
+			vm.eventBus.pcp.state.axis.forEach((a, ai) => {
+				let max = boxes[0].means[ai]
+				let min = boxes[0].means[ai]
+				boxes.forEach(b => {
+					max = Math.max(max, b.means[ai])
+					min = Math.min(min, b.means[ai])
+				})
+				a.ranking = (max - min) / vm.eventBus.std[a.dim]
+			})
+
+			vm.eventBus.pcp.state.axis.sort((x, y) => y.ranking - x.ranking)
+			vm.eventBus.pcp.adjustAxisPosition()
+		},
 
     },
     // 加載頁面執行
