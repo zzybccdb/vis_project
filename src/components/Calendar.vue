@@ -53,13 +53,30 @@ export default {
 		},
         // 更新右鍵選框
 		updateSelection(ctn_cells, ctn_box) {
+            // 修正當前 box 的 index
+            ctn_box.forEach((box,i) => {
+                box.index = i
+            })
 			ctn_cells.children.forEach(c => {
-				let pass = ctn_box.some(box => {
+				let pass = ctn_box.some((box,i) => {
                     // 判定當前 box 與 cell 是否歸屬於同一個 main ctn 之下
-					return box.class === c.class?vm.collision(c, box):false
+                    if(box.class === c.class){
+                        // console.log("what?")
+                        let bool = vm.collision(c,box)
+                        if(bool){
+                            c.box = box
+                        }
+                        return bool
+                    }
+                    else{
+                        return false
+                    }
+					// return box.class === c.class?vm.collision(c, box):false
                 })
+                
 				if( c.data != undefined ){
-					if ((pass && !c.data.mask && c.tint != 0xCCCCCC) || (c.singSelected || c.neibor)) {
+					// if ((pass && !c.data.mask && c.tint != 0xCCCCCC) || (c.singSelected || c.neibor)) {
+                    if ((pass && !c.data.mask && c.tint != 0xCCCCCC)){
 						c.texture = vm.cellTextureSelected
 						c.selected = true
 					} else {
