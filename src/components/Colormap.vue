@@ -454,7 +454,7 @@ export default {
 			let ctn_box = new vm.$PIXI.Container()
 			ctn_box.name = 'ctn_box'
 			vm.app.stage.addChild(ctn_box)
-
+			// 繪製 selection box
 			let rightdown = function(e) {
 				let p = e.data.getLocalPosition(vm.app.stage)
 				let box = new vm.$PIXI.Graphics()
@@ -470,6 +470,11 @@ export default {
 			let mousemove = function(e) {
 				if( ctn_box.selecting ){
 					let p = e.data.getLocalPosition(vm.app.stage)
+					// 判定當前鼠標是否移動超出 color map
+					if( p.x >= 256 || p.y > 256 || p.x <= 0 || p.y <= 0 ){
+						rightup()
+						return 
+					}
 					let box = ctn_box.children[ctn_box.children.length-1]
 					let p_topleft = {
 						x: Math.min(p.x, box.start_p.x),

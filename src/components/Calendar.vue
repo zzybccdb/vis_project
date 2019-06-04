@@ -53,7 +53,7 @@ export default {
 		},
         // 更新右鍵選框
 		updateSelection(ctn_cells, ctn_box) {
-            // 修正當前 box 的 index
+            // 修正當前 box 的 index, 防止重疊選中後, cell 無法關聯到正確的 box 
             ctn_box.forEach((box,i) => {
                 box.index = i
             })
