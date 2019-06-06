@@ -58,7 +58,7 @@ export default {
                 box.index = i
             })
 			ctn_cells.children.forEach(c => {
-				let pass = ctn_box.some((box,i) => {
+				let pass = ctn_box.some(box => {
                     // 判定當前 box 與 cell 是否歸屬於同一個 main ctn 之下
                     if(box.class === c.class){
                         // console.log("what?")

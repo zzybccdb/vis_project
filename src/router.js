@@ -31,16 +31,16 @@ export default new Router({
 		name: 'colormap',
 		component: () => {return import('@/views/Colormap.vue')}
 	},
-	{
-		path: '/Streamgraph',
-		name: 'Streamgraph',
-		component: () => {return import('@/views/Streamgraph.vue')}		
-	},
-	{
-		path: '/TestView',
-		name: 'TestView',
-		component: () => {return import('@/views/test.vue')},
-	},
+	// {
+	// 	path: '/Streamgraph',
+	// 	name: 'Streamgraph',
+	// 	component: () => {return import('@/views/Streamgraph.vue')}		
+	// },
+	// {
+	// 	path: '/TestView',
+	// 	name: 'TestView',
+	// 	component: () => {return import('@/views/test.vue')},
+	// },
 	{
 		path: '/RawDataTable',
 		name: 'DataTable',

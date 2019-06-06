@@ -83,7 +83,7 @@
 
 <script>
 const EventBus = {}
-import handsontable from '@/components/handsontable.vue'
+import handsontable from '@/components/Handsontable.vue'
 export default{
     //需要使用到的组件
     components:{
