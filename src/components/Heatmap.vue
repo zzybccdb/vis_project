@@ -1,16 +1,15 @@
 <template>
-    <v-layout row nowrap>
-        <v-flex style="padding:0px;padding-right:10px;">
+    <v-layout row nowrap fill-height>
+        <v-flex style="padding:0px;padding-right:10px;width:35px">
             <!-- 明确 canvas 的长宽,防止出现比例不一致造成的扭曲问题 -->
             <!-- 千萬注意，style 設定的px 跟 canvas 所在座標系並不是一一對應的 -->
             <canvas ref="color_line" width=30 height=300>
                 can not show canvas color line
             </canvas>
         </v-flex>
-        <v-flex lg12 style="padding:0px">        
+        <v-flex lg12 style="padding:0px;overflow:auto">        
             <hot-table ref="hot" :settings="settings"></hot-table>
         </v-flex>
-
     </v-layout>
 </template>
 <script>
@@ -45,16 +44,17 @@ export default {
                     // 'Ford',
                 ],
                 rowHeaders: [],
-                columnSorting:true,
+                columnSorting:false,
                 // 開啓了虛擬渲染行，handsontable在渲染的時候爲了效能，只會渲染出窗口範圍內的內容。
                 // 開啓後，會保留之前渲染過的內容，但是依舊無法在一開始就直接加載全部的內容
                 renderAllRows: false,
                 // 开启只读模式,不允许修改内容
                 readOnly: true,
                 // columnsSize 設定的是所有cell的寬度
-                autoColumnSize: false,
+                autoColumnSize: true,
+                rowHeaderWidth: 125,
                 // rowSize 設定的是所有cell的高度
-                autoRowSize:false,
+                autoRowSize:true,
                 currentRowClassName: 'currentRow',
                 stretchH: 'none',
                 // 右鍵菜單設定
@@ -154,5 +154,8 @@ export default {
 tr th:first-child{
     background: white;
     padding: 0;
+}
+.rowHeader {
+    width: 180px;
 }
 </style>

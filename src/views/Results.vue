@@ -14,13 +14,13 @@
         <v-layout column>
             <v-flex lg4 style="margin:5px;background:red">
             </v-flex>          
-            <v-flex lg8 class="card" style='margin:5px;overflow:hidden'> 
+            <v-flex lg8 class="card" style='margin:5px;'> 
                 <v-layout row nowrap fill-height>
                     <v-flex lg8 style='margin:5px;overflow:hidden'>
                         <heatmap ref='heatmap'></heatmap>
                     </v-flex>
-                    <v-flex lg4 style='margin:5px;background:steelblue;overflow:hidden'>
-                    </v-flex>
+                    <!-- <v-flex lg4 style='margin:5px;background:steelblue;overflow:hidden'>
+                    </v-flex> -->
                 </v-layout>
             </v-flex>
         </v-layout>
