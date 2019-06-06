@@ -1,20 +1,23 @@
 <template>
     <v-layout row nowrap>
-        <v-flex lg11>        
-            <hot-table ref="hot" :settings="settings"></hot-table>
-        </v-flex>
-        <v-flex style="background:steelblue;">
+        <v-flex style="padding:0px;padding-right:10px;">
             <!-- 明确 canvas 的长宽,防止出现比例不一致造成的扭曲问题 -->
-            <canvas ref="color_line" style="width:40px;height:300px">
+            <!-- 千萬注意，style 設定的px 跟 canvas 所在座標系並不是一一對應的 -->
+            <canvas ref="color_line" width=30 height=300>
                 can not show canvas color line
             </canvas>
         </v-flex>
+        <v-flex lg12 style="padding:0px">        
+            <hot-table ref="hot" :settings="settings"></hot-table>
+        </v-flex>
+
     </v-layout>
 </template>
 <script>
 import { HotTable } from '@handsontable/vue';
 const hotInstance = {}
-let vm = this
+let vm = undefined
+let d3 = undefined
 export default {
     components: {
         HotTable
@@ -58,28 +61,24 @@ export default {
                 contextMenu:false,
                 // afterRenderer 在每一個data cell 繪製完成後都會觸發一次
                 afterRenderer:(TD,row,column,prop,value) => {
-                    let hot = hotInstance.root
-                    let instance = hot.$refs.hot.hotInstance
-                    // let c = "rgb(255,255,255)"
-                    // if(vm.heat && column!==0){
-                    //     if( column-1 in Object.keys(vm.color_scale)){
-                    //         let scale = vm.color_scale[column-1]
-                    //         c = vm.color[parseInt(scale(value))]
-                    //     }
-                    // }
-                    // // 修改文字颜色
-                    // // TD.style.color = 'blue'
-                    // // 修改cell背景色
-                    TD.style.backgroundColor = 'orange'
-                    // instance.render()
+                    //////////////// 
+                    // api 說明, TD 指向這個 cell, value 指的是這個這個 cell 的數值,
+                    // row 表示當前行數, column 表示當前的列數
+                    ////////////////
+                    // 修改文字颜色
+                    // TD.style.color = 'blue'
+                    // 修改cell背景色
+                    TD.style.backgroundColor = vm.color(value)
+
                 },
             },
-            color_range:["white", "#69b3a2"]
+            color_range:['moccasin', 'rgba(147,210,197,1)']
         };
     },
     created(){
         let vm = this
         vm.extent = undefined
+        vm.color = undefined
     },
     methods:{
         // 給定資料欄位名稱
@@ -87,13 +86,15 @@ export default {
             vm.settings.colHeaders = columns
             vm.settings.rowHeaders = columns
             vm.colSetting(columns)
-            console.log("setting headers")
         },
         // 改變資料
         changeData(data,extent){
-            let instance = vm.$refs.hot.hotInstance
             vm.settings.data = data
             vm.extent = extent
+            vm.color = d3.scaleLinear()
+                        .range(vm.color_range)
+                        .domain([extent[0],extent[1]])
+
         },
         // 清除資料
         clearData(){
@@ -104,7 +105,7 @@ export default {
         },
         // 将表格中所有类型都设定为浮点数
         colSetting(columns){
-            columns.forEach(item => {
+            columns.forEach(() => {
                 let temp = {}
                 temp.type = 'numeric'
                 temp.numericFormat = {
@@ -113,16 +114,29 @@ export default {
                 vm.settings.columns.push(temp)
             })
         },
+        // 繪製色碼條
         drawColorScale(){
             let canvas = vm.$refs.color_line
             if (canvas.getContext) {
                 let ctx = canvas.getContext('2d');
-                ctx.strokeRect(0, 0, 40, 100);
+                // 設定 gradient 的時候設定是 x1，y1，x2，y2
+                let gradient = ctx.createLinearGradient(0,20,0,280)
+                gradient.addColorStop(0,'moccasin')
+                gradient.addColorStop(1,'rgba(147,210,197,1)')
+
+                ctx.font = "12px serif"
+                ctx.fillText("Min",5,15)
+                ctx.fillText("Max",5,295)
+                
+                ctx.fillStyle = gradient
+                // 注意繪製矩形的時候輸入是 x，y，width，height
+                ctx.fillRect(0,20, 30,260)
             }
         },
     },
     mounted(){  
         vm = this
+        d3 = vm.$d3
         hotInstance.root = vm
         vm.drawColorScale()
     }
@@ -130,8 +144,15 @@ export default {
 </script>
 
 <style src="./css/handsontable.full.css"></style>
-<style scoped>
-.currentRow {
-  background-color: #F9F9FB !important;
+<style>
+/* .currentRow {
+    background-color: #F9F9FB !important;
+} */
+.relative{
+    background: white;
+}
+tr th:first-child{
+    background: white;
+    padding: 0;
 }
 </style>
