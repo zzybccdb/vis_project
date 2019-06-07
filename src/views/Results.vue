@@ -86,6 +86,7 @@ export default{
         },
         // 载入 scatterplot 资料
         loadScatterplot(rowLabel, colLabel){
+            vm.$refs.heatmap.loading = true
             let param = {
                 'row':rowLabel,
                 'col':colLabel
@@ -98,6 +99,7 @@ export default{
                 console.log("开始绘制")
                 scatter.setAxisLabel(rowLabel,colLabel)
                 scatter.update(data)
+                vm.$refs.heatmap.loading = false
             })
         }
     },

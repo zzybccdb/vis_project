@@ -65,6 +65,7 @@ export default {
         update(data=[{x:1,y:1}]){
             vm.scatterChart.data.datasets[0].data = data
             vm.scatterChart.update()
+            console.log("ok")
         }
     },
     mounted(){  

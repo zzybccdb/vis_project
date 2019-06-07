@@ -6,9 +6,14 @@
             <canvas ref="color_line" width=45 height=300>
                 can not show canvas color line
             </canvas>
-            <v-btn fab dark small color="indigo">
+            <v-btn v-if='!loading' fab dark small color="indigo">
                 <v-icon @click='autoColResize()' dark>add</v-icon>
             </v-btn>
+            <v-progress-circular
+            indeterminate
+            color="primary"
+            v-if='loading'
+            ></v-progress-circular>
         </v-flex>
         <v-flex lg12 style="padding:0px;overflow:hidden">        
             <hot-table ref="hot" :settings="settings"></hot-table>
@@ -26,6 +31,7 @@ export default {
     },
     data: () => {
         return {
+            loading:false,
             settings: {
                 data: [
                     //資料格式
@@ -62,6 +68,8 @@ export default {
                 stretchH: 'none',
                 // 右鍵菜單設定
                 contextMenu:false,
+                // 只允许使用单独选定一个 cell
+                selectionMode:'single',
                 // afterRenderer 在每一個data cell 繪製完成後都會觸發一次
                 afterRenderer:(TD,row,column,prop,value) => {
                     //////////////// 
@@ -182,6 +190,11 @@ tr th:first-child{
 ::-webkit-scrollbar-track {
   background: #fafafa; 
 }
- 
+
+.v-progress-circular{
+    margin: 0.6rem
+}
+
 </style>
+
 <style src="./css/handsontable.full.css"></style>
