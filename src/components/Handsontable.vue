@@ -33,7 +33,7 @@ export default {
                 columnSorting:false,
                 // 開啓了虛擬渲染行，handsontable在渲染的時候爲了效能，只會渲染出窗口範圍內的內容。
                 // 開啓後，會保留之前渲染過的內容，但是依舊無法在一開始就直接加載全部的內容
-                renderAllRows: true,
+                renderAllRows: false,
                 rowHeaders: true,
                 // columnsSize 設定的是所有cell的寬度
                 autoColumnSize: true,

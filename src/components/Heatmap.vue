@@ -1,13 +1,16 @@
 <template>
-    <v-layout row nowrap fill-height>
-        <v-flex style="padding:0px;padding-right:10px;width:35px">
+    <v-layout row nowrap fill-height style="overflow:hidden">
+        <v-flex style="padding:0px;padding-right:10px;width:50px">
             <!-- 明确 canvas 的长宽,防止出现比例不一致造成的扭曲问题 -->
             <!-- 千萬注意，style 設定的px 跟 canvas 所在座標系並不是一一對應的 -->
-            <canvas ref="color_line" width=30 height=300>
+            <canvas ref="color_line" width=45 height=300>
                 can not show canvas color line
             </canvas>
+            <v-btn fab dark small color="indigo">
+                <v-icon @click='autoColResize()' dark>add</v-icon>
+            </v-btn>
         </v-flex>
-        <v-flex lg12 style="padding:0px;overflow:auto">        
+        <v-flex lg12 style="padding:0px;overflow:hidden">        
             <hot-table ref="hot" :settings="settings"></hot-table>
         </v-flex>
     </v-layout>
@@ -51,10 +54,10 @@ export default {
                 // 开启只读模式,不允许修改内容
                 readOnly: true,
                 // columnsSize 設定的是所有cell的寬度
-                autoColumnSize: true,
+                autoColumnSize: false,
                 rowHeaderWidth: 125,
                 // rowSize 設定的是所有cell的高度
-                autoRowSize:true,
+                autoRowSize:false,
                 currentRowClassName: 'currentRow',
                 stretchH: 'none',
                 // 右鍵菜單設定
@@ -71,6 +74,15 @@ export default {
                     TD.style.backgroundColor = vm.color(value)
 
                 },
+                afterOnCellMouseDown:(event,coords,TD) => {
+                    let row = coords.row
+                    let col = coords.col
+                    if(row !== col){
+                        let rowLabel = vm.columns[row]
+                        let colLabel = vm.columns[col]
+                        vm.EventBus.root.loadScatterplot(rowLabel,colLabel)
+                    }
+                },
             },
             color_range:['moccasin', 'rgba(147,210,197,1)']
         };
@@ -85,6 +97,7 @@ export default {
         setHeaders(columns){
             vm.settings.colHeaders = columns
             vm.settings.rowHeaders = columns
+            vm.columns = columns
             vm.colSetting(columns)
         },
         // 改變資料
@@ -125,14 +138,22 @@ export default {
                 gradient.addColorStop(1,'rgba(147,210,197,1)')
 
                 ctx.font = "12px serif"
-                ctx.fillText("Min",5,15)
-                ctx.fillText("Max",5,295)
+                ctx.fillText("Min",17,15)
+                ctx.fillText("Max",17,295)
                 
                 ctx.fillStyle = gradient
                 // 注意繪製矩形的時候輸入是 x，y，width，height
-                ctx.fillRect(0,20, 30,260)
+                ctx.fillRect(12,20, 30,260)
             }
         },
+        // 自動擴展欄位
+        autoColResize(){
+            console.log('change')
+            let hot = vm.$refs.hot.hotInstance
+            vm.settings.autoColumnSize = !vm.settings.autoColumnSize
+            hot.render()
+        }
+
     },
     mounted(){  
         vm = this
@@ -143,7 +164,7 @@ export default {
 }
 </script>
 
-<style src="./css/handsontable.full.css"></style>
+
 <style>
 /* .currentRow {
     background-color: #F9F9FB !important;
@@ -158,4 +179,9 @@ tr th:first-child{
 .rowHeader {
     width: 180px;
 }
+::-webkit-scrollbar-track {
+  background: #fafafa; 
+}
+ 
 </style>
+<style src="./css/handsontable.full.css"></style>

@@ -19,8 +19,9 @@
                     <v-flex lg8 style='margin:5px;overflow:hidden'>
                         <heatmap ref='heatmap'></heatmap>
                     </v-flex>
-                    <!-- <v-flex lg4 style='margin:5px;background:steelblue;overflow:hidden'>
-                    </v-flex> -->
+                    <v-flex lg4 style='margin:5px;overflow:hidden'>
+                        <scatterplot ref='scatter'></scatterplot>
+                    </v-flex>
                 </v-layout>
             </v-flex>
         </v-layout>
@@ -31,11 +32,12 @@
 const EventBus = {}
 let vm = undefined
 import heatmap from '@/components/Heatmap.vue'
-import Handsontable from 'handsontable';
+import scatterplot from '@/components/Scatterplot.vue'
 export default{
     //需要使用到的组件
     components:{
-        heatmap
+        heatmap,
+        scatterplot,
     },
     //全局监听的变量
     data:() => {
@@ -71,8 +73,6 @@ export default{
 				window.error = error
 				console.log(error)
 			})
-            // heatmap.changeData(Handsontable.helper.createSpreadsheetData(100, 100))
-            // heatmap.setHeaders(test_col)
         },
         onDataLoader(response){
             let heatmap = vm.$refs.heatmap  
@@ -83,15 +83,30 @@ export default{
             heatmap.changeData(data,extent)
             heatmap.setHeaders(columns)
             hotInstance.render()
+        },
+        // 载入 scatterplot 资料
+        loadScatterplot(rowLabel, colLabel){
+            let param = {
+                'row':rowLabel,
+                'col':colLabel
+            }
+            let scatter = vm.$refs.scatter
+            vm.$axios.post(vm.$api+'/inference/get_scatter',param)
+            .then((response)=>{
+                let data = response.data.data
+                // 开始绘制
+                console.log("开始绘制")
+                scatter.setAxisLabel(rowLabel,colLabel)
+                scatter.update(data)
+            })
         }
-
     },
     // 启动呼叫
     // 初始状态下显示最底层时间维度资料
     mounted(){  
         vm = this
         vm.EventBus = EventBus
-
+        vm.EventBus.root = vm
         let heatmap = vm.$refs.heatmap
         heatmap.EventBus = EventBus
         vm.initial()
