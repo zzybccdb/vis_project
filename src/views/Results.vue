@@ -12,7 +12,9 @@
     -->
     <v-container ref='home' grid-list-md style="margin:0; max-width:1920px;padding:10px;overflow:hidden" fluid fill-height>
         <v-layout column>
-            <v-flex lg4 style="margin:5px;background:red">
+            <v-flex style="margin:5px;">
+                <!-- <boxplot ref='boxplot'></boxplot> -->
+                <plotly ref='boxplot'></plotly>
             </v-flex>          
             <v-flex lg8 class="card" style='margin:5px;'> 
                 <v-layout row nowrap fill-height>
@@ -33,11 +35,16 @@ const EventBus = {}
 let vm = undefined
 import heatmap from '@/components/Heatmap.vue'
 import scatterplot from '@/components/Scatterplot.vue'
+import boxplot from '@/components/Boxplot.vue'
+import plotly from '@/components/plotly.vue'
+
 export default{
     //需要使用到的组件
     components:{
         heatmap,
         scatterplot,
+        boxplot,
+        plotly,
     },
     //全局监听的变量
     data:() => {
@@ -67,7 +74,7 @@ export default{
         },
         // 载入资料
         loadData(){
-            vm.$axios.get(vm.$api+'/inference/get_covariance')
+            vm.$axios.get(vm.$api+'/inference/get_correlation')
             .then(vm.onDataLoader)
 			.catch(error => {
 				window.error = error
@@ -84,7 +91,7 @@ export default{
             heatmap.setHeaders(columns)
             hotInstance.render()
         },
-        // 载入 scatterplot 资料
+        // 载入 scatterplot 资料, 使用 heatmap.loading 来判断资料是否加载结束
         loadScatterplot(rowLabel, colLabel){
             vm.$refs.heatmap.loading = true
             let param = {

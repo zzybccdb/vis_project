@@ -110,12 +110,12 @@
 						<canvas style="height:450px" id="loss"></canvas>
 						<canvas style="height:450px" id="dis_loss"></canvas>
 					</v-layout>
-					<div style="width: 100%;">
-						<!-- <box-plot
+					<div ref='test' style="width: 100%;">
+						<!-- <BoxPlot
 						v-if="showAnalysis"
 						title='Importance of each dimension (Compare with ground truth)' 
 						api-url='/analysis/dim_importance'
-						ref="box1"></box-plot> -->
+						ref="box1"></BoxPlot> -->
 						<!-- <box-plot
 						v-if="showAnalysis"
 						title='Reconstruction error rate for each dimension' 
@@ -194,7 +194,7 @@ export default {
 		},
 
 		showAnalysis() {
-			// this.$refs.box1.load()
+			this.$refs.box1.load()
 			// this.$refs.box2.load()
 			// return this.state == 'paused'
 			return this.state == "ready"

@@ -177,6 +177,7 @@ export default {
 			var vm = this
 			let char_height = 300
 			vm.char_height = char_height
+			console.log(vm.$api + vm.$props.apiUrl)
 			vm.$axios.get(vm.$api + vm.$props.apiUrl)
 			.then((response) => {
 				let Data = response.data
