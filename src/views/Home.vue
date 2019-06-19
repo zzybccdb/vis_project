@@ -70,7 +70,7 @@
 							</v-text-field>
 						</v-layout>
 						<!-- Window Input Output -->
-						<v-layout>
+						<!-- <v-layout>
 							<v-text-field label="Input Window Size"
 							:error-messages="input_window_errors"
 							:disabled="disableForm"
@@ -83,7 +83,7 @@
 							v-model="output_window"
 							@change="onWindowSizeChange">
 							</v-text-field>
-						</v-layout>
+						</v-layout> -->
 						<v-btn :loading="requesting == 'newTrain'" color="primary" :disabled="disableNewTrainBtn" @click="onNewTrain">
 							<v-icon>add_box</v-icon>
 							New Training

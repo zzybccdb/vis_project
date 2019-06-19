@@ -27,7 +27,6 @@ export default {
             vm.$axios.get(vm.$api+'/inference/box_plot_plotly')
             .then((response)=>{
                 vm.data = response.data.data
-                console.log(vm.data)
                 Plotly.newPlot('myDiv', vm.data, {}, {showSendToCloud: true});
             })
 			.catch(error => {
@@ -42,27 +41,12 @@ export default {
         vm.boxplot = vm.$refs.boxplot
         
         vm.load()
-
-        // var y0=[],y1=[]
-        // for (let i = 0; i < 50; i ++) 
-        // {
-        //     y0[i] = Math.random();
-        //     y1[i] = Math.random();
-        // }
-
-        // var trace1 = {
-        //     y: y0,
-        //     type: 'box'
-        // };
-
-        // var trace2 = {
-        //     y: y1,
-        //     type: 'box'
-        // };
-
-        // var data = [trace1, trace2];
-
-        
+        window.addEventListener('resize',()=>{
+            Plotly.relayout('myDiv', {
+                'width':vm.$refs.boxplot.clientWidth,
+                'height':vm.$refs.boxplot.clientHeight
+            });
+        })        
     }
 }
 </script>

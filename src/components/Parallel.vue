@@ -182,12 +182,10 @@ export default {
 			line.box.push(box)
 			line.current_box = box
 			grp_axis.addChild(box)
-			// console.log("start")
 		},
 		selectingRange(e, line, grp_axis){
 			let vm = this
 			if(line != undefined && line.current_box != undefined){
-				// console.log("selecting Range",line.current_box)
 				let box = line.current_box
 				let p = e.data.getLocalPosition(vm.wrapper)
 				if (!e.data.buttons) {
@@ -206,7 +204,6 @@ export default {
 					box.height = Math.abs(box.start_y - p.y)
 					vm.filterLines()
 				}
-				// console.log(box.height)
 			}
 		},
 		drawFilterEnd(e, line, grp_axis){
@@ -230,7 +227,6 @@ export default {
 		addAxis(column, idx, dim) {
             let vm = this
 			let additional = !vm.eventBus.root.columns_train.includes(column)
-			// console.log(vm.eventBus.root.columns_train)
 			let grp_axis = new vm.$PIXI.Container()
 			vm.ctn_axis.addChild(grp_axis)
 			
@@ -316,21 +312,33 @@ export default {
 			})
 			vm.filterLines()
 		},
+		// 移除當前的 filter box
 		removeFilterBox(line, box, container){
 			let vm = this
+			let num_ctn_box = vm.eventBus.cal.ctn_box.length
 			line.box.splice(line.box.findIndex((a)=>{return a.index === box.index}),1)
 			container.removeChild(box)
 			line.box.forEach(b => {
 				b.enabled = true
 			})
 			vm.filterLines()
+			// 如果當前既沒有 filter box 也沒有 ctn box，清空當前內容
+			if(num_ctn_box===0 && vm.num_filter_box===0){
+				vm.eventBus.data.forEach(d => {
+					d.cal.selected = false
+					d.pcp = undefined
+					d.cm.texture = vm.eventBus.cm.dotTexture
+					d.cm.alpha = 0.3
+					d.cal.texture = vm.eventBus.cal.cellTexture
+				})
+				vm.clearData()
+			}
 		},
 		initFilterBox(x, y, container, line){
 			let vm = this
 			let PIXI = vm.$PIXI
 			let box = vm.drawFilterBox(x, y, line.box.length)
 			box.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 4 * vm.filterbox_width, vm.plot_height);
-			// console.log(box.x, box.y)
 			box.on("mousedown", () => box.moving = true )
 			box.on("mousemove", (e) => vm.filterBoxMove(e, box, line.y, container.x))
 			box.on("mouseup", () => box.moving = false)
@@ -437,16 +445,20 @@ export default {
 		},
 		filterLines() {
 			let vm = this
+			let num_ctn_box = vm.eventBus.cal.ctn_box.length
+			vm.num_filter_box = 0
 			let no_box = vm.state.axis.every(a => {
 				return a.grp.child_dict.line.box.length === 0
-			})
-			// vm.state.axis.forEach((axis,i) => {
-			// 	console.log(i+":",axis.grp.child_dict.line.box.length)
-			// })
+			})	
 			vm.state.axis[1].grp.child_dict.line.box.forEach((box,bi) => console.log(bi, ":", box.x, box.y))
 			vm.updateAlpha()
+			// 統計當前共有多少個 filter box
+			vm.state.axis.forEach(e=>{
+				vm.num_filter_box += e.grp.child_dict.line.box.length
+			})
+			// 遍歷所有資料
 			vm.eventBus.data.forEach(d => {
-				if (d.cal && d.cal.selected) {
+				if ((d.cal && d.cal.selected) || (!num_ctn_box && vm.num_filter_box)) {
 					let line = d.pcp
 					let boolmap = vm.state.axis.map(a =>{
 						let length = a.grp.child_dict.line.box.length
@@ -474,20 +486,37 @@ export default {
 					let pass = boolmap.every(a => {
 						return a === true
 					})
+					/////////////////////////////////////////
+					// 允許使用者在沒有對 calendar view 進行選擇的時候，直接對 pcp 進行選取
+					// 由於當前沒有繪製出 line
+					////////////////////////////////////////
+					if(pass && !num_ctn_box && vm.num_filter_box){
+						if(!line){
+							d.cal.selected = true
+							d.cm.texture = vm.eventBus.cm.selectedTexture
+							d.cm.alpha = 1.0
+							if (d.cal && d.cal.selected) {
+								let newline = new vm.$PIXI.Graphics()
+								vm.ctn_lines.addChild(newline)
+								d.pcp = newline
+								newline.tint = d.color
+								vm.adjustLines()
+							}
+						}
+					}
+					////////////////////////////////////////
+					////////////////////////////////////////
 					if (line) {
 						if (pass) {
 							line.tint = d.color
 							if (no_box) {
 								d.cal.texture = vm.eventBus.cal.cellTextureSelected
-								// console.log("pass,no_box _true:cellTextureSelectedeve")
 							} else {
 								d.cal.texture = vm.eventBus.cal.cellFilterTexture
-								// console.log("pass_true,no_box_false:cellFilterTexture")
 							}
 						} else {
 							line.alpha *= 0.1
 							d.cal.texture = vm.eventBus.cal.cellTextureSelected
-							// console.log("pass_false:cellTextureSelectedeve")
 						}
 					}
 				}
@@ -536,6 +565,9 @@ export default {
 					let line = new vm.$PIXI.Graphics()
 					vm.ctn_lines.addChild(line)
 					d.pcp = line
+				}
+				else{
+					d.pcp = undefined
 				}
 			})
 			vm.adjustTicks()
@@ -595,7 +627,7 @@ export default {
 				vm.addAxis(c, ci, ci + start_idx)
             })    
 			vm.loaded = true    
-        }
+		},
 	},
 	mounted() {
 		let vm = this
@@ -610,7 +642,7 @@ export default {
         vm.app.renderer.view.style.display = 'block'
         // disable the chrome default right click
         vm.$refs.home.addEventListener('contextmenu', e => {e.preventDefault()})
-        window.addEventListener('resize', vm.handleResize)
+		window.addEventListener('resize', vm.handleResize)
 		// loaded the pcp completely
 		vm.$emit('loaded')
 	},

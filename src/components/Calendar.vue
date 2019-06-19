@@ -61,7 +61,6 @@ export default {
 				let pass = ctn_box.some(box => {
                     // 判定當前 box 與 cell 是否歸屬於同一個 main ctn 之下
                     if(box.class === c.class){
-                        // console.log("what?")
                         let bool = vm.collision(c,box)
                         if(bool){
                             c.box = box
@@ -397,14 +396,15 @@ export default {
             vm.app.renderer.resize(vm.app.renderer.width, height + 50)
             // binding the data for the eventBus
             vm.eventBus.data.forEach(d => {
-				d.cal = vm.mapping[d.datetime.format(date_format)]
-				d.cal.data = d
+                d.cal = vm.mapping[d.datetime.format(date_format)]
+                d.cal.data = d
 
 				if (d.mask) {
 					d.cal.texture = vm.cellMaskTexture
 					d.cal.oldTexture = vm.cellMaskTexture
-				}
-			}) 
+                }
+            }) 
+
             vm.wrapper.x = (vm.app.renderer.width - vm.wrapper.width) / 2
         },
         // level 年 calendar view, 每一格顯示一天的內容，呼叫 addYear()繪製
@@ -481,6 +481,154 @@ export default {
 			main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
 			return ctn_year
         },
+        // level 月 calendar view,每一格顯示2小時資料
+        monthChart(){   
+            // 獲取資料的年份,起始和結束月份
+			let year = vm.eventBus.startDate.year()
+			let startMonth = vm.eventBus.startDate.month()
+            let endMonth = vm.eventBus.endDate.month()
+            // 每個月之間間距設定
+            let gap_size = (vm.padding + vm.cellSize * 13)
+            let height = undefined
+            // 繪製 back button,回到上一個 level 的結果
+            let str = String(year)
+            vm.drawBackLabel(str)
+
+            // 以每個月爲一個 main_ctn 
+			for(let m=startMonth;m<=endMonth;++m) {
+				let m_ctn = vm.addMonth(year, m)
+
+				if(m%2 === 1){
+					m_ctn.y = (m - startMonth -1)/2 * gap_size  + vm.padding + 20
+					m_ctn.x = 31 * vm.cellSize + 60
+				}
+				else{
+					m_ctn.y = (m - startMonth)/2 * gap_size  + vm.padding + 20
+				}
+				height = m_ctn.y + gap_size
+            }
+
+            return height
+        },
+        // level month 實際繪製代碼
+        addMonth(year, month){
+            let date = vm.eventBus.startDate.clone().month(month).date(1)
+            let [ctn_month,main_ctn,ctn_box,ctn_cells] = vm.containerInitial("ctn_month")
+            // 標籤容器宣告,繪製側邊月份信息
+            let y = 12
+            let label = vm.drawLabel(date.format('MMM'),year,y,month)
+            main_ctn.name = date.format('MMM')
+            main_ctn.x = label.height
+            ctn_month.addChild(label)
+            // 日 容器標籤
+            let ctn_label = new PIXI.Container()
+            ctn_label.name = 'ctn_label'
+            ctn_label.x =  label.height
+			ctn_month.addChild(ctn_label)
+            // 判別日期使用
+            let lastDate = undefined
+			while(date.month() === month) {
+				let x = (date.date()-1)
+				let y = date.hour()/2
+                let sp = new PIXI.Sprite(vm.cellTexture)
+                vm.spInitial(sp,x,y)
+                sp.class = main_ctn.name
+                // cell 鼠標操作
+                sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
+                sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
+                sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
+                sp.rightdown = () => {vm.spRightDown(sp)}                
+				vm.mapping[date.format(date_format)] = sp
+
+				let dayOfMonth = date.date()
+				if (lastDate != dayOfMonth) {
+					lastDate = dayOfMonth
+					let color = (date.day() === 6|| date.day() === 0)?0xff0000:0x000000
+                    // 繪製上方日期信息
+                    let day_label = new PIXI.Text(date.format('Do')
+					, {fontFamily : vm.pixi_font, fontSize: vm.pixi_font_size, fill : color, align : 'center'})
+					day_label.x = sp.x
+					day_label.y = - 13
+					day_label.rotation = - Math.PI / 4;
+					ctn_label.addChild(day_label)
+				}
+
+                date.add(2, 'hour')
+                ctn_cells.addChild(sp)
+            }
+			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
+            main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
+			main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)}           
+            return ctn_month
+        },
+        // level 日 calendar view, 每一格顯示5分鐘資料
+        dayChart(){
+			let year = vm.eventBus.startDate.year()
+			let month = vm.eventBus.startDate.month()
+			let startDay = vm.eventBus.startDate.date()
+            let endDay = vm.eventBus.endDate.date()
+            // 唯一存成
+            let gap_size = (vm.padding + vm.cellSize * 7)
+            let height = undefined
+            // 繪製 back button,回到上一個 level 的結果
+            let str = vm.eventBus.startDate.format('YYYY-MM')
+            vm.drawBackLabel(str)
+
+            // 繪製 level day 的具體 calender view
+			for(let d=startDay;d<=endDay;++d) {
+				let d_ctn = vm.addDay(year, month, d)
+				d_ctn.y = (d - startDay) * gap_size + vm.padding + 20
+				height = d_ctn.y + gap_size
+            }            
+
+            return height
+        },
+        // level day 實際繪製代碼
+        addDay(year,month,day){
+			let date = vm.eventBus.startDate.clone().date(day)
+            let [ctn_day,main_ctn,ctn_box,ctn_cells,] = vm.containerInitial("ctn_day")
+            // day information 容器
+            let color = (date.day() === 6|| date.day() === 0)?0xff0000:0x000000
+            let y = 6
+            let label = vm.drawLabel(date.format('MMM-Do-ddd'),year,y,undefined,color)
+            main_ctn.name = date.format('MMM-Do-ddd')
+            main_ctn.x = label.height
+            ctn_day.addChild(label)
+            // hour 標籤容器
+			let ctn_label = new vm.$PIXI.Container()
+			ctn_label.name = 'ctn_label'
+			ctn_label.x = label.height
+			ctn_day.addChild(ctn_label)
+            // 判別時間使用
+			let lastHour = undefined
+			while(date.date() == day) {
+				let x = (date.hour()) * 2 + (date.minute() >= 30)
+				let y = ((date.minute()/5) % 6)
+                let sp = new vm.$PIXI.Sprite(vm.cellTexture)
+                sp.class = main_ctn.name
+                vm.spInitial(sp,x,y)
+                // cell 鼠標操作
+                sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
+                sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
+                sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
+                sp.rightdown = () => {vm.spRightDown(sp)}                 
+				vm.mapping[date.format(date_format)] = sp
+
+				let hourOfDay = date.hour()
+				if (lastHour != hourOfDay) {
+                    lastHour = hourOfDay
+					let label = new vm.$PIXI.Text(date.format('HH')
+					, {fontFamily : vm.pixi_font, fontSize: vm.pixi_font_size, fill : 0x000000, align : 'center'})
+					label.x = sp.x
+					label.y = -label.height - 3
+					ctn_label.addChild(label)
+				}
+
+				date.add(5, 'minute')
+				ctn_cells.addChild(sp)
+            }
+			return ctn_day
+        },
         // ****** cell 單獨操作
         // cell sp 初始化設定
         spInitial(sp,x,y){
@@ -544,6 +692,9 @@ export default {
                     c.singSelected = false	
                     c.texture = vm.cellTexture
                     c.selected = false
+                    // 檢測當前 cell 是否爲空，如果是空白就跳過
+                    if(c.tint === 0xCCCCCC)
+                        c.data.pcp = undefined
                 })		
                 ctn_box.removeChild(sp.box)
                 vm.ctn_box.splice(sp.box.index,1)
@@ -740,11 +891,11 @@ export default {
             return [ctn_,main_ctn,ctn_box,ctn_cells,ctn_border]
         },
         // //鼠标从 cell 上移开后, 重置 pcp alpha
-        // cellMouseout(){
-        //     if(!vm.highLightBlock){
-        //         vm.eventBus.pcp.resetAlpha();
-        //     }
-        // },
+        cellMouseout(){
+            if(!vm.highLightBlock){
+                vm.eventBus.pcp.resetAlpha();
+            }
+        },
         // 绘制标签,输入一个 string
         drawLabel(str,year,y,month=undefined,color=0x000000){
             let label = new PIXI.Text(str,{fontFamily : vm.pixi_font, fontSize: vm.pixi_font_size, fill : color, align : 'center'})
@@ -755,7 +906,6 @@ export default {
             label.buttonMode = true
             // 标签点击事件宣告
             label.mousedown = ()=>{
-                console.log(month)
                 if(month === undefined){
                     console.log("load month data")
                     let sd = vm.$moment.utc().year(year).dayOfYear(1).hour(0).minute(0).second(0)
@@ -772,155 +922,7 @@ export default {
             }
             return label
         },
-        
-        monthChart(){   
-            // 獲取資料的年份,起始和結束月份
-			let year = vm.eventBus.startDate.year()
-			let startMonth = vm.eventBus.startDate.month()
-            let endMonth = vm.eventBus.endDate.month()
-            // 每個月之間間距設定
-            let gap_size = (vm.padding + vm.cellSize * 13)
-            let height = undefined
-            // 繪製 back button,回到上一個 level 的結果
-            let str = String(year)
-            vm.drawBackLabel(str)
-
-            // 以每個月爲一個 main_ctn 
-			for(let m=startMonth;m<=endMonth;++m) {
-				let m_ctn = vm.addMonth(year, m)
-
-				if(m%2 === 1){
-					m_ctn.y = (m - startMonth -1)/2 * gap_size  + vm.padding + 20
-					m_ctn.x = 31 * vm.cellSize + 60
-				}
-				else{
-					m_ctn.y = (m - startMonth)/2 * gap_size  + vm.padding + 20
-				}
-				height = m_ctn.y + gap_size
-            }
-
-            return height
-        },
-
-        addMonth(year, month){
-            let date = vm.eventBus.startDate.clone().month(month).date(1)
-            let [ctn_month,main_ctn,ctn_box,ctn_cells] = vm.containerInitial("ctn_month")
-            // 標籤容器宣告,繪製側邊月份信息
-            let y = 12
-            let label = vm.drawLabel(date.format('MMM'),year,y,month)
-            main_ctn.name = date.format('MMM')
-            main_ctn.x = label.height
-            ctn_month.addChild(label)
-            // 日 容器標籤
-            let ctn_label = new PIXI.Container()
-            ctn_label.name = 'ctn_label'
-            ctn_label.x =  label.height
-			ctn_month.addChild(ctn_label)
-            // 判別日期使用
-            let lastDate = undefined
-			while(date.month() === month) {
-				let x = (date.date()-1)
-				let y = date.hour()/2
-                let sp = new PIXI.Sprite(vm.cellTexture)
-                vm.spInitial(sp,x,y)
-                sp.class = main_ctn.name
-                // cell 鼠標操作
-                sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
-                sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
-                sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
-                sp.rightdown = () => {vm.spRightDown(sp)}                
-				vm.mapping[date.format(date_format)] = sp
-
-				let dayOfMonth = date.date()
-				if (lastDate != dayOfMonth) {
-					lastDate = dayOfMonth
-					let color = (date.day() === 6|| date.day() === 0)?0xff0000:0x000000
-                    // 繪製上方日期信息
-                    let day_label = new PIXI.Text(date.format('Do')
-					, {fontFamily : vm.pixi_font, fontSize: vm.pixi_font_size, fill : color, align : 'center'})
-					day_label.x = sp.x
-					day_label.y = - 13
-					day_label.rotation = - Math.PI / 4;
-					ctn_label.addChild(day_label)
-				}
-
-                date.add(2, 'hour')
-                ctn_cells.addChild(sp)
-            }
-			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
-            main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-			main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)}           
-            return ctn_month
-        },
-
-        dayChart(){
-			let year = vm.eventBus.startDate.year()
-			let month = vm.eventBus.startDate.month()
-			let startDay = vm.eventBus.startDate.date()
-            let endDay = vm.eventBus.endDate.date()
-            // 唯一存成
-            let gap_size = (vm.padding + vm.cellSize * 7)
-            let height = undefined
-            // 繪製 back button,回到上一個 level 的結果
-            let str = vm.eventBus.startDate.format('YYYY-MM')
-            vm.drawBackLabel(str)
-
-            // 繪製 level day 的具體 calender view
-			for(let d=startDay;d<=endDay;++d) {
-				let d_ctn = vm.addDay(year, month, d)
-				d_ctn.y = (d - startDay) * gap_size + vm.padding + 20
-				height = d_ctn.y + gap_size
-            }            
-
-            return height
-        },
-
-        addDay(year,month,day){
-			let date = vm.eventBus.startDate.clone().date(day)
-            let [ctn_day,main_ctn,ctn_box,ctn_cells,] = vm.containerInitial("ctn_day")
-            // day information 容器
-            let color = (date.day() === 6|| date.day() === 0)?0xff0000:0x000000
-            let y = 6
-            let label = vm.drawLabel(date.format('MMM-Do-ddd'),year,y,undefined,color)
-            main_ctn.name = date.format('MMM-Do-ddd')
-            main_ctn.x = label.height
-            ctn_day.addChild(label)
-            // hour 標籤容器
-			let ctn_label = new vm.$PIXI.Container()
-			ctn_label.name = 'ctn_label'
-			ctn_label.x = label.height
-			ctn_day.addChild(ctn_label)
-            // 判別時間使用
-			let lastHour = undefined
-			while(date.date() == day) {
-				let x = (date.hour()) * 2 + (date.minute() >= 30)
-				let y = ((date.minute()/5) % 6)
-                let sp = new vm.$PIXI.Sprite(vm.cellTexture)
-                sp.class = main_ctn.name
-                vm.spInitial(sp,x,y)
-                // cell 鼠標操作
-                sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
-                sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
-                sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
-                sp.rightdown = () => {vm.spRightDown(sp)}                 
-				vm.mapping[date.format(date_format)] = sp
-
-				let hourOfDay = date.hour()
-				if (lastHour != hourOfDay) {
-                    lastHour = hourOfDay
-					let label = new vm.$PIXI.Text(date.format('HH')
-					, {fontFamily : vm.pixi_font, fontSize: vm.pixi_font_size, fill : 0x000000, align : 'center'})
-					label.x = sp.x
-					label.y = -label.height - 3
-					ctn_label.addChild(label)
-				}
-
-				date.add(5, 'minute')
-				ctn_cells.addChild(sp)
-            }
-			return ctn_day
-        },
-
+        // 返回按鍵設置
         drawBackLabel(str){
 			let back_button = new PIXI.Text("Back: " + str
 			, {fontFamily : vm.pixi_font, fontSize: vm.pixi_font_size, fill : 0x000000, align : 'center'})
@@ -931,7 +933,6 @@ export default {
 				vm.goLastZoom()
 			}
         },
-
 		adjustAxisOrder() {
 			let boxes = []
 			let disableSort = true
@@ -1001,7 +1002,6 @@ export default {
     // 離開頁面前執行, 取消 window 全局監聽內容.
     // 包括 resize, keydown, keyup 等.
 	beforeDestroy() {
-		var vm = this;
 		window.removeEventListener('resize', vm.handleResize)
 		window.removeEventListener("keydown",vm.checkKeydown)
 		window.removeEventListener("keyup", vm.KeyUp);
