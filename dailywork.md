@@ -18,3 +18,10 @@
 
 #### 2019/06/19
 - 加入新的功能，允許使用者在 pcp 上直接 filter 資料
+
+#### 2019/06/20
+- 修正了 correlation matrix 回傳 nan 的問題
+- 修正了 ticks 數量分佈不均的問題
+- 允許使用者可以繪製對角線的 scatter plot
+- 將 pcp 軸線間距加倍
+- 將 box plot 調整爲每個維度單獨繪製
