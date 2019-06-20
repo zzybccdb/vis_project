@@ -202,7 +202,7 @@ export default {
 						box.y = box.start_y
 					}
 					box.height = Math.abs(box.start_y - p.y)
-					vm.filterLines()
+					// vm.filterLines()
 				}
 			}
 		},
@@ -294,10 +294,11 @@ export default {
 				else{
 					box.moving = false
 				}
-				vm.filterLines()
+				// vm.filterLines()
 			}			
 		},	 
 		filterBoxMoveOver(line, box){
+			console.log("end")
 			let vm = this
 			line.box.forEach(b => {
 				b.enabled = false
@@ -382,8 +383,18 @@ export default {
 				let axis_y_start = vm.state.axis[0].grp.child_dict.line.y
 				a.scale = vm.$d3.scaleLinear()
 					.domain(a.extent).range([axis_y_start + vm.plot_height, axis_y_start])
-
-				let ticks = a.scale.ticks(5)
+				// 自己定義間距,計算 ticks 數值 
+				let range = a.extent[1] - a.extent[0]
+				let gap = range / 4
+				let ticks = [parseFloat(a.extent[0].toFixed(4))]
+				for(let i = 1; i < 4; i++){
+					ticks.push(parseFloat((ticks[0]+i*gap).toFixed(4)))
+				}
+				ticks.push(parseFloat(a.extent[1].toFixed(4)))
+				// 確保 ticks 唯一性
+				ticks = new Set(ticks)
+				// 使用 d3 取得其 ticks 數值
+				// let ticks = a.scale.ticks(5)
 				a.grp.child_dict.ctn_ticks.removeChildren()
 				for (let t of ticks) {
 					let tick = new vm.$PIXI.Graphics()
@@ -583,7 +594,7 @@ export default {
             let vm = this
 			// constant 
 			vm.alpha_m = 0.4
-            vm.min_axis_gap = 40
+            vm.min_axis_gap = 80
             vm.filterbox_width = 10
             vm.plot_height = 190
 			vm.dim_font = 'Arial'
