@@ -627,6 +627,9 @@ export default {
 				date.add(5, 'minute')
 				ctn_cells.addChild(sp)
             }
+			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
+            main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
+			main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
 			return ctn_day
         },
         // ****** cell 單獨操作
