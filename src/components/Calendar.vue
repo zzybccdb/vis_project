@@ -478,7 +478,10 @@ export default {
             }   
 			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-			main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
+            main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
+            main_ctn.mouseout = (e) => {
+                vm.eventBus.pcp.highLight()
+            }
 			return ctn_year
         },
         // level 月 calendar view,每一格顯示2小時資料

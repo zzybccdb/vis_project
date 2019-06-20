@@ -1,16 +1,18 @@
 <template>
     <!-- <v-layout ref='layout'> -->
-        <div id="myDiv" style="height:300px" ref='boxplot'></div>
+        <v-layout ref='boxplot' row align-center style="overflow:auto">
+            <div v-bind:id='col' v-for = "col in columns" style="height:300px;min-width:150px;max-width=300px" ></div>
+            <!-- <div id="myDiv"  ref='boxplot'></div> -->
+        </v-layout>
     <!-- </v-layout> -->
 </template>
 <script>
 // 一个颜色表的 lib
 
 let vm = undefined
-let PIXI = undefined
 
 export default {
-    props:['title'],
+    props:['title','columns'],
     components: {
     },
     data: () => {
@@ -27,7 +29,23 @@ export default {
             vm.$axios.get(vm.$api+'/inference/box_plot_plotly')
             .then((response)=>{
                 vm.data = response.data.data
-                Plotly.newPlot('myDiv', vm.data, {}, {showSendToCloud: true});
+                let layout = {
+                    showlegend: false,
+                    margin: {
+                        l: 20,
+                        r: 20,
+                        b: 20,
+                        t: 20,
+                        pad: 0
+                    },
+                }
+                setTimeout(()=>{
+                    vm.data.forEach(data => {
+                        Plotly.newPlot(data[0].name, data, layout, {displayModeBar:false,showSendToCloud: true});
+                    });
+                    vm.EventBus.heatmap.loading = false
+                }, 1000)
+                
             })
 			.catch(error => {
 				window.error = error

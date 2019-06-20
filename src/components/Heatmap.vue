@@ -31,7 +31,7 @@ export default {
     },
     data: () => {
         return {
-            loading:false,
+            loading:true,
             settings: {
                 data: [
                     //資料格式
@@ -82,7 +82,7 @@ export default {
                     TD.style.backgroundColor = vm.color(value)
 
                 },
-                afterOnCellMouseDown:(event,coords,TD) => {
+                afterOnCellMouseDown:(event,coords) => {
                     let row = coords.row
                     let col = coords.col
                     // if(row !== col){

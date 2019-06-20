@@ -14,14 +14,14 @@
         <v-layout column>
             <v-flex style="margin:5px;">
                 <!-- <boxplot ref='boxplot'></boxplot> -->
-                <plotly ref='boxplot'></plotly>
+                <plotly :columns="columns" ref='boxplot'></plotly>
             </v-flex>          
             <v-flex lg8 class="card" style='margin:5px;'> 
                 <v-layout row nowrap fill-height>
                     <v-flex lg8 style='margin:5px;overflow:hidden'>
                         <heatmap ref='heatmap'></heatmap>
                     </v-flex>
-                    <v-flex lg4 style='margin:5px;overflow:hidden'>
+                    <v-flex lg4 style='margin:5px;overflow:scroll'>
                         <scatterplot ref='scatter'></scatterplot>
                     </v-flex>
                 </v-layout>
@@ -49,6 +49,7 @@ export default{
     //全局监听的变量
     data:() => {
         return{
+            columns:[]
         }
     },
     //
@@ -84,12 +85,14 @@ export default{
         onDataLoader(response){
             let heatmap = vm.$refs.heatmap  
             let data = response.data.data
+
             let columns = response.data.columns
             let extent = response.data.extent
             let hotInstance = vm.$refs.heatmap.$refs.hot.hotInstance
             heatmap.changeData(data,extent)
             heatmap.setHeaders(columns)
             hotInstance.render()
+            vm.columns =  columns
         },
         // 载入 scatterplot 资料, 使用 heatmap.loading 来判断资料是否加载结束
         loadScatterplot(rowLabel, colLabel){
@@ -117,7 +120,11 @@ export default{
         vm.EventBus = EventBus
         vm.EventBus.root = vm
         let heatmap = vm.$refs.heatmap
+        let boxplot = vm.$refs.boxplot
         heatmap.EventBus = EventBus
+        boxplot.EventBus = EventBus
+
+        EventBus.heatmap = heatmap
         vm.initial()
     },
     //离开时执行的内容

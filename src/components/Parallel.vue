@@ -594,7 +594,7 @@ export default {
             let vm = this
 			// constant 
 			vm.alpha_m = 0.4
-            vm.min_axis_gap = 80
+            vm.min_axis_gap = 120
             vm.filterbox_width = 10
             vm.plot_height = 190
 			vm.dim_font = 'Arial'
