@@ -85,11 +85,14 @@ export default {
                 afterOnCellMouseDown:(event,coords,TD) => {
                     let row = coords.row
                     let col = coords.col
-                    if(row !== col){
-                        let rowLabel = vm.columns[row]
-                        let colLabel = vm.columns[col]
-                        vm.EventBus.root.loadScatterplot(rowLabel,colLabel)
-                    }
+                    // if(row !== col){
+                    //     let rowLabel = vm.columns[row]
+                    //     let colLabel = vm.columns[col]
+                    //     vm.EventBus.root.loadScatterplot(rowLabel,colLabel)
+                    // }
+                    let rowLabel = vm.columns[row]
+                    let colLabel = vm.columns[col]
+                    vm.EventBus.root.loadScatterplot(rowLabel,colLabel)
                 },
             },
             color_range:['moccasin', 'rgba(147,210,197,1)']
@@ -142,12 +145,12 @@ export default {
                 let ctx = canvas.getContext('2d');
                 // 設定 gradient 的時候設定是 x1，y1，x2，y2
                 let gradient = ctx.createLinearGradient(0,20,0,280)
-                gradient.addColorStop(0,'moccasin')
-                gradient.addColorStop(1,'rgba(147,210,197,1)')
+                gradient.addColorStop(1,'moccasin')
+                gradient.addColorStop(0,'rgba(147,210,197,1)')
 
                 ctx.font = "12px serif"
-                ctx.fillText("Min",17,15)
-                ctx.fillText("Max",17,295)
+                ctx.fillText("Min",17,295)
+                ctx.fillText("Max",17,15)
                 
                 ctx.fillStyle = gradient
                 // 注意繪製矩形的時候輸入是 x，y，width，height
@@ -156,7 +159,6 @@ export default {
         },
         // 自動擴展欄位
         autoColResize(){
-            console.log('change')
             let hot = vm.$refs.hot.hotInstance
             vm.settings.autoColumnSize = !vm.settings.autoColumnSize
             hot.render()
