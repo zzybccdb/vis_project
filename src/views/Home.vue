@@ -108,7 +108,7 @@
 					</v-form>
 					<v-layout column>
 						<canvas style="height:450px" id="loss"></canvas>
-						<canvas style="height:450px" id="dis_loss"></canvas>
+						<canvas v-if="dist" style="height:450px" id="dis_loss"></canvas>
 					</v-layout>
 					<div ref='test' style="width: 100%;">
 						<!-- <BoxPlot
@@ -131,6 +131,7 @@
 
 <script>
 import Chart from 'chart.js'
+import { setTimeout } from 'timers';
 // import BoxPlot from '@/components/BoxPlot.vue'
 
 export default {
@@ -165,7 +166,7 @@ export default {
 		input_window:1,
 		output_window:1,
 		loss_weight:1.00,
-
+		dist:true,
 	}),
 	computed: {
 		anyError() {
@@ -254,34 +255,41 @@ export default {
 				vm.requesting = 'none'
 			})
 		},
-		addLoss(rec_loss,dis_loss,step) {
+		addLoss(rec_loss,dis_loss=undefined,step) {
 			let vm = this;
 			vm.config.data.labels.push(String(step));
 			vm.config.data.datasets[0].data.push(rec_loss);
-			console.log(step,rec_loss)
 			if (vm.config.data.labels.length > 100) {
 				vm.config.data.labels.shift();
 				vm.config.data.datasets[0].data.shift();
 			}
-
-			vm.dis_config.data.labels.push(String(step));
-			vm.dis_config.data.datasets[0].data.push(dis_loss);
-			if (vm.dis_config.data.labels.length > 100) {
-				vm.dis_config.data.labels.shift();
-				vm.dis_config.data.datasets[0].data.shift();
-			}
-
-			vm.dis_loss_plot.update()
 			vm.loss_plot.update()	
+
+			if(dis_loss){
+				vm.dis_config.data.labels.push(String(step));
+				vm.dis_config.data.datasets[0].data.push(dis_loss);
+				if (vm.dis_config.data.labels.length > 100) {
+					vm.dis_config.data.labels.shift();
+					vm.dis_config.data.datasets[0].data.shift();
+				}
+				vm.dis_loss_plot.update()
+			}
 		},
 		getProgress() {
 			var vm = this
 			if (vm.state == 'training' && vm.requesting == 'none') {
 				this.$axios.post(this.$api + '/train/progress',{'start':vm.start}).then(response => {
 					vm.state = response.data.state
-					console.log(response.data)
-					if(response.data.rec_loss && response.data.dis_loss){
-						vm.addLoss(response.data.rec_loss,response.data.dis_loss,response.data.step)
+					let model = response.data.model
+					if(model === 'NN based MDS'){
+						if(response.data.rec_loss && response.data.dis_loss){
+							vm.addLoss(response.data.rec_loss,response.data.dis_loss,response.data.step)
+						}
+					}
+					else{
+						if(response.data.rec_loss){
+							vm.addLoss(response.data.rec_loss,undefined,response.data.step)
+						}						
 					}
 					
 				}).catch(error => {
@@ -306,6 +314,15 @@ export default {
 			}).then(response => {
 				vm.state = response.data.state
 				vm.network_errors = []
+				if(vm.network === 'NN based MDS'){
+					vm.dist = true
+					setTimeout(()=>{
+						let dis = document.getElementById('dis_loss').getContext('2d')
+						vm.dis_loss_plot = new Chart(dis,vm.dis_config)
+					},100)
+				}else{
+					vm.dist = false
+				}
 			}).catch(error => {
 				vm.network_errors = [error.response.data]
 			})
@@ -503,8 +520,9 @@ export default {
 			}
 		}
 		// vm.start = true
-		var ctx = document.getElementById('loss').getContext('2d');
+		let ctx = document.getElementById('loss').getContext('2d');
 		vm.loss_plot = new Chart(ctx, vm.config)
+
 		let dis = document.getElementById('dis_loss').getContext('2d')
 		vm.dis_loss_plot = new Chart(dis,vm.dis_config)
 		// this.$axios.post(this.$api + '/train/get_param', {
