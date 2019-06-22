@@ -107,8 +107,8 @@
 						</v-btn>
 					</v-form>
 					<v-layout column>
-						<canvas style="height:450px" id="loss"></canvas>
-						<canvas v-if="dist" style="height:450px" id="dis_loss"></canvas>
+						<canvas v-if="recon_loss" style="height:450px" id="loss"></canvas>
+						<canvas v-if="dist_loss" style="height:450px" id="dis_loss"></canvas>
 					</v-layout>
 					<div ref='test' style="width: 100%;">
 						<!-- <BoxPlot
@@ -166,7 +166,8 @@ export default {
 		input_window:1,
 		output_window:1,
 		loss_weight:1.00,
-		dist:true,
+		dist_loss:false,
+		recon_loss:false,
 	}),
 	computed: {
 		anyError() {
@@ -206,7 +207,38 @@ export default {
 			var vm = this
 			vm.requesting = 'newTrain'
 			vm.start = true
-			// this.$axios.post(this.$api + '/train/start_new', {
+			if(vm.network === 'NN based MDS'){
+				vm.dist_loss = true
+				vm.recon_loss = true
+				window.recon_loss = true
+				window.dis_loss = true 
+				setTimeout(()=>{
+					let ctx = document.getElementById('loss').getContext('2d');
+					vm.loss_plot = new Chart(ctx, vm.config)
+
+					let dis = document.getElementById('dis_loss').getContext('2d')
+					vm.dis_loss_plot = new Chart(dis,vm.dis_config)
+
+					vm.startTrain()
+				},500)
+			}else if(vm.network === 'Autoencoder' || vm.network === 'VAE'){
+				vm.recon_loss = true
+				window.recon_loss = true
+				setTimeout(()=>{
+					let ctx = document.getElementById('loss').getContext('2d');
+					vm.loss_plot = new Chart(ctx, vm.config)
+
+					vm.startTrain()
+				},500)
+			}
+			else{
+				vm.startTrain()
+			}
+
+		},
+
+		startTrain(){
+			let vm = this
 			this.$axios.post(this.$api + '/train/start', {
 				'network': vm.network,
 				'dataset': vm.dataset,
@@ -221,18 +253,21 @@ export default {
 			}).catch(error => {
 				console.log('something went wrong!', error.response.data)
 			}).finally(() => {
+				console.log("clear loss chart")
 				vm.requesting = 'none'
 
 				vm.config.data.labels = []
 				vm.config.data.datasets[0].data = []
-
-				vm.loss_plot.update()
+				if(vm.recon_loss)
+					vm.loss_plot.update()
 
 				vm.dis_config.data.labels = []
 				vm.dis_config.data.datasets[0].data = []
-				vm.dis_loss_plot.update()
+				if(vm.dist_loss)
+					vm.dis_loss_plot.update()
 			})
 		},
+
 		onContinue() {
 			var vm = this
 			vm.requesting = 'continue'
@@ -312,17 +347,23 @@ export default {
 			this.$axios.post(this.$api + '/train/set_param', {
 				'network': vm.network
 			}).then(response => {
+				// 清空當前 loss 圖表的圖表內容,已經清除圖表暫存數據
 				vm.state = response.data.state
 				vm.network_errors = []
-				if(vm.network === 'NN based MDS'){
-					vm.dist = true
-					setTimeout(()=>{
-						let dis = document.getElementById('dis_loss').getContext('2d')
-						vm.dis_loss_plot = new Chart(dis,vm.dis_config)
-					},100)
-				}else{
-					vm.dist = false
-				}
+				vm.requesting = 'none'
+
+				vm.config.data.labels = []
+				vm.config.data.datasets[0].data = []
+				vm.loss_plot.update()
+
+				vm.dis_config.data.labels = []
+				vm.dis_config.data.datasets[0].data = []
+				vm.dis_loss_plot.update()
+
+				vm.dist_loss = false
+				vm.recon_loss = false
+				window.recon_loss = false
+				window.dist_loss = false
 			}).catch(error => {
 				vm.network_errors = [error.response.data]
 			})
@@ -519,14 +560,21 @@ export default {
 				}
 			}
 		}
-		// vm.start = true
-		let ctx = document.getElementById('loss').getContext('2d');
-		vm.loss_plot = new Chart(ctx, vm.config)
 
-		let dis = document.getElementById('dis_loss').getContext('2d')
-		vm.dis_loss_plot = new Chart(dis,vm.dis_config)
-		// this.$axios.post(this.$api + '/train/get_param', {
-		// 	'param': [
+		vm.recon_loss = window.recon_loss
+		vm.dist_loss = window.dist_loss
+		
+		setTimeout(() => {			
+			if(vm.recon_loss){
+				let ctx = document.getElementById('loss').getContext('2d');
+				vm.loss_plot = new Chart(ctx, vm.config)
+			}
+			if(vm.dist_loss){
+				let dis = document.getElementById('dis_loss').getContext('2d')
+				vm.dis_loss_plot = new Chart(dis,vm.dis_config)
+			}
+		}, 300);
+
 		this.$axios.post(this.$api + '/train/get_param', [
 				'networks',
 				'network',
@@ -540,8 +588,6 @@ export default {
 				'loss_weight',
 				'input_window',
 				'output_window',
-			// ]
-		// }).then((response) => {
 		]).then((response) => {
 			vm.state = response.data.state
 			vm.network = response.data.network

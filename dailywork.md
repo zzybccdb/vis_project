@@ -29,3 +29,6 @@
 #### 2019/06/21
 - 將 AE VAE loss line chart 均修正爲只有 reconstruction loss
 - 只有 nn based mds 下存在 distance loss, 並且會計算 global distance matrix
+
+#### 2019/06/22
+- 將主界面的 loss line chart 先隱藏起來,選定 model 後在決定需要繪製哪些loss
