@@ -35,3 +35,4 @@
 
 #### 2019/06/24 
 - 修正在 highlight pcp 後,移開沒有取消 highlight 效果的問題
+- 修正了 filterline 卡頓的問題

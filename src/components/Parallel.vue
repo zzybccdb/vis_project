@@ -462,7 +462,8 @@ export default {
 				return a.grp.child_dict.line.box.length === 0
 			})	
 			vm.state.axis[1].grp.child_dict.line.box.forEach((box,bi) => console.log(bi, ":", box.x, box.y))
-			vm.updateAlpha()
+			if(!num_ctn_box)
+				vm.updateAlpha()
 			// 統計當前共有多少個 filter box
 			vm.state.axis.forEach(e=>{
 				vm.num_filter_box += e.grp.child_dict.line.box.length
@@ -504,6 +505,7 @@ export default {
 					if(pass && !num_ctn_box && vm.num_filter_box){
 						if(!line){
 							d.cal.selected = true
+							d.cal.texture = vm.eventBus.cal.cellTextureSelected
 							d.cm.texture = vm.eventBus.cm.selectedTexture
 							d.cm.alpha = 1.0
 							if (d.cal && d.cal.selected) {
@@ -511,7 +513,7 @@ export default {
 								vm.ctn_lines.addChild(newline)
 								d.pcp = newline
 								newline.tint = d.color
-								vm.adjustLines()
+								// vm.adjustLines()
 							}
 						}
 					}
@@ -532,6 +534,10 @@ export default {
 					}
 				}
 			})
+
+			if(!num_ctn_box && vm.num_filter_box){
+				vm.updateData()
+			}
 		},
 		adjustLines() {
 			let vm = this
