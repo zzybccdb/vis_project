@@ -32,3 +32,6 @@
 
 #### 2019/06/22
 - 將主界面的 loss line chart 先隱藏起來,選定 model 後在決定需要繪製哪些loss
+
+#### 2019/06/24 
+- 修正在 highlight pcp 後,移開沒有取消 highlight 效果的問題

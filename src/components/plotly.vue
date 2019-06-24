@@ -1,8 +1,7 @@
 <template>
     <!-- <v-layout ref='layout'> -->
-        <v-layout ref='boxplot' row align-center style="overflow:auto">
-            <div v-bind:id='col' v-for = "col in columns" style="height:300px;min-width:150px;max-width=300px" ></div>
-            <!-- <div id="myDiv"  ref='boxplot'></div> -->
+        <v-layout id='boxplot' ref='boxplot' row align-center style="overflow:auto">
+            <div v-bind:id='col' v-for = "col in columns" :key="col" style="height:300px;min-width:150px;max-width=300px" ></div>
         </v-layout>
     <!-- </v-layout> -->
 </template>
@@ -58,13 +57,7 @@ export default {
         PIXI = vm.$PIXI
         vm.boxplot = vm.$refs.boxplot
         
-        vm.load()
-        window.addEventListener('resize',()=>{
-            Plotly.relayout('myDiv', {
-                'width':vm.$refs.boxplot.clientWidth,
-                'height':vm.$refs.boxplot.clientHeight
-            });
-        })        
+        vm.load()   
     }
 }
 </script>
