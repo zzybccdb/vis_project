@@ -500,7 +500,9 @@ export default {
 					})
 					/////////////////////////////////////////
 					// 允許使用者在沒有對 calendar view 進行選擇的時候，直接對 pcp 進行選取
-					// 由於當前沒有繪製出 line
+					// 由於當前沒有繪製出 line, 需要重新绘制
+					// 判断条件是当前没有 filter box，也没有 calender view 的 ctn_box
+					// 这个情况下就绘制
 					////////////////////////////////////////
 					if(pass && !num_ctn_box && vm.num_filter_box){
 						if(!line){

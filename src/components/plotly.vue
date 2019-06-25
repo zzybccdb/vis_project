@@ -31,7 +31,7 @@ export default {
                 let layout = {
                     showlegend: false,
                     margin: {
-                        l: 20,
+                        l: 80,
                         r: 20,
                         b: 20,
                         t: 20,
