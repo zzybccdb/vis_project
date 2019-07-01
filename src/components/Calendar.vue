@@ -479,7 +479,7 @@ export default {
 			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
             main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
-            main_ctn.mouseout = (e) => {vm.eventBus.pcp.resetAlpha()}
+            main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}
 			return ctn_year
         },
         // level 月 calendar view,每一格顯示2小時資料
@@ -560,7 +560,7 @@ export default {
 			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
             main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
-            main_ctn.mouseout = (e) => {vm.eventBus.pcp.resetAlpha()}          
+            main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}          
             return ctn_month
         },
         // level 日 calendar view, 每一格顯示5分鐘資料
@@ -632,7 +632,7 @@ export default {
 			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
 			main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
-            main_ctn.mouseout = (e) => {vm.eventBus.pcp.resetAlpha()}
+            main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}
             return ctn_day
         },
         // ****** cell 單獨操作

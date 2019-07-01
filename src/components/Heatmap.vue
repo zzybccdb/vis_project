@@ -169,6 +169,7 @@ export default {
         vm = this
         d3 = vm.$d3
         hotInstance.root = vm
+        vm.load = true 
         vm.drawColorScale()
     }
 }

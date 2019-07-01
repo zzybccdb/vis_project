@@ -13,8 +13,7 @@
     <v-container ref='home' grid-list-md style="margin:0; max-width:1920px;padding:10px;overflow:hidden" fluid fill-height>
         <v-layout column>
             <v-flex style="margin:5px;">
-                <!-- <boxplot ref='boxplot'></boxplot> -->
-                <plotly :columns="columns" ref='boxplot'></plotly>
+                <boxplot ref='boxplot'></boxplot>
             </v-flex>          
             <v-flex lg8 class="card" style='margin:5px;'> 
                 <v-layout row nowrap fill-height>
@@ -36,7 +35,8 @@ let vm = undefined
 import heatmap from '@/components/Heatmap.vue'
 import scatterplot from '@/components/Scatterplot.vue'
 import boxplot from '@/components/Boxplot.vue'
-import plotly from '@/components/plotly.vue'
+import plotly from '@/components/Boxplot.vue'
+import { setTimeout, clearInterval } from 'timers';
 
 export default{
     //需要使用到的组件
@@ -85,7 +85,6 @@ export default{
         onDataLoader(response){
             let heatmap = vm.$refs.heatmap  
             let data = response.data.data
-
             let columns = response.data.columns
             let extent = response.data.extent
             let hotInstance = vm.$refs.heatmap.$refs.hot.hotInstance
@@ -93,6 +92,21 @@ export default{
             heatmap.setHeaders(columns)
             hotInstance.render()
             vm.columns =  columns
+            vm.$refs.heatmap.load = false
+        },
+        checkInit(){
+            let heatmap = vm.$refs.heatmap
+            let box = vm.$refs.boxplot
+            let value = setInterval(()=>{
+                if(!heatmap.load && !box.load){
+                    console.log('加載完畢')
+                    window.clearInterval(value)
+                    heatmap.loading = false
+                }
+                else{
+                    vm.checkInit()
+                }
+            },500);
         },
         // 载入 scatterplot 资料, 使用 heatmap.loading 来判断资料是否加载结束
         loadScatterplot(rowLabel, colLabel){
@@ -106,7 +120,7 @@ export default{
             .then((response)=>{
                 let data = response.data.data
                 // 开始绘制
-                console.log("开始绘制")
+                console.log("开始绘制 Scatter plot")
                 scatter.setAxisLabel(rowLabel,colLabel)
                 scatter.update(data)
                 vm.$refs.heatmap.loading = false
@@ -126,6 +140,7 @@ export default{
 
         EventBus.heatmap = heatmap
         vm.initial()
+        vm.checkInit()
     },
     //离开时执行的内容
     beforeDestroy(){

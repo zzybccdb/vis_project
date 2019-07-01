@@ -211,7 +211,7 @@ export default {
 				vm.dist_loss = true
 				vm.recon_loss = true
 				window.recon_loss = true
-				window.dis_loss = true 
+				window.dist_loss = true 
 				setTimeout(()=>{
 					let ctx = document.getElementById('loss').getContext('2d');
 					vm.loss_plot = new Chart(ctx, vm.config)
