@@ -102,6 +102,10 @@ export default {
                 let temp = {}
                 temp.data = data[d]
                 temp.extent = [data[d][0],data[d].slice(-1)[0]]
+                if( parseInt(temp.extent[0]) === 0 && parseInt(temp.extent[1]) === 0){
+                    data[d] = [-1,-0.5,0,0.5,1]
+                    temp.extent = [-1,1]
+                }
                 temp.scale = d3.scaleLinear().domain(temp.extent).range([40,260])
                 temp.name = d
                 temp.ctn = new PIXI.Container()
@@ -109,8 +113,8 @@ export default {
                 vm.dimensions[d] = temp
                 vm.ctn.addChild(temp.ctn)
             }
-            console.log(vm.dimensions)
         },
+        // 開始繪製
         drawGraph(){
             let format = d3.format('.2s')
             vm.columns.forEach((label, i) => {  
@@ -133,7 +137,7 @@ export default {
                 let text = undefined
                 let line = undefined
                 // 幫 tick 制定 format, 防止數值表達式超過邊界
-                if(item > 1000 || item < 0.0001)
+                if(Math.abs(item) > 1000 || Math.abs(item) < 0.0001)
                     text = vm.Text(format(item),12)
                 else
                     text = vm.Text(item,12)
@@ -238,7 +242,7 @@ export default {
             return ctn
         },
         // 顯示 inforbox 信息
-        showInfo(data,i){
+        showInfo(data,i){ 
             vm.InfoBox.x = vm.layout.padding * (i-1) + vm.layout.margin.l + 20
             vm.InfoBox.alpha = 1
             let format = d3.format('.6r')

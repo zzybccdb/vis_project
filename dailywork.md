@@ -40,3 +40,4 @@
 #### 2019/06/25
 - 提高 plotly box plot 間距
 - 更換 Data sheet icon
+- PIXI 實作 box plot
