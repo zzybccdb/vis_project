@@ -36,7 +36,6 @@ import heatmap from '@/components/Heatmap.vue'
 import scatterplot from '@/components/Scatterplot.vue'
 import boxplot from '@/components/Boxplot.vue'
 import plotly from '@/components/Boxplot.vue'
-import { setTimeout, clearInterval } from 'timers';
 
 export default{
     //需要使用到的组件

@@ -4,9 +4,6 @@
     <!-- </v-layout> -->
 </template>
 <script>
-// 一个颜色表的 lib
-import Palette from '@/palette.js'
-
 let vm = undefined
 let PIXI = undefined
 let d3 = undefined
@@ -247,7 +244,7 @@ export default {
             vm.InfoBox.alpha = 1
             let format = d3.format('.6r')
             vm.info.forEach((t,i)=>{
-                t.text = String(d3.format('.6r')(data[i]))
+                t.text = String(format(data[i]))
             })
         },
         // 处理 web resize 
@@ -273,9 +270,8 @@ export default {
             return axis
         },
         // 绘制文本, 存在字體 
-        Text(content='no text',fontSize=15,fill='0x000000',font="Arial",align='center'){
+        Text(content='no text',fontSize=15,fill='0x000000'){
             let text = new PIXI.Text(content,{
-                // fontfamliy:font,
                 fontFamily:'Arial',
                 fontStyle:'bold',
                 fontSize:fontSize,
