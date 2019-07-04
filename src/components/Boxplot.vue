@@ -46,7 +46,7 @@ export default {
                 vm.load = false
 			})
         },
-        // PIXI初始化设定,视窗绑定,title 绘制
+        // PIXI初始化设定,视窗绑定
         pixiInit(){
             let padding = 150
             let width = padding * vm.columns.length + 20
@@ -288,7 +288,6 @@ export default {
         PIXI = vm.$PIXI
         d3 = vm.$d3
         vm.boxplot = vm.$refs.boxplot
-        PIXI.settings.PRECISION_FRAGMENT= 'highp'
         vm.loadData()
         // 动态调整 app 长宽比例
         // window.addEventListener('resize', vm.handleResize)
