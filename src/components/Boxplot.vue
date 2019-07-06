@@ -63,7 +63,6 @@ export default {
             vm.app.renderer.roundPixels = true
             vm.app.renderer.view.style.display = 'block'
             vm.app.renderer.resize(width,height)
-            PIXI.settings.PRECISION_FRAGMENT = window.devicePixelRatio
             // 轉換世界座標系統
             vm.app.stage.worldTransform.fromArray([
                 1,  0, 0,
@@ -273,7 +272,7 @@ export default {
         Text(content='no text',fontSize=15,fill='0x000000'){
             let text = new PIXI.Text(content,{
                 fontFamily:'Arial',
-                fontStyle:'bold',
+                // fontStyle:'bold',
                 fontSize:fontSize,
                 fill:fill,
                 align:'center',
@@ -288,6 +287,7 @@ export default {
         PIXI = vm.$PIXI
         d3 = vm.$d3
         vm.boxplot = vm.$refs.boxplot
+        PIXI.settings.PRECISION_FRAGMENT= 'highp'
         vm.loadData()
         // 动态调整 app 长宽比例
         // window.addEventListener('resize', vm.handleResize)

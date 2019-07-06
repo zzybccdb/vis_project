@@ -105,22 +105,20 @@
 								<v-icon light>cached</v-icon>
 							</span>
 						</v-btn>
+						<v-btn :loading="requesting == 'newTrain'"  color="primary" :disabled="disableNewTrainBtn" @click="onHistogram">
+							<v-icon>bar_chart</v-icon>
+							Histogram
+							<span slot="loader" class="arrow-loader">
+								<v-icon light>cached</v-icon>
+							</span>
+						</v-btn>
 					</v-form>
 					<v-layout column>
 						<canvas v-if="recon_loss" style="height:450px" id="loss"></canvas>
 						<canvas v-if="dist_loss" style="height:450px" id="dis_loss"></canvas>
 					</v-layout>
-					<div ref='test' style="width: 100%;">
-						<!-- <BoxPlot
-						v-if="showAnalysis"
-						title='Importance of each dimension (Compare with ground truth)' 
-						api-url='/analysis/dim_importance'
-						ref="box1"></BoxPlot> -->
-						<!-- <box-plot
-						v-if="showAnalysis"
-						title='Reconstruction error rate for each dimension' 
-						api-url='/analysis/dim_reconstruct'
-						ref="box2"></box-plot> -->
+					<div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
+						<HISTOGRAM ref='histogram'/>
 					</div>
 					</v-card-title>
 				</v-card>
@@ -132,11 +130,14 @@
 <script>
 import Chart from 'chart.js'
 import { setTimeout } from 'timers';
-// import BoxPlot from '@/components/BoxPlot.vue'
+import HISTOGRAM from '@/components/Histogram.vue'
+// import { EventEmitter } from 'events';
+
+const EventBus = {}
 
 export default {
 	components: {
-		// BoxPlot
+		HISTOGRAM
 	},
 	data: () => ({
 		state: 'reset',
@@ -168,6 +169,7 @@ export default {
 		loss_weight:1.00,
 		dist_loss:false,
 		recon_loss:false,
+		histogram:false,
 	}),
 	computed: {
 		anyError() {
@@ -203,6 +205,21 @@ export default {
 		}
 	},
 	methods: {
+		onHistogram(){
+			let vm = this 
+			vm.histogram = !vm.histogram
+			if(vm.histogram){
+				setTimeout(() => {
+					let histogram = vm.$refs.histogram
+					EventBus.histogram = histogram
+					histogram.eventBus = EventBus
+					histogram.loadData()
+				}, 200);
+			}
+			else{
+				// histogram.clear()
+			}
+		},
 		onNewTrain() {
 			var vm = this
 			vm.requesting = 'newTrain'
@@ -607,6 +624,9 @@ export default {
 		})
 		// 一秒鐘詢問一次當前的 loss數值
 		vm.timer = setInterval(vm.getProgress.bind(vm), 1000)
+
+		EventBus.root = vm
+		vm.eventBus = EventBus
 	},
 
 	beforeDestroy() {
