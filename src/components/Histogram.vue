@@ -13,6 +13,7 @@ let d3 = undefined
 export default {
     components: {
     },
+
     data: () => {
         return {
         };
@@ -21,6 +22,7 @@ export default {
         let vm = this
         vm.app = undefined
     },
+
     methods:{
         // 加载资料
         // response data 包含 hist（纵轴）， bin_edges（横轴）
@@ -68,7 +70,7 @@ export default {
             vm.app.renderer.roundPixels = true
             vm.app.renderer.view.style.display = 'block'
             vm.app.renderer.resize(vm.appWidth,vm.appHeight)
-            PIXI.settings.PRECISION_FRAGMENT= 'highp'
+            // PIXI.settings.PRECISION_FRAGMENT= 'highp'
             // 將圖表加入 DOM tree
             vm.$refs.histogram.appendChild(vm.app.view)
             // 圖表整體外包裝
@@ -78,19 +80,9 @@ export default {
             vm.wrapper.y = 0 
             // 將包裝紙加入畫布
             vm.app.stage.addChild(vm.wrapper)
-            // test line
-            // vm.lines = new PIXI.Container()
-            // for(let c = 1; c < Math.ceil(vm.count/2); c++){
-            //     let x = 10
-            //     let y1 = 20 + 300*(c-1)
-            //     let y2 = 300 * c - 20
-            //     let line = vm.drawSolidLine(x,y1,x,y2)
-            //     vm.lines.addChild(line)
-            // }
-            // vm.app.stage.addChild(vm.lines)
             // 主體容器 
             vm.ctn  = new PIXI.Container()
-            vm.ctn.name = 'main.ctn'
+            vm.ctn.name = 'main_ctn'
             vm.wrapper.addChild(vm.ctn)
 
         },      
@@ -276,6 +268,7 @@ export default {
             }
         }
     },
+
     mounted(){  
         vm = this
         vm.load = true
@@ -286,7 +279,6 @@ export default {
         // window.addEventListener('resize', vm.handleResize)
     },
 	beforeDestroy() {
-		let vm = this;
 		if (vm.app !== undefined) {
 			vm.app.destroy()
 		}

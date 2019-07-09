@@ -95,6 +95,7 @@ export default {
 			// let dotTexture = mt.generateCanvasTexture()
 
 			let data = vm.eventBus.data
+			// console.log(data)
 			let x_extent = vm.$d3.extent(data.map(d => {return parseFloat(d.raw[0])}))
 			let y_extent = vm.$d3.extent(data.map(d => {return parseFloat(d.raw[1])}))
 			let x_range = x_extent[1] - x_extent[0]
