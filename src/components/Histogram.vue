@@ -147,7 +147,7 @@ export default {
                     temp.ctn.addChild(hist_ctn)
                 } 
                 else{
-                    let text = vm.Text(temp.ctn.name+' DATA ERROR',20)
+                    let text = vm.Text(temp.ctn.name+' DATA ERROR',15)
                     text.x = vm.appWidth/(vm.layout.chartNum*2)-text.width/2
                     text.y = vm.layout.height/2-text.height/2
                     temp.ctn.addChild(text)

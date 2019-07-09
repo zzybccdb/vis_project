@@ -397,6 +397,11 @@ export default {
 				vm.columns_all = response.data.columns_all
 				vm.columns = response.data.columns
 				vm.dataset_errors = []
+
+				// 设定 histogram 为 false
+				vm.histogram = !vm.histogram
+				console.log('histogram false')
+
 			}).catch(error => {
 				vm.dataset_errors = [error.response.data]
 			})
