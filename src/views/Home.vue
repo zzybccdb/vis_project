@@ -113,17 +113,18 @@
 							</span>
 						</v-btn>
 					</v-form>
-					<v-layout row>
-						<div style="height:512px;width:521px">
+					<div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
+						<HISTOGRAM ref='histogram'/>
+					</div>
+					<v-layout style="height:512px" v-if="recon_loss || dist_loss" row nowrap>
+						<div style="height:512px;width:512px">
+							<ColorScatter ref='latent_scatter'/>
 						</div>
-						<v-layout column>
+						<v-layout  style="margin:0px" column>
 							<canvas v-if="recon_loss" style="height:256px" id="loss"></canvas>
 							<canvas v-if="dist_loss" style="height:256px" id="dis_loss"></canvas>
 						</v-layout>
 					</v-layout>
-					<div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
-						<HISTOGRAM ref='histogram'/>
-					</div>
 					</v-card-title>
 				</v-card>
 			</v-flex>
@@ -135,13 +136,15 @@
 import Chart from 'chart.js'
 import { setTimeout } from 'timers';
 import HISTOGRAM from '@/components/Histogram.vue'
+import ColorScatter from '@/components/ColorScatter.vue'
 // import { EventEmitter } from 'events';
 
 const EventBus = {}
 
 export default {
 	components: {
-		HISTOGRAM
+		HISTOGRAM,
+		ColorScatter
 	},
 	data: () => ({
 		state: 'reset',
@@ -225,7 +228,7 @@ export default {
 			}
 		},
 		onNewTrain() {
-			var vm = this
+			let vm = this
 			vm.requesting = 'newTrain'
 			vm.start = true
 			if(vm.network === 'NN based MDS'){
@@ -240,6 +243,10 @@ export default {
 					let dis = document.getElementById('dis_loss').getContext('2d')
 					vm.dis_loss_plot = new Chart(dis,vm.dis_config)
 
+					let latent_scatter = vm.$refs.latent_scatter
+					EventBus.latent_scatter = latent_scatter
+					latent_scatter.eventBus = EventBus
+					
 					vm.startTrain()
 				},500)
 			}else if(vm.network === 'Autoencoder' || vm.network === 'VAE'){
@@ -332,7 +339,7 @@ export default {
 			}
 		},
 		getProgress() {
-			var vm = this
+			let vm = this
 			if (vm.state == 'training' && vm.requesting == 'none') {
 				this.$axios.post(this.$api + '/train/progress',{'start':vm.start}).then(response => {
 					vm.state = response.data.state
@@ -347,6 +354,19 @@ export default {
 							vm.addLoss(response.data.rec_loss,undefined,response.data.step)
 						}						
 					}
+					// 加载 latent 资料点
+					vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
+						let latent_scatter = vm.$refs.latent_scatter
+						let data = response.data.latent
+						if(latent_scatter.latent){
+							latent_scatter.pointsTransition(data)
+						}
+						else{
+							latent_scatter.addPoints(data)
+						}
+					}).catch(error => {
+						console.log('Get progress went wrong!', error.response.data)
+					})
 					
 				}).catch(error => {
 					console.log('something went wrong!', error.response.data)
@@ -404,7 +424,8 @@ export default {
 
 				// 设定 histogram 为 false
 				vm.histogram = !vm.histogram
-				console.log('histogram false')
+				// 清空 scatter 
+				vm.$refs.latent_scatter.removePoints()
 
 			}).catch(error => {
 				vm.dataset_errors = [error.response.data]
