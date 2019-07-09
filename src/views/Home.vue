@@ -105,7 +105,7 @@
 								<v-icon light>cached</v-icon>
 							</span>
 						</v-btn>
-						<v-btn :loading="requesting == 'newTrain'"  color="primary" :disabled="disableNewTrainBtn" @click="onHistogram">
+						<v-btn color="primary" :disabled="disableNewTrainBtn" @click="onHistogram">
 							<v-icon>bar_chart</v-icon>
 							Histogram
 							<span slot="loader" class="arrow-loader">
@@ -113,9 +113,13 @@
 							</span>
 						</v-btn>
 					</v-form>
-					<v-layout column>
-						<canvas v-if="recon_loss" style="height:450px" id="loss"></canvas>
-						<canvas v-if="dist_loss" style="height:450px" id="dis_loss"></canvas>
+					<v-layout row>
+						<div style="height:512px;width:521px">
+						</div>
+						<v-layout column>
+							<canvas v-if="recon_loss" style="height:256px" id="loss"></canvas>
+							<canvas v-if="dist_loss" style="height:256px" id="dis_loss"></canvas>
+						</v-layout>
 					</v-layout>
 					<div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
 						<HISTOGRAM ref='histogram'/>

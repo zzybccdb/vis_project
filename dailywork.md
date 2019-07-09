@@ -41,3 +41,9 @@
 - 提高 plotly box plot 間距
 - 更換 Data sheet icon
 - PIXI 實作 box plot
+
+#### 2019/07/08
+- 完成所有维度的 histogram 的绘制
+
+####　2019/07/09
+- 实作 training 过程中 scatter plot 绘制
