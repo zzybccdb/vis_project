@@ -291,6 +291,11 @@ export default {
         vm.loadData()
         // 动态调整 app 长宽比例
         // window.addEventListener('resize', vm.handleResize)
-    }
+    },
+	beforeDestroy() {
+		if (vm.app !== undefined) {
+			vm.app.destroy()
+		}
+	}
 }
 </script>
