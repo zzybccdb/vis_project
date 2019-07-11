@@ -30,7 +30,6 @@ export default {
             vm.root = vm.eventBus.root
             vm.$axios.get(vm.$api+'/inference/get_histogram')
             .then((response)=>{
-                console.log(response.data)
                 vm.data = response.data.data
                 vm.columns = response.data.columns
                 vm.count = vm.columns.length
@@ -53,7 +52,7 @@ export default {
                     t:20,
                 },
                 height: 100,
-                chartNum:4
+                chartNum:3
             }
             vm.appWidth = vm.$refs.histogram.clientWidth
             // Math.ceil(number) 向上取整
@@ -152,8 +151,8 @@ export default {
         // 绘制轴线
         drawAxis(label,name,orgx,orgy,graphWidth,graphHeight){
             let axis_ctn = new PIXI.Container()
-            
-            let text = vm.Text(name,12)
+            // Label name 
+            let text = vm.Text(name,15)
             text.y = 0
             text.x = vm.appWidth/(vm.layout.chartNum*2)-text.width/2
             let yAxis = vm.drawSolidLine(orgx,orgy,orgx,graphHeight)
@@ -194,17 +193,16 @@ export default {
         // x 轴固定 4 个 ticks
         drawxTicks(label,x,y){
             let ticks_ctn = new PIXI.Container()
-            let format = d3.format('.2s')
+            let format1 = d3.format('.2s')
+            let format2 = d3.format('.2f')
             let scale = vm.dimensions[label].bin_edges_scale
             let ticks = scale.ticks(5)
-            // let extent = vm.dimensions[label].bin_edges_extent
-            // let range = extent[1] - extent[0]
-            // let gap = range / 5
-            // let ticks = [1,2,3,4].map(i =>{
-            //     return (i*gap)
-            // })
             ticks.forEach(tick =>{
-                let text = vm.Text(format(tick),10)
+                let text = undefined
+                if(tick > 1)
+                    text = vm.Text(format1(tick),10)
+                else
+                    text = vm.Text(format2(tick),10)
                 text.y = y+10
                 text.x = x + scale(tick) 
                 let line = vm.drawSolidLine(text.x,y,text.x,y+5)
@@ -251,7 +249,7 @@ export default {
             return axis
         },
         // 绘制文本
-        Text(content='no text',fontSize=15,fill='0x000000'){
+        Text(content='no text',fontSize=18,fill='0x000000'){
             let text = new PIXI.Text(content,{
                 fontFamily:'Arial',
                 // fontStyle:'bold',

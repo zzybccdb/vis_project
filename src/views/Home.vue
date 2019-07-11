@@ -116,7 +116,7 @@
 					<div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
 						<HISTOGRAM ref='histogram'/>
 					</div>
-					<v-layout style="height:512px" v-if="recon_loss || dist_loss" row nowrap>
+					<v-layout style="height:512px;margin:10px" v-if="recon_loss || dist_loss" row nowrap>
 						<div style="height:512px;width:512px">
 							<ColorScatter ref='latent_scatter'/>
 						</div>
@@ -232,6 +232,7 @@ export default {
 			vm.requesting = 'newTrain'
 			vm.start = true
 			if(vm.network === 'NN based MDS'){
+				vm.histogram = !vm.histogram
 				vm.dist_loss = true
 				vm.recon_loss = true
 				window.recon_loss = true
@@ -297,7 +298,8 @@ export default {
 		},
 
 		onContinue() {
-			var vm = this
+			let vm = this
+			vm.histogram = !vm.histogram
 			vm.requesting = 'continue'
 			this.$axios.post(this.$api + '/train/continue').then(response => {
 				vm.state = response.data.state
@@ -312,6 +314,13 @@ export default {
 			vm.requesting = 'pause'
 			this.$axios.post(this.$api + '/train/pause').then(response => {
 				vm.state = response.data.state
+				vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
+					let latent_scatter = vm.$refs.latent_scatter
+					let data = response.data.latent
+					latent_scatter.pointsTransition(data)
+				}).catch(error => {
+					console.log('Get progress went wrong!', error.response.data)
+				})
 			}).catch(error => {
 				console.log('something went wrong!', error.response.data)
 			}).finally(() => {
@@ -340,33 +349,35 @@ export default {
 		},
 		getProgress() {
 			let vm = this
-			if (vm.state == 'training' && vm.requesting == 'none') {
+			if (vm.state == 'training' && vm.requesting == 'none' && !vm.histogram) {
 				this.$axios.post(this.$api + '/train/progress',{'start':vm.start}).then(response => {
-					vm.state = response.data.state
-					let model = response.data.model
-					if(model === 'NN based MDS'){
-						if(response.data.rec_loss && response.data.dis_loss){
-							vm.addLoss(response.data.rec_loss,response.data.dis_loss,response.data.step)
-						}
-					}
-					else{
-						if(response.data.rec_loss){
-							vm.addLoss(response.data.rec_loss,undefined,response.data.step)
-						}						
-					}
-					// 加载 latent 资料点
-					vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
-						let latent_scatter = vm.$refs.latent_scatter
-						let data = response.data.latent
-						if(latent_scatter.latent){
-							latent_scatter.pointsTransition(data)
+					if(!vm.histogram){
+						vm.state = response.data.state
+						let model = response.data.model
+						if(model === 'NN based MDS'){
+							if(response.data.rec_loss && response.data.dis_loss){
+								vm.addLoss(response.data.rec_loss,response.data.dis_loss,response.data.step)
+							}
 						}
 						else{
-							latent_scatter.addPoints(data)
+							if(response.data.rec_loss){
+								vm.addLoss(response.data.rec_loss,undefined,response.data.step)
+							}						
 						}
-					}).catch(error => {
-						console.log('Get progress went wrong!', error.response.data)
-					})
+						// 加载 latent 资料点
+						vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
+							let latent_scatter = vm.$refs.latent_scatter
+							let data = response.data.latent
+							if(latent_scatter.latent){
+								latent_scatter.pointsTransition(data)
+							}
+							else{
+								latent_scatter.addPoints(data)
+							}
+						}).catch(error => {
+							console.log('Get progress went wrong!', error.response.data)
+						})
+					}
 					
 				}).catch(error => {
 					console.log('something went wrong!', error.response.data)

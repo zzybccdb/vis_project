@@ -47,3 +47,7 @@
 
 ####　2019/07/09
 - 实作 training 过程中 scatter plot 绘制
+
+#### 2019/07/11
+- 修正 histogram x 軸顯示錯誤的問題
+- 在 training 開始後， histogram 消失
