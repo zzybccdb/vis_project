@@ -30,6 +30,7 @@ export default {
             vm.root = vm.eventBus.root
             vm.$axios.get(vm.$api+'/inference/get_histogram')
             .then((response)=>{
+                console.log(response.data)
                 vm.data = response.data.data
                 vm.columns = response.data.columns
                 vm.count = vm.columns.length
@@ -222,7 +223,7 @@ export default {
             let range = extent[1] - extent[0]
             let gap = range / 4
             let ticks = [1,2,3].map(i => {
-                return (i * gap)
+                return (i * gap) + extent[0]
             })
 
             ticks.forEach(tick =>{
