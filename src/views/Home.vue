@@ -105,7 +105,7 @@
 								<v-icon light>cached</v-icon>
 							</span>
 						</v-btn>
-						<v-btn color="primary" :disabled="disableNewTrainBtn" @click="onHistogram">
+						<v-btn color="primary" :loading="histogram_loading" :disabled="disableNewTrainBtn" @click="onHistogram">
 							<v-icon>bar_chart</v-icon>
 							Histogram
 							<span slot="loader" class="arrow-loader">
@@ -177,6 +177,7 @@ export default {
 		dist_loss:false,
 		recon_loss:false,
 		histogram:false,
+		histogram_loading:false,
 	}),
 	computed: {
 		anyError() {
@@ -215,12 +216,14 @@ export default {
 		onHistogram(){
 			let vm = this 
 			vm.histogram = !vm.histogram
+			vm.histogram_loading = vm.histogram
 			if(vm.histogram){
 				setTimeout(() => {
 					let histogram = vm.$refs.histogram
 					EventBus.histogram = histogram
 					histogram.eventBus = EventBus
 					histogram.loadData()
+					vm.histogram_loading = false
 				}, 200);
 			}
 			else{
