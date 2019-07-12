@@ -21,6 +21,7 @@ export default {
     created(){
         let vm = this
         vm.app = undefined
+        vm.board = {}
     },
 
     methods:{
@@ -30,7 +31,6 @@ export default {
             vm.root = vm.eventBus.root
             vm.$axios.get(vm.$api+'/inference/get_histogram')
             .then((response)=>{
-                console.log(response.data)
                 vm.data = response.data.data
                 vm.columns = response.data.columns
                 vm.count = vm.columns.length
@@ -135,19 +135,30 @@ export default {
                 if(!temp.error){
                     let axis_ctn = vm.drawAxis(label,temp.ctn.name,orgx,orgy,graphWidth,graphHeight)
                     let hist_ctn = vm.drawHist(label,graphHeight+vm.layout.margin.t)
+                    let board = vm.drawMaskBoard(label,0,0,graphWidth,graphHeight+vm.layout.margin.b)
+
                     temp.ctn.addChild(axis_ctn)
                     temp.ctn.addChild(hist_ctn)
+                    temp.ctn.addChild(board)
                 } 
                 else{
                     let text = vm.Text(temp.ctn.name+' DATA ERROR',15)
                     text.x = vm.appWidth/(vm.layout.chartNum*2)-text.width/2
                     text.y = vm.layout.height/2-text.height/2
                     temp.ctn.addChild(text)
+                    let board = vm.drawMaskBoard(label,0,0,graphWidth,graphHeight+vm.layout.margin.b)
+
+                    temp.ctn.addChild(board)
                     vm.ctn.addChild(temp.ctn)
                 }
                 temp.ctn.x = x 
                 temp.ctn.y = y
             });
+        },
+        // 使用者鼠標點擊選擇是否需要這個   dimension
+        chartMourseDown(board){ 
+            board.disable = !board.disable
+            board.alpha = board.disable?0.3:0;
         },
         // 绘制轴线
         drawAxis(label,name,orgx,orgy,graphWidth,graphHeight){
@@ -182,9 +193,9 @@ export default {
                 let y1 = y-hist_scale(h)
                 let w = bin_scale(bin_edges[i+1])-x1
                 let height = hist_scale(h)-vm.layout.margin.t
-                box.lineStyle(2, 0x3273b2, 1);
+                box.lineStyle(2, 0x3273b2, 1)
                 box.beginFill(0x98b9d8)
-                box.drawRect(x1,y1,w,height);
+                box.drawRect(x1,y1,w,height)
                 box.endFill()
                 hist_ctn.addChild(box)
             })
@@ -238,6 +249,31 @@ export default {
 
             return ticks_ctn
         },
+        // 繪製 mask 版
+        drawMaskBoard(label,x,y,width,height){
+            let ctn_mask_board = new PIXI.Container()
+            ctn_mask_board.label = label
+            ctn_mask_board.name = 'mask board'
+            let board = new PIXI.Graphics()
+            board.lineStyle(2,0x000000,1)
+            board.beginFill()
+            board.drawRect(x,y,width,height)
+            board.endFill()
+            board.drawRect()
+            board.alpha = 0
+            board.disable = false
+            ctn_mask_board.addChild(board)
+            board.interactive = true
+            board.buttonMode = true 
+            vm.board[label] = board
+            board.mousedown = () => {
+                vm.root.columns  = vm.columns.filter((item => {
+                    return (item!==label && vm.board[item].disable===false) || (item===label && board.disable===true)
+                }))
+                vm.chartMourseDown(board)
+            }
+            return ctn_mask_board
+        },  
         // 绘制實線
         drawSolidLine(x1,y1,x2,y2,color,name=undefined){
             // 绘制轴线

@@ -443,7 +443,7 @@ export default {
 			})
 		},
 		onColumnsChange() {
-			var vm = this
+			let vm = this
 			if(vm.switch_dataset){
 				vm.switch_dataset = false
 				return
