@@ -4,6 +4,7 @@
     </v-layout>
 </template>
 <script>
+// 由 chart.js 繪製的 scatter plot, 是 result 頁面中的一個組件
 import Chart from 'chart.js'
 let vm = undefined
 let canvas = undefined
@@ -15,7 +16,6 @@ export default {
         };
     },
     created(){
-        let vm = this
     },
     methods:{
         ScatterPlotUInit(){

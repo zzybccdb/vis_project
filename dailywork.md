@@ -56,3 +56,4 @@
 - histogram bins 數量固定爲10 
 - 允許使用者利用 histogram 進行 training 維度的選擇調整
 - 給 histogram 加入 loading 
+- 給 color scatter plot 加入 zoom 功能

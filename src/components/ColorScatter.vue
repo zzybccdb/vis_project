@@ -1,8 +1,10 @@
 <template>
-        <div style="width:100%;height:100%" ref='colorScatter'></div>
+        <div id='colorScatter' style="width:100%;height:100%" ref='colorScatter'></div>
 </template>
 
 <script>
+// Home view 下所使用到的 training 過程觀察的 scatter plot 組件
+// 參考 components/colormap.vue
 
 let vm = undefined
 let PIXI = undefined
@@ -51,6 +53,7 @@ export default {
             // 防止绘制出现模糊现象
             vm.app.renderer.roundPixels = true
             vm.app.renderer.view.style.display = 'block'
+            vm.app.autoResize = true
             vm.app.renderer.resize(width,height)
             // 将 PIXI application 加入 Dom Tree
             vm.$refs.colorScatter.appendChild(vm.app.view)
@@ -67,6 +70,8 @@ export default {
             // 数据点容器
             vm.ctn_pts = new PIXI.Container()
             vm.ctn_pts.name = "ctn_points"
+            vm.ctn_pts.interactive = true
+            vm.ctn_pts.buttonmode = true
             vm.ctn.addChild(vm.ctn_pts)
             // 数据点贴图宣告
             vm.dotTexture = vm.dotStyle()            
@@ -81,10 +86,15 @@ export default {
             g.endFill()
             return g.generateCanvasTexture()
         },
-
+        // d3 axis scale initial
         d3Init(){
             vm.x_scale = d3.scaleLinear().range([0,512])
             vm.y_scale = d3.scaleLinear().range([0,512])
+            // 縮放參數設定
+            let zoom = d3.zoom()
+                    .on('zoom',vm.zoomed)
+            d3.select('#colorScatter').call(zoom)
+            vm.zoom = zoom
         },
         // 绘制图像
         drawGraph(){
@@ -98,47 +108,60 @@ export default {
         },
         // 加入数据点
         addPoints(data){
-            let x_extent = d3.extent(data.map(d => parseFloat(d[0])))
-            let y_extent = d3.extent(data.map(d => parseFloat(d[1])))
-
-            vm.x_scale.domain(x_extent)
-            vm.y_scale.domain(y_extent)
-
+            vm.domainSetting(data)
             data.forEach(d => {
                 let sp = new PIXI.Sprite(vm.dotTexture)
-                
-                let x = vm.x_scale(d[0])
-                let y = vm.y_scale(d[1])
-            
-                sp.rawpos = [x,y]
-                sp.x = x
-                sp.y = y
-                sp.tint = vm.getColor(x,y)
+                vm.setPointLocation(sp,d[0],d[1])
                 sp.alpha = 0.3
                 vm.ctn_pts.addChild(sp)
             });
             vm.latent = true
         },
-        // 对点的位置进行位移
+        // 將點放置到正確的位置
         pointsTransition(data){
+            vm.domainSetting(data)
+            vm.ctn_pts.children.forEach((pt,i) => {
+                vm.setPointLocation(pt,data[i][0],data[i][1])
+            });
+        },
+        // scale domain 設定
+        domainSetting(data){
             let x_extent = d3.extent(data.map(d => parseFloat(d[0])))
             let y_extent = d3.extent(data.map(d => parseFloat(d[1])))
             vm.x_scale.domain(x_extent)
-            vm.y_scale.domain(y_extent)
-            vm.ctn_pts.children.forEach((pt,i) => {
-                let x = vm.x_scale(data[i][0])
-                let y = vm.y_scale(data[i][1])
-
-                pt.rawpos = [x,y]
-                pt.tint = vm.getColor(x,y)
-                pt.x = x
-                pt.y = y
-            });
+            vm.y_scale.domain(y_extent)            
         },
+        // 設定資料點的座標位置, 傳入pt, Latent_x, Latent_y
+        setPointLocation(pt,x,y){
+            x = vm.x_scale(x)
+            y = vm.y_scale(y)
+
+            pt.rawpos = [x,y]
+            pt.curpos = [x,y]
+            pt.tint = vm.getColor(x,y)
+            pt.x = pt.curpos[0]
+            pt.y = pt.curpos[1]
+        },
+        // 移除資料點
         removePoints(){
             vm.latent = false
             vm.ctn_pts.removeChildren()
-        }
+        },
+        // 數據點的縮放 Zoom
+        zoomed(){
+            vm.transform = d3.event.transform
+            vm.applyZoom()
+        },
+        //zooming
+        applyZoom(){
+            vm.ctn_pts.children.forEach(pt => {
+                let new_pt = vm.transform.apply(pt.rawpos)
+                pt.curpos = new_pt
+                pt.x = pt.curpos[0]
+                pt.y = pt.curpos[1]
+                pt.tint = vm.getColor(pt.x,pt.y)
+            })
+        },
     },
     mounted(){
         vm = this

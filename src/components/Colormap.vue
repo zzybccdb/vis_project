@@ -3,6 +3,7 @@
 </template>
 
 <script>
+// calender view 中所使用的 color scatter 組件
 export default {
 	components: {},
 	methods: {
