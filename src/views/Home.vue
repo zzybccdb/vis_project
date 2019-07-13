@@ -234,8 +234,8 @@ export default {
 			let vm = this
 			vm.requesting = 'newTrain'
 			vm.start = true
+			vm.histogram = false
 			if(vm.network === 'NN based MDS'){
-				vm.histogram = !vm.histogram
 				vm.dist_loss = true
 				vm.recon_loss = true
 				window.recon_loss = true
@@ -302,7 +302,7 @@ export default {
 
 		onContinue() {
 			let vm = this
-			vm.histogram = !vm.histogram
+			vm.histogram = false
 			vm.requesting = 'continue'
 			this.$axios.post(this.$api + '/train/continue').then(response => {
 				vm.state = response.data.state
@@ -354,34 +354,31 @@ export default {
 			let vm = this
 			if (vm.state == 'training' && vm.requesting == 'none' && !vm.histogram) {
 				this.$axios.post(this.$api + '/train/progress',{'start':vm.start}).then(response => {
-					if(!vm.histogram){
-						vm.state = response.data.state
-						let model = response.data.model
-						if(model === 'NN based MDS'){
-							if(response.data.rec_loss && response.data.dis_loss){
-								vm.addLoss(response.data.rec_loss,response.data.dis_loss,response.data.step)
-							}
+					vm.state = response.data.state
+					let model = response.data.model
+					if(model === 'NN based MDS'){
+						if(response.data.rec_loss && response.data.dis_loss){
+							vm.addLoss(response.data.rec_loss,response.data.dis_loss,response.data.step)
+						}
+					}
+					else{
+						if(response.data.rec_loss){
+							vm.addLoss(response.data.rec_loss,undefined,response.data.step)
+						}						
+					}
+					// 加载 latent 资料点
+					vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
+						let latent_scatter = vm.$refs.latent_scatter
+						let data = response.data.latent
+						if(latent_scatter.latent){
+							latent_scatter.pointsTransition(data)
 						}
 						else{
-							if(response.data.rec_loss){
-								vm.addLoss(response.data.rec_loss,undefined,response.data.step)
-							}						
+							latent_scatter.addPoints(data)
 						}
-						// 加载 latent 资料点
-						vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
-							let latent_scatter = vm.$refs.latent_scatter
-							let data = response.data.latent
-							if(latent_scatter.latent){
-								latent_scatter.pointsTransition(data)
-							}
-							else{
-								latent_scatter.addPoints(data)
-							}
-						}).catch(error => {
-							console.log('Get progress went wrong!', error.response.data)
-						})
-					}
-					
+					}).catch(error => {
+						console.log('Get progress went wrong!', error.response.data)
+					})
 				}).catch(error => {
 					console.log('something went wrong!', error.response.data)
 				})
