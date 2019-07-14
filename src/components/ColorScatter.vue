@@ -1,5 +1,5 @@
 <template>
-        <div id='colorScatter' style="width:100%;height:100%" ref='colorScatter'></div>
+        <div id='colorScatter' style="width:100%;height:100%;margin:10px" ref='colorScatter'></div>
 </template>
 
 <script>
@@ -16,6 +16,8 @@ export default {
         buildColorTable(background){
             vm.colors = []
             let raw_colormap = vm.app.renderer.extract.pixels(background)
+            // raw_colormap 是由　pixel 數量 × 【r,g,b,a】 的 array
+            // r，g，b，a 取值都是 0～255
             for(let x=0; x<512; x++){
                 let color = []
                 for(let y=0; y<512; y++){
@@ -55,6 +57,12 @@ export default {
             vm.app.renderer.view.style.display = 'block'
             vm.app.autoResize = true
             vm.app.renderer.resize(width,height)
+            // 設定 app 的鼠標操作
+            vm.app.stage.interactive = true
+            vm.app.stage.buttonmode = true
+            vm.app.stage.rightdown = vm.rightdownRotate
+            vm.app.stage.mousemove = vm.mousemoveRotate
+            vm.app.stage.rightup = vm.rightupRotate
             // 将 PIXI application 加入 Dom Tree
             vm.$refs.colorScatter.appendChild(vm.app.view)
             // 图表外包装设定
@@ -138,6 +146,7 @@ export default {
 
             pt.rawpos = [x,y]
             pt.curpos = [x,y]
+            pt.rotpos = [x,y]
             pt.tint = vm.getColor(x,y)
             pt.x = pt.curpos[0]
             pt.y = pt.curpos[1]
@@ -152,13 +161,54 @@ export default {
             vm.transform = d3.event.transform
             vm.applyZoom()
         },
-        //zooming
+        // 縮放，平移 矩陣公式
+        // [ 1, 0, x軸平移距離 ] [x] => [x']
+        // [ 0, 1, y軸平移距離 ] [y] => [y']
+        // [ 0, 0, 1 ]         [1] => [1]
         applyZoom(){
             vm.ctn_pts.children.forEach(pt => {
-                let new_pt = vm.transform.apply(pt.rawpos)
-                pt.curpos = new_pt
+                let new_pos = vm.transform.apply(pt.rawpos)
+                pt.curpos = new_pos
                 pt.x = pt.curpos[0]
                 pt.y = pt.curpos[1]
+                pt.tint = vm.getColor(pt.x,pt.y)
+            })
+        },
+        // 右鍵旋轉操作
+        rightdownRotate(e){
+            vm.rotating = true
+            //  以圖形中心爲旋轉點
+            // Math.atan2 回傳弧度
+            vm.ang1 = Math.atan2(e.data.global.y - 256, e.data.global.x - 256)
+        },
+        // 右鍵旋轉移動
+        mousemoveRotate(e){
+            if (e.data.global.y >= 512 || e.data.global.y < 0 ||  e.data.global.x >= 512 ||  e.data.global.x < 0 ){
+                vm.rotating = false
+                vm.rotation_acc = vm.rotation
+            }
+            if (vm.rotating) {
+                vm.rotation = Math.atan2(e.data.global.y - 256, e.data.global.x - 256) - vm.ang1 + vm.rotation_acc
+                vm.rotate(vm.rotation)
+            }            
+        },
+        // 停止旋轉
+        rightupRotate(){
+            vm.rotating = false
+            vm.rotation_acc = vm.rotation
+        },
+        // 旋轉矩陣公式
+        // [ cos角度 -sin角度 ] [x] => [x']
+        // [ sin角度 cos角度 ]  [y] => [y']
+        rotate(rad){
+            // 旋轉矩陣公式
+            let cos = Math.cos(rad)
+            let sin = Math.sin(rad)
+            vm.ctn_pts.children.forEach(pt => {
+                let tx = pt.rawpos[0] - 256, ty = pt.rawpos[1] - 256
+                pt.x = tx * cos - ty * sin + 256
+                pt.y = tx * sin + ty * cos + 256
+                pt.curpos = [tx,ty]
                 pt.tint = vm.getColor(pt.x,pt.y)
             })
         },
@@ -169,6 +219,11 @@ export default {
         PIXI = vm.$PIXI
         
         vm.latent = false
+        vm.rotating = false
+        
+        vm.ang1 = undefined
+		vm.rotation = 0
+		vm.rotation_acc = 0
 
         vm.$refs.colorScatter.addEventListener('contextmenu',e => e.preventDefault())
         vm.pixiInit()

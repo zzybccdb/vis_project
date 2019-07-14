@@ -57,3 +57,7 @@
 - 允許使用者利用 histogram 進行 training 維度的選擇調整
 - 給 histogram 加入 loading 
 - 給 color scatter plot 加入 zoom 功能
+
+#### 2019/07/13
+- 修正 Home.vue 的一些邏輯問題
+- 給 color scatter plot 加入 rotate
