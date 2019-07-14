@@ -146,7 +146,8 @@ export default {
 
             pt.rawpos = [x,y]
             pt.curpos = [x,y]
-            pt.rotpos = [x,y]
+            // rotation 和 zooming 時的參考座標
+            pt.refpos = [x,y]
             pt.tint = vm.getColor(x,y)
             pt.x = pt.curpos[0]
             pt.y = pt.curpos[1]
@@ -157,7 +158,7 @@ export default {
             vm.ctn_pts.removeChildren()
         },
         // 數據點的縮放 Zoom
-        zoomed(){
+        zoomed(){ 
             vm.transform = d3.event.transform
             vm.applyZoom()
         },
@@ -166,8 +167,14 @@ export default {
         // [ 0, 1, y軸平移距離 ] [y] => [y']
         // [ 0, 0, 1 ]         [1] => [1]
         applyZoom(){
+            vm.zoom_dirty = true
+            vm.rotation_acc = 0
+            if(vm.rotate_dirty){
+                vm.ctn_pts.children.forEach(pt => {pt.refpos=[pt.x,pt.y]})
+                vm.rotate_dirty = false
+            }
             vm.ctn_pts.children.forEach(pt => {
-                let new_pos = vm.transform.apply(pt.rawpos)
+                let new_pos = vm.transform.apply(pt.refpos)
                 pt.curpos = new_pos
                 pt.x = pt.curpos[0]
                 pt.y = pt.curpos[1]
@@ -204,13 +211,20 @@ export default {
             // 旋轉矩陣公式
             let cos = Math.cos(rad)
             let sin = Math.sin(rad)
+            if(vm.zoom_dirty){
+                vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
+                vm.$d3.select('#colorScatter').call(vm.zoom.transform, d3.zoomIdentity)
+                vm.zoom_dirty = false
+                console.log('reset zoom')
+            }
             vm.ctn_pts.children.forEach(pt => {
-                let tx = pt.rawpos[0] - 256, ty = pt.rawpos[1] - 256
+                let tx = pt.refpos[0] - 256, ty = pt.refpos[1] - 256
                 pt.x = tx * cos - ty * sin + 256
                 pt.y = tx * sin + ty * cos + 256
                 pt.curpos = [tx,ty]
                 pt.tint = vm.getColor(pt.x,pt.y)
             })
+            vm.rotate_dirty = true
         },
     },
     mounted(){
@@ -220,10 +234,17 @@ export default {
         
         vm.latent = false
         vm.rotating = false
-        
+        vm.zoom_dirty = false
+        vm.rotate_dirty = false
+
+        // 圖形起始位置的偏移角度
         vm.ang1 = undefined
-		vm.rotation = 0
-		vm.rotation_acc = 0
+        // 記錄當前旋轉量
+        vm.rotation = 0
+        // 記錄歷史旋轉量
+        vm.rotation_acc = 0
+        
+        vm.transform = d3.zoomIdentity
 
         vm.$refs.colorScatter.addEventListener('contextmenu',e => e.preventDefault())
         vm.pixiInit()
