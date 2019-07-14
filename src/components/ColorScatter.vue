@@ -170,7 +170,7 @@ export default {
             vm.zoom_dirty = true
             vm.rotation_acc = 0
             if(vm.rotate_dirty){
-                vm.ctn_pts.children.forEach(pt => {pt.refpos=[pt.x,pt.y]})
+                vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
                 vm.rotate_dirty = false
             }
             vm.ctn_pts.children.forEach(pt => {
@@ -221,7 +221,7 @@ export default {
                 let tx = pt.refpos[0] - 256, ty = pt.refpos[1] - 256
                 pt.x = tx * cos - ty * sin + 256
                 pt.y = tx * sin + ty * cos + 256
-                pt.curpos = [tx,ty]
+                pt.curpos = [pt.x,pt.y]
                 pt.tint = vm.getColor(pt.x,pt.y)
             })
             vm.rotate_dirty = true
