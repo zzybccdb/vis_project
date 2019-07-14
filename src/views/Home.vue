@@ -116,9 +116,17 @@
 					<div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
 						<HISTOGRAM ref='histogram'/>
 					</div>
-					<v-layout style="height:512px" v-if="recon_loss || dist_loss" row nowrap>
-						<div style="height:512px;width:512px">
+					<v-layout style="height:572px" v-if="recon_loss || dist_loss" row nowrap>
+						<div style="height:542px;width:512px">
 							<ColorScatter ref='latent_scatter'/>
+							<v-layout justify-space-around>
+								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onReset">
+									Reset
+								</v-btn>
+								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onMask">
+									Ajuste
+								</v-btn>
+							</v-layout>
 						</div>
 						<v-layout  style="margin:10px" column>
 							<canvas v-if="recon_loss" style="height:256px" id="loss"></canvas>
@@ -213,6 +221,16 @@ export default {
 		}
 	},
 	methods: {
+		// 對 color scatter 進行 reset
+		onReset(){
+			let latent_scatter = vm.$refs.latent_scatter
+			latent_scatter.onReset()
+		},
+		// 對 color scatter 進行點的圈選
+		onMask(){
+			let latent_scatter = vm.$refs.latent_scatter
+			latent_scatter.mask = !latent_scatter.mask
+		},
 		onHistogram(){
 			let vm = this 
 			vm.histogram = !vm.histogram
@@ -266,7 +284,6 @@ export default {
 			else{
 				vm.startTrain()
 			}
-
 		},
 
 		startTrain(){
@@ -313,7 +330,13 @@ export default {
 			})
 		},
 		onPause() {
-			var vm = this
+			let vm = this
+			// 自動滾動，向下移動100px
+			window.scroll({
+				top: 100,
+				left:0,
+				behavior: 'smooth'
+			});
 			vm.requesting = 'pause'
 			this.$axios.post(this.$api + '/train/pause').then(response => {
 				vm.state = response.data.state

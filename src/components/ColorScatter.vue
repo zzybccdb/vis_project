@@ -1,5 +1,7 @@
 <template>
-        <div id='colorScatter' style="width:100%;height:100%;margin:10px" ref='colorScatter'></div>
+        <v-layout column>
+            <div id='colorScatter' style="width:512px;height:512px;margin:10px" ref='colorScatter'></div>
+        </v-layout>
 </template>
 
 <script>
@@ -12,6 +14,18 @@ let d3 = undefined
 
 export default {
     methods:{
+        // reset 空間內容
+        onReset(){
+            vm.ctn_pts.children.forEach(pt => {
+                pt.x = pt.rawpos[0]
+                pt.y = pt.rawpos[1]
+                pt.curpos = pt.rawpos
+                pt.refpos = pt.rawpos
+            })
+            vm.rotate_dirty = false
+            vm.zoom_dirty = false
+            d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
+        },
         // 设定色碼表
         buildColorTable(background){
             vm.colors = []
@@ -77,10 +91,12 @@ export default {
             vm.wrapper.addChild(vm.ctn)
             // 数据点容器
             vm.ctn_pts = new PIXI.Container()
-            vm.ctn_pts.name = "ctn_points"
-            vm.ctn_pts.interactive = true
-            vm.ctn_pts.buttonmode = true
+            vm.ctn_pts.name = 'ctn_points'
             vm.ctn.addChild(vm.ctn_pts)
+            // 選取框
+            vm.ctn_mask = new PIXI.Container()
+            vm.ctn_mask.name = 'ctn_mask'
+            vm.ctn.addChild(vm.ctn_mask)
             // 数据点贴图宣告
             vm.dotTexture = vm.dotStyle()            
         },
@@ -169,17 +185,19 @@ export default {
         applyZoom(){
             vm.zoom_dirty = true
             vm.rotation_acc = 0
-            if(vm.rotate_dirty){
-                vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
-                vm.rotate_dirty = false
+            if(!vm.mask){
+                if(vm.rotate_dirty){
+                    vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
+                    vm.rotate_dirty = false
+                }
+                vm.ctn_pts.children.forEach(pt => {
+                    let new_pos = vm.transform.apply(pt.refpos)
+                    pt.curpos = new_pos
+                    pt.x = pt.curpos[0]
+                    pt.y = pt.curpos[1]
+                    pt.tint = vm.getColor(pt.x,pt.y)
+                })
             }
-            vm.ctn_pts.children.forEach(pt => {
-                let new_pos = vm.transform.apply(pt.refpos)
-                pt.curpos = new_pos
-                pt.x = pt.curpos[0]
-                pt.y = pt.curpos[1]
-                pt.tint = vm.getColor(pt.x,pt.y)
-            })
         },
         // 右鍵旋轉操作
         rightdownRotate(e){
@@ -194,7 +212,7 @@ export default {
                 vm.rotating = false
                 vm.rotation_acc = vm.rotation
             }
-            if (vm.rotating) {
+            if (vm.rotating && !vm.mask) {
                 vm.rotation = Math.atan2(e.data.global.y - 256, e.data.global.x - 256) - vm.ang1 + vm.rotation_acc
                 vm.rotate(vm.rotation)
             }            
@@ -226,6 +244,10 @@ export default {
             })
             vm.rotate_dirty = true
         },
+        // 調整點位置
+        onMask(){
+            vm.mask = false
+        },
     },
     mounted(){
         vm = this
@@ -236,6 +258,7 @@ export default {
         vm.rotating = false
         vm.zoom_dirty = false
         vm.rotate_dirty = false
+        vm.mask = false 
 
         // 圖形起始位置的偏移角度
         vm.ang1 = undefined
