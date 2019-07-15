@@ -259,6 +259,15 @@ export default {
 				window.recon_loss = true
 				window.dist_loss = true 
 				setTimeout(()=>{
+					console.log('new loss graph')
+					// 清除殘留圖像
+					if(vm.loss_plot){
+						vm.loss_plot.destroy()
+					}					
+					if(vm.dis_loss_plot){
+						vm.dis_loss_plot.destroy()
+					}
+					// 
 					let ctx = document.getElementById('loss').getContext('2d');
 					vm.loss_plot = new Chart(ctx, vm.config)
 
@@ -319,8 +328,11 @@ export default {
 
 		onContinue() {
 			let vm = this
+			let latent_scatter = vm.$refs.latent_scatter
+			latent_scatter.onReset()
 			vm.histogram = false
 			vm.requesting = 'continue'
+			
 			this.$axios.post(this.$api + '/train/continue').then(response => {
 				vm.state = response.data.state
 			}).catch(error => {
@@ -547,6 +559,8 @@ export default {
 	mounted() {
 		var vm = this;
 		window.vm = vm
+		vm.loss_plot = undefined
+		vm.dis_loss_plot = undefined
 		vm.config = {
 			type: 'line',
 			data: {
