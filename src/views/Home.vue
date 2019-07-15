@@ -343,10 +343,11 @@ export default {
 		},
 		onPause() {
 			let vm = this
-			// 自動滾動，向下移動100px
+			console.log(document.body.scrollHeight)
+			// 自動滾動，向下移動到最底部
 			window.scroll({
-				top: 100,
-				left:0,
+				top: document.body.scrollHeight,
+				left: 0,
 				behavior: 'smooth'
 			});
 			vm.requesting = 'pause'
