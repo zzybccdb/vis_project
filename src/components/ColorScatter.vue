@@ -99,6 +99,7 @@ export default {
             // 数据点容器
             vm.ctn_pts = new PIXI.Container()
             vm.ctn_pts.name = 'ctn_points'
+            vm.ctn_pts.sortableChildren = true
             vm.ctn.addChild(vm.ctn_pts)
             // 選取框
             vm.ctn_mask = new PIXI.Container()
@@ -322,15 +323,23 @@ export default {
             vm.mask_pts = vm.ctn_pts.children.filter(pt => {
                 if(x_extent[0] <= pt.x &&  x_extent[1] >= pt.x && y_extent[0] <= pt.y && y_extent[1] >= pt.y){
                     pt.tint = 0xff0000
-                    pt.zIndex = 100000
+                    pt.zIndex = 2
                     return true
                 }
                 else{
                     pt.tint = vm.getColor(pt.x,pt.y)
-                    pt.zIndex = 0
+                    pt.zIndex = -1
                     return false
                 }
             })
+            //////////////////////////////
+            // pixi 5.0 之後可以使用 sortChildren() 來調整
+            // vm.ctn_pts.sortChildren()
+            //////////////////////////////
+            vm.mask_pts.forEach((pt,i) => {
+                vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.children.length-i-1)
+            })
+
             // vm.mask_pts = vm.mask_pts.map(pt => {
             //     return [vm.x_scale.invert(pt.x),vm.y_scale.invert(pt.y)]
             // })
