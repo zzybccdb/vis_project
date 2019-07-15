@@ -249,7 +249,7 @@ export default {
 
             return ticks_ctn
         },
-        // 繪製 mask 版
+        // 繪製 mask 板
         drawMaskBoard(label,x,y,width,height){
             let ctn_mask_board = new PIXI.Container()
             ctn_mask_board.label = label
@@ -259,7 +259,6 @@ export default {
             board.beginFill()
             board.drawRect(x,y,width,height)
             board.endFill()
-            board.drawRect()
             board.alpha = 0
             board.disable = false
             ctn_mask_board.addChild(board)

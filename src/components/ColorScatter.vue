@@ -16,15 +16,20 @@ export default {
     methods:{
         // reset 空間內容
         onReset(){
+            vm.rotate_dirty = false
+            vm.zoom_dirty = false
+            vm.mask = false 
+            vm.mask_pts = undefined
+            vm.group_move = undefined
+            vm.maskBox(vm.mask_box)
+            d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
             vm.ctn_pts.children.forEach(pt => {
                 pt.x = pt.rawpos[0]
                 pt.y = pt.rawpos[1]
                 pt.curpos = pt.rawpos
                 pt.refpos = pt.rawpos
+                pt.tint = vm.getColor(pt.x,pt.y)
             })
-            vm.rotate_dirty = false
-            vm.zoom_dirty = false
-            d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
         },
         // 设定色碼表
         buildColorTable(background){
@@ -74,9 +79,11 @@ export default {
             // 設定 app 的鼠標操作
             vm.app.stage.interactive = true
             vm.app.stage.buttonmode = true
-            vm.app.stage.rightdown = vm.rightdownRotate
-            vm.app.stage.mousemove = vm.mousemoveRotate
-            vm.app.stage.rightup = vm.rightupRotate
+            vm.app.stage.mousedown = vm.mousedown
+            vm.app.stage.mouseup = vm.mouseup
+            vm.app.stage.rightdown = vm.rightdown
+            vm.app.stage.mousemove = vm.mosuemove
+            vm.app.stage.rightup = vm.rightup
             // 将 PIXI application 加入 Dom Tree
             vm.$refs.colorScatter.appendChild(vm.app.view)
             // 图表外包装设定
@@ -96,6 +103,9 @@ export default {
             // 選取框
             vm.ctn_mask = new PIXI.Container()
             vm.ctn_mask.name = 'ctn_mask'
+            vm.mask_box = new PIXI.Graphics()
+            vm.maskBox(vm.mask_box)
+            vm.ctn_mask.addChild(vm.mask_box)
             vm.ctn.addChild(vm.ctn_mask)
             // 数据点贴图宣告
             vm.dotTexture = vm.dotStyle()            
@@ -167,6 +177,8 @@ export default {
             pt.tint = vm.getColor(x,y)
             pt.x = pt.curpos[0]
             pt.y = pt.curpos[1]
+
+            pt.mask = false
         },
         // 移除資料點
         removePoints(){
@@ -199,28 +211,73 @@ export default {
                 })
             }
         },
-        // 右鍵旋轉操作
-        rightdownRotate(e){
-            vm.rotating = true
-            //  以圖形中心爲旋轉點
-            // Math.atan2 回傳弧度
-            vm.ang1 = Math.atan2(e.data.global.y - 256, e.data.global.x - 256)
-        },
-        // 右鍵旋轉移動
-        mousemoveRotate(e){
-            if (e.data.global.y >= 512 || e.data.global.y < 0 ||  e.data.global.x >= 512 ||  e.data.global.x < 0 ){
-                vm.rotating = false
-                vm.rotation_acc = vm.rotation
+        // 左鍵拖動
+        mousedown(e){
+            if(vm.mask){
+                vm.group_move = [e.data.global.x, e.data.global.y]
             }
+        },
+        // 右鍵旋轉操作
+        rightdown(e){
+            if(!vm.mask){
+                vm.rotating = true
+                //  以圖形中心爲旋轉點
+                // Math.atan2 回傳弧度
+                vm.ang1 = Math.atan2(e.data.global.y - 256, e.data.global.x - 256)
+            }
+            else{
+                vm.mask_box_draw = true
+                vm.mask_box.startx = e.data.global.x
+                vm.mask_box.starty = e.data.global.y
+            }
+        },
+        // 按鍵旋轉移動，拖拽控制
+        mosuemove(e){
+            // 邊界設定，超出結束控制
+            if (e.data.global.y >= 512 || e.data.global.y < 0 ||  e.data.global.x >= 512 ||  e.data.global.x < 0 ){
+                vm.rightup()
+                vm.mouseup()
+            }
+            // 旋轉控制執行
             if (vm.rotating && !vm.mask) {
                 vm.rotation = Math.atan2(e.data.global.y - 256, e.data.global.x - 256) - vm.ang1 + vm.rotation_acc
                 vm.rotate(vm.rotation)
-            }            
+            }
+            // 執行 mask 選擇框
+            else if(vm.mask && vm.mask_box_draw){
+                vm.mask_box.clear()
+                vm.maskBox(vm.mask_box,vm.mask_box.startx,vm.mask_box.starty,e.data.global.x,e.data.global.y)
+                vm.mask_box.globalx = e.data.global.x
+                vm.mask_box.globaly = e.data.global.y
+                vm.mask_box.alpha = 0.3
+                vm.maskBoxCollision()
+            }        
+            else if(vm.mask && vm.mask_pts && vm.group_move){
+                let x_move = vm.group_move[0] - e.data.global.x
+                let y_move = vm.group_move[1] - e.data.global.y
+                vm.mask_pts.forEach(pt => {
+                    pt.x = pt.curpos[0]-x_move
+                    pt.y = pt.curpos[1]-y_move
+                })
+            }    
         },
         // 停止旋轉
-        rightupRotate(){
+        rightup(){
             vm.rotating = false
+            vm.mask_box_draw = false
+            vm.mask_box.alpha = 0
             vm.rotation_acc = vm.rotation
+            vm.mask_box.clear()
+        },
+        // 左鍵停止移動
+        mouseup(){
+            if(vm.mask_pts){
+                vm.mask_pts.forEach(pt => {
+                    pt.curpos = [pt.x,pt.y]
+                    pt.rawpos = pt.curpos
+                })
+            }
+            vm.group_move = undefined
         },
         // 旋轉矩陣公式
         // [ cos角度 -sin角度 ] [x] => [x']
@@ -248,6 +305,43 @@ export default {
         onMask(){
             vm.mask = false
         },
+        // mask box
+        maskBox(box,x1=0,y1=0,x2=0,y2=0){
+            box.lineStyle(1,0x000000,0)
+            box.beginFill()
+            box.drawRect(x1,y1,x2-x1,y2-y1)
+            box.endFill()
+            box.alpha = 0
+        },
+        // mask box 與資料點 collision
+        maskBoxCollision(){
+            let x1 = vm.mask_box.startx, x2 = vm.mask_box.globalx
+            let x_extent = vm.minMax(x1,x2)
+            let y1 = vm.mask_box.starty, y2 = vm.mask_box.globaly
+            let y_extent = vm.minMax(y1,y2)
+            vm.mask_pts = vm.ctn_pts.children.filter(pt => {
+                if(x_extent[0] <= pt.x &&  x_extent[1] >= pt.x && y_extent[0] <= pt.y && y_extent[1] >= pt.y){
+                    pt.tint = 0xff0000
+                    pt.zIndex = 100000
+                    return true
+                }
+                else{
+                    pt.tint = vm.getColor(pt.x,pt.y)
+                    pt.zIndex = 0
+                    return false
+                }
+            })
+            // vm.mask_pts = vm.mask_pts.map(pt => {
+            //     return [vm.x_scale.invert(pt.x),vm.y_scale.invert(pt.y)]
+            // })
+            // console.log(vm.mask_pts)
+        },
+        // 以 min，max 順序回傳
+        minMax(num1,num2){
+            let min = Math.min(num1,num2)
+            let max = Math.max(num1,num2)
+            return [min,max]
+        }
     },
     mounted(){
         vm = this
@@ -259,20 +353,24 @@ export default {
         vm.zoom_dirty = false
         vm.rotate_dirty = false
         vm.mask = false 
-
+        // 記錄 group 移動的起始位置
+        vm.group_move = undefined
+        
+        //記錄 mask 的資料點
+        vm.mask_pts = undefined
         // 圖形起始位置的偏移角度
         vm.ang1 = undefined
         // 記錄當前旋轉量
         vm.rotation = 0
         // 記錄歷史旋轉量
         vm.rotation_acc = 0
-        
+        // 設定縮放矩陣
         vm.transform = d3.zoomIdentity
 
         vm.$refs.colorScatter.addEventListener('contextmenu',e => e.preventDefault())
         vm.pixiInit()
         vm.d3Init()
-
+        // 加載背景 color map
         if(vm.$PIXI.utils.TextureCache['map_big.png'] == undefined){
             vm.$PIXI.loader.add('map_big.png').load(()=>{
                 console.log('load picture')
