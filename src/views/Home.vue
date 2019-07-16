@@ -126,6 +126,9 @@
 								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onMask">
 									Ajuste
 								</v-btn>
+								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onConfirm">
+									Confirm
+								</v-btn>
 							</v-layout>
 						</div>
 						<v-layout  style="margin:10px" column>
@@ -231,6 +234,11 @@ export default {
 			let latent_scatter = vm.$refs.latent_scatter
 			latent_scatter.mask = !latent_scatter.mask
 		},
+		// 對移動後的 color scatter 進行確認
+		onConfirm(){
+			let latent_scatter = vm.$refs.latent_scatter
+			latent_scatter.confirm()
+		},
 		onHistogram(){
 			let vm = this 
 			vm.histogram = !vm.histogram
@@ -259,7 +267,6 @@ export default {
 				window.recon_loss = true
 				window.dist_loss = true 
 				setTimeout(()=>{
-					console.log('new loss graph')
 					// 清除殘留圖像
 					if(vm.loss_plot){
 						vm.loss_plot.destroy()
@@ -267,7 +274,9 @@ export default {
 					if(vm.dis_loss_plot){
 						vm.dis_loss_plot.destroy()
 					}
-					// 
+					// 清空 scatter 
+					vm.$refs.latent_scatter.removePoints()
+					// 重新宣告曲线图
 					let ctx = document.getElementById('loss').getContext('2d');
 					vm.loss_plot = new Chart(ctx, vm.config)
 
@@ -279,6 +288,13 @@ export default {
 					latent_scatter.eventBus = EventBus
 					
 					vm.startTrain()
+					// 自動滾動，向下移動到最底部
+					window.scroll({
+						top: document.body.scrollHeight,
+						left: 0,
+						behavior: 'smooth'
+					});
+
 				},500)
 			}else if(vm.network === 'Autoencoder' || vm.network === 'VAE'){
 				vm.recon_loss = true
@@ -327,6 +343,12 @@ export default {
 		},
 
 		onContinue() {
+			// 自動滾動，向下移動到最底部
+			window.scroll({
+				top: document.body.scrollHeight,
+				left: 0,
+				behavior: 'smooth'
+			});
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
 			latent_scatter.onReset()
@@ -343,13 +365,6 @@ export default {
 		},
 		onPause() {
 			let vm = this
-			console.log(document.body.scrollHeight)
-			// 自動滾動，向下移動到最底部
-			window.scroll({
-				top: document.body.scrollHeight,
-				left: 0,
-				behavior: 'smooth'
-			});
 			vm.requesting = 'pause'
 			this.$axios.post(this.$api + '/train/pause').then(response => {
 				vm.state = response.data.state
@@ -405,7 +420,12 @@ export default {
 					// 加载 latent 资料点
 					vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
 						let latent_scatter = vm.$refs.latent_scatter
-						let data = response.data.latent
+						// let data = response.data.latent
+						let data = response.data.rawdata
+						let control_points = response.data.control_points
+						if(control_points.length !== 0){
+							latent_scatter.control_points = control_points
+						}
 						if(latent_scatter.latent){
 							latent_scatter.pointsTransition(data)
 						}
@@ -413,10 +433,10 @@ export default {
 							latent_scatter.addPoints(data)
 						}
 					}).catch(error => {
-						console.log('Get progress went wrong!', error.response.data)
+						console.error('Home Get progress went wrong!')
 					})
 				}).catch(error => {
-					console.log('something went wrong!', error.response.data)
+					console.error('Something went wrong!')
 				})
 				vm.start = false
 			}
@@ -471,8 +491,8 @@ export default {
 
 				// 设定 histogram 为 false
 				vm.histogram = !vm.histogram
-				// 清空 scatter 
-				vm.$refs.latent_scatter.removePoints()
+				// // 清空 scatter 
+				// vm.$refs.latent_scatter.removePoints()
 
 			}).catch(error => {
 				vm.dataset_errors = [error.response.data]
@@ -503,6 +523,8 @@ export default {
 			}).then(response => {
 				vm.state = response.data.state
 				vm.columns_errors = []
+				// // 清空 scatter 
+				// vm.$refs.latent_scatter.removePoints()
 			}).catch(error => {
 				vm.columns_errors = [error.response.data]
 			})

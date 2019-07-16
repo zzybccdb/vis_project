@@ -14,21 +14,71 @@ let d3 = undefined
 
 export default {
     methods:{
+        // confirm
+        confirm(){
+            let mean = [0,0]
+            let size = vm.mask_pts.length
+            vm.mask_pts.forEach(pt => {
+                pt.rawpos = pt.curpos
+                if(pt.tint !== 0xffffff){
+                    pt.tint = vm.getColor(pt.x,pt.y)
+                }
+                mean[0] += pt.x
+                mean[1] += pt.y
+            })
+            mean[0] = mean[0]/size, mean[1] = mean[1]/size
+            let dist = vm.mask_pts.map(pt => {
+                return Math.pow((pt.x-mean[0]),2)+Math.pow((pt.y-mean[1]),2)
+            })
+            // 获取距离群中心最近的点的 x,y
+            let center = dist.indexOf(Math.min.apply(null,dist))
+            // 中心点更换贴图并且 highlight
+            let pt = vm.mask_pts[center]
+            console.log('control pt: ', [pt.x,pt.y])
+            pt.texture = vm.highlightTexture
+            pt.tint = 0xffffff
+            pt.alpha = 1
+            vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1)
+            // 保存控制中心点
+            vm.control_points.push(pt.data[0])
+            console.log(vm.control_points)
+            // 获取当前 color map 上 latent
+            let latent = pt.data.slice(-2)
+            // 处理回传参数
+            let param = {
+                // 扣除第一項時間以及最後的 latent
+                'cdata': pt.data.slice(0,-2),
+                'cxy': [vm.x_scale.invert(pt.x), vm.y_scale.invert(pt.y)]
+            }
+            // 将中心点坐标,原始数据传回后端
+            vm.$axios.post(vm.$api + '/inference/confirm_latent',param)
+            .then(response => {
+                console.log('Confirm ok')
+                vm.mask_pts = []
+            }).catch(error => {
+                console.error('Confirm latent error')
+            })
+
+        },
         // reset 空間內容
         onReset(){
             vm.rotate_dirty = false
             vm.zoom_dirty = false
-            vm.mask = false 
+            // vm.mask = false 
             vm.mask_pts = undefined
             vm.group_move = undefined
+            // 重置 mask 选框
             vm.maskBox(vm.mask_box)
+            // 还原旋转前位置
             d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
             vm.ctn_pts.children.forEach(pt => {
                 pt.x = pt.rawpos[0]
                 pt.y = pt.rawpos[1]
                 pt.curpos = pt.rawpos
                 pt.refpos = pt.rawpos
-                pt.tint = vm.getColor(pt.x,pt.y)
+                if(pt.tint !== 0xffffff){
+                    pt.tint = vm.getColor(pt.x,pt.y)
+                }
             })
         },
         // 设定色碼表
@@ -99,7 +149,7 @@ export default {
             // 数据点容器
             vm.ctn_pts = new PIXI.Container()
             vm.ctn_pts.name = 'ctn_points'
-            vm.ctn_pts.sortableChildren = true
+            vm.ctn_pts.count = undefined    
             vm.ctn.addChild(vm.ctn_pts)
             // 選取框
             vm.ctn_mask = new PIXI.Container()
@@ -109,15 +159,29 @@ export default {
             vm.ctn_mask.addChild(vm.mask_box)
             vm.ctn.addChild(vm.ctn_mask)
             // 数据点贴图宣告
-            vm.dotTexture = vm.dotStyle()            
+            vm.dotTexture = vm.dotStyle()  
+            // 数据点 highlight 贴图
+            vm.highlightTexture = vm.dotHightlightStyle()
         },
         // 数据点的贴图
         dotStyle(){
-            let g = new PIXI.Graphics
+            let g = new PIXI.Graphics()
             g.lineStyle(1,0x0)
             g.beginFill(0xFFFFFF)
             // 参数 x,y,半径
             g.drawCircle(0, 0, 3)
+            g.endFill()
+            return g.generateCanvasTexture()
+        },
+        // 数据点 highlight 贴图
+        dotHightlightStyle(){
+            let g = new PIXI.Graphics()
+            g.lineStyle(1,0x0)
+            g.beginFill(0xFFFFFF)
+            g.moveTo(0,-7.5)
+            g.lineTo(-7.5,7.5)
+            g.lineTo(7.5,7.5)
+            g.lineTo(0,-7.5)
             g.endFill()
             return g.generateCanvasTexture()
         },
@@ -144,10 +208,12 @@ export default {
         // 加入数据点
         addPoints(data){
             vm.domainSetting(data)
-            data.forEach(d => {
+            vm.ctn_pts.count = data.length
+            data.forEach((d,i) => {
                 let sp = new PIXI.Sprite(vm.dotTexture)
-                vm.setPointLocation(sp,d[0],d[1])
+                vm.setPointLocation(sp,d.slice(-2)[0],d.slice(-2)[1])
                 sp.alpha = 0.3
+                sp.data = d
                 vm.ctn_pts.addChild(sp)
             });
             vm.latent = true
@@ -156,13 +222,22 @@ export default {
         pointsTransition(data){
             vm.domainSetting(data)
             vm.ctn_pts.children.forEach((pt,i) => {
-                vm.setPointLocation(pt,data[i][0],data[i][1])
+                vm.setPointLocation(pt,data[i].slice(-2)[0],data[i].slice(-2)[1])
+                pt.data = data[i]
+                vm.control_points.forEach(cpt => {
+                    if(cpt === data[i][0]){
+                        pt.texture = vm.highlightTexture
+                        pt.tint = 0xffffff
+                        pt.alpha = 1
+                        // vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1)
+                    }
+                })
             });
         },
         // scale domain 設定
         domainSetting(data){
-            let x_extent = d3.extent(data.map(d => parseFloat(d[0])))
-            let y_extent = d3.extent(data.map(d => parseFloat(d[1])))
+            let x_extent = d3.extent(data.map(d => parseFloat(d.slice(-2)[0])))
+            let y_extent = d3.extent(data.map(d => parseFloat(d.slice(-2)[1])))
             vm.x_scale.domain(x_extent)
             vm.y_scale.domain(y_extent)            
         },
@@ -178,12 +253,16 @@ export default {
             pt.tint = vm.getColor(x,y)
             pt.x = pt.curpos[0]
             pt.y = pt.curpos[1]
-
+            pt.texture = vm.dotTexture
             pt.mask = false
         },
         // 移除資料點
         removePoints(){
+            console.log('remove pts')
             vm.latent = false
+            vm.mask = false
+            vm.mask_pts = false
+            vm.control_points = []
             vm.ctn_pts.removeChildren()
         },
         // 數據點的縮放 Zoom
@@ -208,7 +287,9 @@ export default {
                     pt.curpos = new_pos
                     pt.x = pt.curpos[0]
                     pt.y = pt.curpos[1]
-                    pt.tint = vm.getColor(pt.x,pt.y)
+                    if(pt.tint !== 0xffffff){
+                        pt.tint = vm.getColor(pt.x,pt.y)
+                    }
                 })
             }
         },
@@ -254,6 +335,12 @@ export default {
                 vm.maskBoxCollision()
             }        
             else if(vm.mask && vm.mask_pts && vm.group_move){
+                // 檢測拖拽位置是否在選擇框內
+                let x1 = vm.mask_box.startx, x2 = vm.mask_box.globalx
+                let x_extent = vm.minMax(x1,x2)
+                let y1 = vm.mask_box.starty, y2 = vm.mask_box.globaly
+                let y_extent = vm.minMax(y1,y2)
+                
                 let x_move = vm.group_move[0] - e.data.global.x
                 let y_move = vm.group_move[1] - e.data.global.y
                 vm.mask_pts.forEach(pt => {
@@ -275,7 +362,7 @@ export default {
             if(vm.mask_pts){
                 vm.mask_pts.forEach(pt => {
                     pt.curpos = [pt.x,pt.y]
-                    pt.rawpos = pt.curpos
+                    // pt.rawpos = pt.curpos
                 })
             }
             vm.group_move = undefined
@@ -298,7 +385,9 @@ export default {
                 pt.x = tx * cos - ty * sin + 256
                 pt.y = tx * sin + ty * cos + 256
                 pt.curpos = [pt.x,pt.y]
-                pt.tint = vm.getColor(pt.x,pt.y)
+                if(pt.tint !== 0xffffff){
+                    pt.tint = vm.getColor(pt.x,pt.y)
+                }
             })
             vm.rotate_dirty = true
         },
@@ -323,12 +412,12 @@ export default {
             vm.mask_pts = vm.ctn_pts.children.filter(pt => {
                 if(x_extent[0] <= pt.x &&  x_extent[1] >= pt.x && y_extent[0] <= pt.y && y_extent[1] >= pt.y){
                     pt.tint = 0xff0000
-                    pt.zIndex = 2
                     return true
                 }
                 else{
-                    pt.tint = vm.getColor(pt.x,pt.y)
-                    pt.zIndex = -1
+                    if(pt.tint !== 0xffffff){
+                        pt.tint = vm.getColor(pt.x,pt.y)
+                    }
                     return false
                 }
             })
@@ -336,14 +425,10 @@ export default {
             // pixi 5.0 之後可以使用 sortChildren() 來調整
             // vm.ctn_pts.sortChildren()
             //////////////////////////////
+            // 將選中的資料點移動至圖層的上層
             vm.mask_pts.forEach((pt,i) => {
-                vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.children.length-i-1)
+                vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
             })
-
-            // vm.mask_pts = vm.mask_pts.map(pt => {
-            //     return [vm.x_scale.invert(pt.x),vm.y_scale.invert(pt.y)]
-            // })
-            // console.log(vm.mask_pts)
         },
         // 以 min，max 順序回傳
         minMax(num1,num2){
@@ -362,9 +447,10 @@ export default {
         vm.zoom_dirty = false
         vm.rotate_dirty = false
         vm.mask = false 
-        // 記錄 group 移動的起始位置
+        // 記錄 group 移動的起始位置,将会以 [] 形式保存
         vm.group_move = undefined
-        
+        // 记录使用者选中的控制点群中心
+        vm.control_points = []
         //記錄 mask 的資料點
         vm.mask_pts = undefined
         // 圖形起始位置的偏移角度
