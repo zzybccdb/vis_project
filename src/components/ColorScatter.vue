@@ -18,6 +18,7 @@ export default {
         confirm(){
             let mean = [0,0]
             let size = vm.mask_pts.length
+            let cdata = []
             vm.mask_pts.forEach(pt => {
                 pt.rawpos = pt.curpos
                 if(pt.tint !== 0xffffff){
@@ -25,40 +26,27 @@ export default {
                 }
                 mean[0] += pt.x
                 mean[1] += pt.y
+                cdata.push(pt.data.slice(1,-2))
             })
             mean[0] = mean[0]/size, mean[1] = mean[1]/size
-            let dist = vm.mask_pts.map(pt => {
-                return Math.pow((pt.x-mean[0]),2)+Math.pow((pt.y-mean[1]),2)
-            })
-            // 获取距离群中心最近的点的 x,y
-            let center = dist.indexOf(Math.min.apply(null,dist))
-            // 中心点更换贴图并且 highlight
-            let pt = vm.mask_pts[center]
-            console.log('control pt: ', [pt.x,pt.y])
-            pt.texture = vm.highlightTexture
-            pt.tint = 0xffffff
-            pt.alpha = 1
-            vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1)
-            // 保存控制中心点
-            vm.control_points.push(pt.data[0])
-            console.log(vm.control_points)
-            // 获取当前 color map 上 latent
-            let latent = pt.data.slice(-2)
+            // 生成 contral point, 白色三角形
+            let control_shadow = vm.controlPointsInit(vm.controlTexture, mean[0], mean[1])
+            control_shadow.alpha = 1 
+            vm.ctn_control_shadow.addChild(control_shadow)
             // 处理回传参数
             let param = {
                 // 扣除第一項時間以及最後的 latent
-                'cdata': pt.data.slice(0,-2),
-                'cxy': [vm.x_scale.invert(pt.x), vm.y_scale.invert(pt.y)]
+                'cxy': [vm.x_scale.invert(mean[0]), vm.y_scale.invert(mean[1])],
+                'cdata':cdata
             }
             // 将中心点坐标,原始数据传回后端
             vm.$axios.post(vm.$api + '/inference/confirm_latent',param)
-            .then(response => {
+            .then(() => {
                 console.log('Confirm ok')
-                vm.mask_pts = []
+                vm.mask_pts = undefined
             }).catch(error => {
-                console.error('Confirm latent error')
+                console.error('Confirm latent error',error)
             })
-
         },
         // reset 空間內容
         onReset(){
@@ -85,7 +73,7 @@ export default {
         buildColorTable(background){
             vm.colors = []
             let raw_colormap = vm.app.renderer.extract.pixels(background)
-            // raw_colormap 是由　pixel 數量 × 【r,g,b,a】 的 array
+            // raw color map 是由 r g b a 组成的 n * 4 大小的 array
             // r，g，b，a 取值都是 0～255
             for(let x=0; x<512; x++){
                 let color = []
@@ -97,6 +85,7 @@ export default {
                 vm.colors.push(color) 
             }
         },
+        // 获取 color map pixel 颜色
 		getColor(x, y) {
 			x = parseInt(x)
 			y = parseInt(y)
@@ -105,7 +94,8 @@ export default {
 				return vm.colors[x][y]
 			}
 			return 0xCCCCCC // default to black
-		},
+        },
+        // 绘图容器,参数初始化设定
         pixiInit(){
             vm.app = new PIXI.Application({
                 autoResize:true,
@@ -142,7 +132,7 @@ export default {
             vm.wrapper.x = 0
             vm.wrapper.y = 0
             // vm.app.stage.addChild(vm.wrapper)
-            // 主题容器
+            // 主体容器
             vm.ctn = new PIXI.Container()
             vm.ctn.name = 'main_ctn'
             vm.wrapper.addChild(vm.ctn)
@@ -158,10 +148,24 @@ export default {
             vm.maskBox(vm.mask_box)
             vm.ctn_mask.addChild(vm.mask_box)
             vm.ctn.addChild(vm.ctn_mask)
-            // 数据点贴图宣告
+            // control point 和 control shadow 间的连接线
+            vm.ctn_lines = new PIXI.Container()
+            vm.ctn_lines.name = 'links'
+            vm.ctn.addChild(vm.ctn_lines)
+            // 控制点残影容器
+            vm.ctn_control_shadow = new PIXI.Container()
+            vm.ctn_control_shadow.name = 'control_shadow'
+            vm.ctn.addChild(vm.ctn_control_shadow)
+            // 控制点容器
+            vm.ctn_control_pts = new PIXI.Container()
+            vm.ctn_control_pts.name = 'control_pts'
+            vm.ctn.addChild(vm.ctn_control_pts)
+            // 数据点贴图
             vm.dotTexture = vm.dotStyle()  
             // 数据点 highlight 贴图
-            vm.highlightTexture = vm.dotHightlightStyle()
+            vm.controlTexture = vm.controlStyle()
+            // control shadow 贴图
+            vm.controlShadowTexture = vm.controlShadowStyle()
         },
         // 数据点的贴图
         dotStyle(){
@@ -173,15 +177,31 @@ export default {
             g.endFill()
             return g.generateCanvasTexture()
         },
-        // 数据点 highlight 贴图
-        dotHightlightStyle(){
+        // 数据点 control 点贴图
+        controlStyle(){
             let g = new PIXI.Graphics()
-            g.lineStyle(1,0x0)
+            g.lineStyle(2,0x0)
             g.beginFill(0xFFFFFF)
             g.moveTo(0,-7.5)
             g.lineTo(-7.5,7.5)
             g.lineTo(7.5,7.5)
             g.lineTo(0,-7.5)
+            g.endFill()
+            return g.generateCanvasTexture()
+        },
+        // 数据点 control shadow 贴图
+        controlShadowStyle(){
+            let g = new PIXI.Graphics()
+            g.lineStyle(2,0x0)
+            g.beginFill(0xFFFFFF)
+            g.moveTo(7.5,0)
+            g.lineTo(0,15)
+            g.lineTo(15,15)
+            g.lineTo(7.5,0)
+            g.moveTo(10,5)
+            g.lineTo(5,15)
+            g.moveTo(12.5,10)
+            g.lineTo(10,15)
             g.endFill()
             return g.generateCanvasTexture()
         },
@@ -209,7 +229,7 @@ export default {
         addPoints(data){
             vm.domainSetting(data)
             vm.ctn_pts.count = data.length
-            data.forEach((d,i) => {
+            data.forEach((d) => {
                 let sp = new PIXI.Sprite(vm.dotTexture)
                 vm.setPointLocation(sp,d.slice(-2)[0],d.slice(-2)[1])
                 sp.alpha = 0.3
@@ -224,12 +244,12 @@ export default {
             vm.ctn_pts.children.forEach((pt,i) => {
                 vm.setPointLocation(pt,data[i].slice(-2)[0],data[i].slice(-2)[1])
                 pt.data = data[i]
-                vm.control_points.forEach(cpt => {
-                    if(cpt === data[i][0]){
-                        pt.texture = vm.highlightTexture
-                        pt.tint = 0xffffff
-                        pt.alpha = 1
-                        // vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1)
+                vm.ctn_control_pts.children.forEach(cpt => {
+                    if(cpt.index === data[i][0]){
+                        cpt.x = pt.x
+                        cpt.y = pt.y
+                        let shadow = cpt.shadow
+                        // let line
                     }
                 })
             });
@@ -261,8 +281,10 @@ export default {
             console.log('remove pts')
             vm.latent = false
             vm.mask = false
-            vm.mask_pts = false
-            vm.control_points = []
+            if(vm.mask_pts !== undefined)
+                vm.mask_pts.removeChildren()
+            vm.ctn_control_pts.removeChildren()
+            vm.ctn_control_shadow.removeChildren()
             vm.ctn_pts.removeChildren()
         },
         // 數據點的縮放 Zoom
@@ -308,6 +330,7 @@ export default {
                 vm.ang1 = Math.atan2(e.data.global.y - 256, e.data.global.x - 256)
             }
             else{
+                // 控制是否 mask_box 绘制模式
                 vm.mask_box_draw = true
                 vm.mask_box.startx = e.data.global.x
                 vm.mask_box.starty = e.data.global.y
@@ -326,28 +349,44 @@ export default {
                 vm.rotate(vm.rotation)
             }
             // 執行 mask 選擇框
-            else if(vm.mask && vm.mask_box_draw){
-                vm.mask_box.clear()
-                vm.maskBox(vm.mask_box,vm.mask_box.startx,vm.mask_box.starty,e.data.global.x,e.data.global.y)
-                vm.mask_box.globalx = e.data.global.x
-                vm.mask_box.globaly = e.data.global.y
-                vm.mask_box.alpha = 0.3
-                vm.maskBoxCollision()
-            }        
-            else if(vm.mask && vm.mask_pts && vm.group_move){
-                // 檢測拖拽位置是否在選擇框內
-                let x1 = vm.mask_box.startx, x2 = vm.mask_box.globalx
-                let x_extent = vm.minMax(x1,x2)
-                let y1 = vm.mask_box.starty, y2 = vm.mask_box.globaly
-                let y_extent = vm.minMax(y1,y2)
-                
-                let x_move = vm.group_move[0] - e.data.global.x
-                let y_move = vm.group_move[1] - e.data.global.y
-                vm.mask_pts.forEach(pt => {
-                    pt.x = pt.curpos[0]-x_move
-                    pt.y = pt.curpos[1]-y_move
-                })
+            if(vm.mask && vm.mask_box_draw){
+                vm.maskBoxRisize(e)
+            }
+            // 移动 mask 标注数据点
+            if(vm.mask && vm.mask_pts && vm.group_move){
+                vm.maskPointsMove(e)
             }    
+        },
+        // mask 选择框绘制调整
+        maskBoxRisize(e){
+            let x1 = vm.mask_box.startx
+            let y1 = vm.mask_box.starty
+            let x2 = e.data.global.x
+            let y2 = e.data.global.y
+            // 清空当前绘制的 maskbox
+            vm.mask_box.clear()
+            // 对 maskbox 进行初始化, 给定(object, x1, y1, x2, y2)
+            vm.maskBox(vm.mask_box,x1,y1,x2,y2)
+            // 保存 maskbox 的对角坐标
+            vm.mask_box.endx = e.data.global.x
+            vm.mask_box.endy = e.data.global.y
+            vm.mask_box.alpha = 0.3
+            vm.maskBoxCollision()
+        },
+        // 移动 mask 标注数据点
+        maskPointsMove(e){
+            // 檢測拖拽位置是否在選擇框內
+            // let x1 = vm.mask_box.startx, x2 = vm.mask_box.endx
+            // let y1 = vm.mask_box_starty, y2 = vm.mask_box.endy
+            // let x_extent = vm.minMax(x1,x2)
+            // let y_extent = vm.minMax(y1,y2)
+            
+            let x_move = e.data.global.x - vm.group_move[0] 
+            let y_move = e.data.global.y - vm.group_move[1]  
+            vm.mask_pts.forEach(pt => {
+                pt.x = pt.curpos[0]+x_move
+                pt.y = pt.curpos[1]+y_move
+            })
         },
         // 停止旋轉
         rightup(){
@@ -405,9 +444,9 @@ export default {
         },
         // mask box 與資料點 collision
         maskBoxCollision(){
-            let x1 = vm.mask_box.startx, x2 = vm.mask_box.globalx
+            let x1 = vm.mask_box.startx, x2 = vm.mask_box.endx
             let x_extent = vm.minMax(x1,x2)
-            let y1 = vm.mask_box.starty, y2 = vm.mask_box.globaly
+            let y1 = vm.mask_box.starty, y2 = vm.mask_box.endy
             let y_extent = vm.minMax(y1,y2)
             vm.mask_pts = vm.ctn_pts.children.filter(pt => {
                 if(x_extent[0] <= pt.x &&  x_extent[1] >= pt.x && y_extent[0] <= pt.y && y_extent[1] >= pt.y){
@@ -435,7 +474,16 @@ export default {
             let min = Math.min(num1,num2)
             let max = Math.max(num1,num2)
             return [min,max]
-        }
+        },
+        // 绘制控制点.
+        controlPointsInit(texture,x,y){
+            let sp = new PIXI.Sprite(texture)
+            sp.alpha = 0.5
+            sp.x = x-7.5
+            sp.y = y-7.5
+            sp.tint = 0xffffff
+            return sp
+        },
     },
     mounted(){
         vm = this
@@ -447,10 +495,9 @@ export default {
         vm.zoom_dirty = false
         vm.rotate_dirty = false
         vm.mask = false 
+        vm.mask_box_draw = false
         // 記錄 group 移動的起始位置,将会以 [] 形式保存
         vm.group_move = undefined
-        // 记录使用者选中的控制点群中心
-        vm.control_points = []
         //記錄 mask 的資料點
         vm.mask_pts = undefined
         // 圖形起始位置的偏移角度

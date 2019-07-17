@@ -226,16 +226,19 @@ export default {
 	methods: {
 		// 對 color scatter 進行 reset
 		onReset(){
+			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
 			latent_scatter.onReset()
 		},
 		// 對 color scatter 進行點的圈選
 		onMask(){
+			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
 			latent_scatter.mask = !latent_scatter.mask
 		},
 		// 對移動後的 color scatter 進行確認
 		onConfirm(){
+			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
 			latent_scatter.confirm()
 		},
@@ -325,7 +328,7 @@ export default {
 			}).then(response => {
 				vm.state = response.data.state
 			}).catch(error => {
-				console.log('something went wrong!', error.response.data)
+				console.log('something went wrong! Home startTrain', error)
 			}).finally(() => {
 				console.log("clear loss chart")
 				vm.requesting = 'none'
@@ -358,7 +361,7 @@ export default {
 			this.$axios.post(this.$api + '/train/continue').then(response => {
 				vm.state = response.data.state
 			}).catch(error => {
-				console.log('something went wrong!', error.response.data)
+				console.log('something went wrong! Home onContimue', error)
 			}).finally(() => {
 				vm.requesting = 'none'
 			})
@@ -373,10 +376,10 @@ export default {
 					let data = response.data.latent
 					latent_scatter.pointsTransition(data)
 				}).catch(error => {
-					console.log('Get progress went wrong!', error.response.data)
+					console.log('Get progress went wrong! Home onPause -> pause', error)
 				})
 			}).catch(error => {
-				console.log('something went wrong!', error.response.data)
+				console.log('something went wrong! Home onPause', error)
 			}).finally(() => {
 				vm.requesting = 'none'
 			})
@@ -422,10 +425,6 @@ export default {
 						let latent_scatter = vm.$refs.latent_scatter
 						// let data = response.data.latent
 						let data = response.data.rawdata
-						let control_points = response.data.control_points
-						if(control_points.length !== 0){
-							latent_scatter.control_points = control_points
-						}
 						if(latent_scatter.latent){
 							latent_scatter.pointsTransition(data)
 						}
@@ -433,10 +432,10 @@ export default {
 							latent_scatter.addPoints(data)
 						}
 					}).catch(error => {
-						console.error('Home Get progress went wrong!')
+						console.error('Home Get progress went wrong!',error)
 					})
 				}).catch(error => {
-					console.error('Something went wrong!')
+					console.error('Something went wrong!',error)
 				})
 				vm.start = false
 			}
@@ -473,7 +472,7 @@ export default {
 				window.recon_loss = false
 				window.dist_loss = false
 			}).catch(error => {
-				vm.network_errors = [error.response.data]
+				vm.network_errors = [error]
 			})
 		},
 		onDatasetChange() {
@@ -495,7 +494,7 @@ export default {
 				// vm.$refs.latent_scatter.removePoints()
 
 			}).catch(error => {
-				vm.dataset_errors = [error.response.data]
+				vm.dataset_errors = [error]
 			})
 		},
 		onColumnsChange() {
@@ -526,7 +525,7 @@ export default {
 				// // 清空 scatter 
 				// vm.$refs.latent_scatter.removePoints()
 			}).catch(error => {
-				vm.columns_errors = [error.response.data]
+				vm.columns_errors = [error]
 			})
 		},
 		onLearningRateChange() {
@@ -538,7 +537,7 @@ export default {
 				vm.state = response.data.state
 				vm.learning_rate_errors = []
 			}).catch(error => {
-				vm.learning_rate_errors = [error.response.data]
+				vm.learning_rate_errors = [error]
 			})
 		},
 		onBatchSizeChange() {
@@ -550,7 +549,7 @@ export default {
 				vm.state = response.data.state
 				vm.batch_size_errors = []
 			}).catch(error => {
-				vm.batch_size_errors = [error.response.data]
+				vm.batch_size_errors = [error]
 			})
 		},
 		onWindowSizeChange(){
@@ -563,8 +562,8 @@ export default {
 				vm.input_window_errors = []
 				vm.output_window_errors = []
 			}).catch(error => {
-				vm.input_window_errors = [error.response.data]
-				vm.output_window_errors = [error.response.data]
+				vm.input_window_errors = [error]
+				vm.output_window_errors = [error]
 			})
 		},
 		onLossWeightChange(){
@@ -575,7 +574,7 @@ export default {
 				vm.state = res.data.state
 				vm.loss_weight_errors = []
 			}).catch(error => {
-				vm.loss_weight_errors = [error.response.data]
+				vm.loss_weight_errors = [error]
 			})
 		},
 	},
