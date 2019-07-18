@@ -1,5 +1,5 @@
 <template>
-	<v-container grid-list-md fill-height>
+	<v-container ref='Home' grid-list-md fill-height>
 		<v-layout row wrap>
 			<v-flex xs12>
 				<v-card>
@@ -111,13 +111,13 @@
 								<v-icon light>cached</v-icon>
 							</span>
 						</v-btn>
-						<v-btn color="primary" :loading="histogram_loading" :disabled="disableNewTrainBtn" @click="onHistogram">
+						<!-- <v-btn color="primary" :loading="histogram_loading" :disabled="disableNewTrainBtn" @click="onHistogram">
 							<v-icon>bar_chart</v-icon>
 							Histogram
 							<span slot="loader" class="arrow-loader">
 								<v-icon light>cached</v-icon>
 							</span>
-						</v-btn>
+						</v-btn> -->
 					</v-form>
 					<!-- <div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
 						<HISTOGRAM ref='histogram'/>
@@ -198,7 +198,7 @@ export default {
 		dist_loss:false,
 		recon_loss:false,
 		histogram:false,
-		histogram_loading:false,
+		// histogram_loading:false,
 		adjust: 'zoom'
 	}),
 	computed: {
@@ -259,6 +259,14 @@ export default {
 			let vm = this 
 			vm.histogram = !vm.histogram
 			vm.histogram_loading = vm.histogram
+			if(vm.histogram_loading){
+				vm.$refs.Home.style.cursor = 'wait'
+				vm.combobox.getElementsByTagName('i')[0].style.cursor = 'wait'
+			}
+			else{
+				vm.$refs.Home.style.cursor = 'default'
+				vm.combobox.getElementsByTagName('i')[0].style.cursor = 'pointer'
+			}
 			if(vm.histogram){
 				setTimeout(() => {
 					let histogram = vm.$refs.histogram
@@ -266,6 +274,8 @@ export default {
 					histogram.eventBus = EventBus
 					histogram.loadData()
 					vm.histogram_loading = false
+					vm.$refs.Home.style.cursor = 'default'
+					vm.combobox.getElementsByTagName('i')[0].style.cursor = 'pointer'
 				}, 200);
 			}
 			// else{
@@ -454,8 +464,13 @@ export default {
 			}
 		},
 		remove (item) {
-			this.columns.splice(this.columns.indexOf(item), 1)
-			this.columns = [...this.columns]
+			let vm = this
+			let histogram = vm.eventBus.histogram
+			histogram.board[item].alpha = 0.3
+			histogram.board[item].disable = true
+			vm.columns.splice(this.columns.indexOf(item), 1)
+			vm.columns = [...this.columns]
+
 		},
 		updateParam(cb) {
 			if (this.loaded) {
@@ -530,13 +545,12 @@ export default {
 					}
 				})
 			}
+
 			this.$axios.post(this.$api + '/train/set_param', {
 				'columns': vm.columns
 			}).then(response => {
 				vm.state = response.data.state
 				vm.columns_errors = []
-				// // 清空 scatter 
-				// vm.$refs.latent_scatter.removePoints()
 			}).catch(error => {
 				vm.columns_errors = [error]
 			})
@@ -733,9 +747,9 @@ export default {
 			vm.output_window = response.data.output_window
 			vm.$nextTick(function() {
 				vm.loaded = true
-				document.getElementsByClassName('v-input__icon v-input__icon--append')[2].onclick = () => {vm.onHistogram()}
-				document.getElementsByClassName('v-input__icon v-input__icon--append')[2]
-				.getElementsByTagName('i')[0].style.cursor = 'pointer'
+				vm.combobox = document.getElementsByClassName('v-input__icon v-input__icon--append')[2]
+				vm.combobox.onclick = () => {vm.onHistogram()}
+				vm.combobox.getElementsByTagName('i')[0].style.cursor = 'pointer'
 			})
 		})
 		// 一秒鐘詢問一次當前的 loss數值

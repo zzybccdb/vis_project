@@ -33,7 +33,8 @@ export default {
             .then((response)=>{
                 vm.data = response.data.data
                 vm.columns = response.data.columns
-                vm.count = vm.columns.length
+                vm.columns_all = response.data.columns_all
+                vm.count = vm.columns_all.length
                 vm.pixiInit()
                 vm.d3Init(vm.data)
                 vm.drawGraph()
@@ -120,7 +121,7 @@ export default {
         },
         // 開始繪製
         drawGraph(){
-            vm.columns.forEach((label,i) => {
+            vm.columns_all.forEach((label,i) => {
                 let temp = vm.dimensions[label]
                 let gap = vm.layout.chartNum
                 // 坐标原点的起始坐标
@@ -136,7 +137,15 @@ export default {
                     let axis_ctn = vm.drawAxis(label,temp.ctn.name,orgx,orgy,graphWidth,graphHeight)
                     let hist_ctn = vm.drawHist(label,graphHeight+vm.layout.margin.t)
                     let board = vm.drawMaskBoard(label,0,0,graphWidth,graphHeight+vm.layout.margin.b)
-
+                    if(vm.columns.indexOf(label) !== -1){
+                        // console.log(label)
+                        board.children[0].disable = false
+                        board.children[0].alpha = 0
+                    }
+                    else{
+                        board.children[0].display = true
+                        board.children[0].alpha = 0.3
+                    }
                     temp.ctn.addChild(axis_ctn)
                     temp.ctn.addChild(hist_ctn)
                     temp.ctn.addChild(board)
@@ -259,14 +268,15 @@ export default {
             board.beginFill()
             board.drawRect(x,y,width,height)
             board.endFill()
-            board.alpha = 0
-            board.disable = false
+            board.alpha = 0.3
+            board.disable = true
             ctn_mask_board.addChild(board)
             board.interactive = true
             board.buttonMode = true 
             vm.board[label] = board
             board.mousedown = () => {
-                vm.root.columns  = vm.columns.filter((item => {
+                console.log('mousedown')
+                vm.root.columns  = vm.columns_all.filter((item => {
                     return (item!==label && vm.board[item].disable===false) || (item===label && board.disable===true)
                 }))
                 vm.chartMourseDown(board)
