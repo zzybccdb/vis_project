@@ -63,9 +63,11 @@ export default {
                 pt.y = pt.rawpos[1]
                 pt.curpos = pt.rawpos
                 pt.refpos = pt.rawpos
-                if(pt.tint !== 0xffffff){
-                    pt.tint = vm.getColor(pt.x,pt.y)
-                }
+                // reset 還原 position 原始顏色
+                pt.tint = vm.getColor(pt.x,pt.y)
+                // if(pt.tint !== 0xffffff){
+                //     pt.tint = vm.getColor(pt.x,pt.y)
+                // }
             })
         },
         // 设定色碼表
@@ -284,7 +286,7 @@ export default {
             if(vm.eventBus !== undefined)
                 vm.eventBus.root.adjust = 'zoom'
             if(vm.mask_pts !== undefined)
-                vm.mask_pts.removeChildren()
+                vm.mask_pts = undefined
             vm.ctn_control_pts.removeChildren()
             vm.ctn_control_shadow.removeChildren()
             vm.ctn_pts.removeChildren()
@@ -311,9 +313,10 @@ export default {
                     pt.curpos = new_pos
                     pt.x = pt.curpos[0]
                     pt.y = pt.curpos[1]
-                    if(pt.tint !== 0xffffff){
-                        pt.tint = vm.getColor(pt.x,pt.y)
-                    }
+                    pt.tint = vm.getColor(pt.x,pt.y)
+                    // if(pt.tint !== 0xffffff){
+                    //     pt.tint = vm.getColor(pt.x,pt.y)
+                    // }
                 })
             }
         },
@@ -342,8 +345,12 @@ export default {
         mosuemove(e){
             // 邊界設定，超出結束控制
             if (e.data.global.y >= 512 || e.data.global.y < 0 ||  e.data.global.x >= 512 ||  e.data.global.x < 0 ){
-                vm.rightup()
-                vm.mouseup()
+                // mask box 錯誤判斷
+                if(vm.mask && vm.mask_box_draw)  
+                    vm.rightup()
+                // zoom, pan 的錯誤判斷
+                if(vm.group_move)
+                    vm.mouseup()
             }
             // 旋轉控制執行
             if (vm.rotating && !vm.mask) {
@@ -373,7 +380,6 @@ export default {
             vm.mask_box.endx = e.data.global.x
             vm.mask_box.endy = e.data.global.y
             vm.mask_box.alpha = 0.3
-            vm.maskBoxCollision()
         },
         // 移动 mask 标注数据点
         maskPointsMove(e){
@@ -392,11 +398,14 @@ export default {
         },
         // 停止旋轉
         rightup(){
+            console.log('rightup')
             vm.rotating = false
             vm.mask_box_draw = false
             vm.mask_box.alpha = 0
             vm.rotation_acc = vm.rotation
             vm.mask_box.clear()
+            if(vm.mask)
+                vm.maskBoxCollision()
         },
         // 左鍵停止移動
         mouseup(){
@@ -412,6 +421,7 @@ export default {
         // [ cos角度 -sin角度 ] [x] => [x']
         // [ sin角度 cos角度 ]  [y] => [y']
         rotate(rad){
+            console.log('rotate')
             // 旋轉矩陣公式
             let cos = Math.cos(rad)
             let sin = Math.sin(rad)
@@ -442,13 +452,14 @@ export default {
         },
         // mask box 與資料點 collision
         maskBoxCollision(){
+            console.log('maskBoxCollision')
             let x1 = vm.mask_box.startx, x2 = vm.mask_box.endx
             let x_extent = vm.minMax(x1,x2)
             let y1 = vm.mask_box.starty, y2 = vm.mask_box.endy
             let y_extent = vm.minMax(y1,y2)
             vm.mask_pts = vm.ctn_pts.children.filter(pt => {
                 if(x_extent[0] <= pt.x &&  x_extent[1] >= pt.x && y_extent[0] <= pt.y && y_extent[1] >= pt.y){
-                    pt.tint = 0xff0000
+                    pt.tint = 0xffffff
                     return true
                 }
                 else{
@@ -466,6 +477,8 @@ export default {
             vm.mask_pts.forEach((pt,i) => {
                 vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
             })
+            if(vm.mask_pts.length === 0)
+                vm.mask_pts = undefined
         },
         // 以 min，max 順序回傳
         minMax(num1,num2){
