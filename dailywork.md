@@ -75,3 +75,7 @@
 - calendar view 存在 bug mask 後, pcp filter 狀態錯誤 (未修正)
 - 調整 latent scatter 相關操作的 ui 和部分操作邏輯
 - 繪製圖像時不再重複宣告 scale domain
+- 使用 histogram 當做 Dimension 選擇機制
+
+#### 2019/07/19
+- 允許使用者刪除選中的目標點

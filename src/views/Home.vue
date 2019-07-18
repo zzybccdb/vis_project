@@ -21,30 +21,6 @@
 						@change="updateParam(onDatasetChange)"
 						:disabled="disableForm"
 						></v-select>
-						<v-combobox
-						:error-messages="columns_errors"
-						v-model="columns"
-						:items="columns_all"
-						label="Dimension"
-						multiple
-						chips
-						clearable
-						@change="updateParam(onColumnsChange)"
-						:disabled="disableForm"
-						>
-							<template slot="selection" slot-scope="data">
-							<v-chip
-								:selected="data.selected"
-								close
-								small
-								text-color="white"
-								:color="disableForm ? 'grey' : 'green'"
-								@input="remove(data.item)"
-							>
-								<strong>{{ data.item }}</strong>&nbsp;
-							</v-chip>
-							</template>
-						</v-combobox>
 						<!-- Learning Rate, Batch Size, Loss Weight -->
 						<v-layout>
 							<v-text-field
@@ -69,6 +45,36 @@
 							@change="onLossWeightChange">
 							</v-text-field>
 						</v-layout>
+						<!-- 欄位選擇 以及 histogram 呼叫 -->
+						<v-combobox
+						:error-messages="columns_errors"
+						v-model="columns"
+						:items="columns_all"
+						label="Dimension"
+						multiple
+						chips
+						clearable
+						@change="updateParam(onColumnsChange)"
+						:disabled="disableForm"
+						readonly
+						>
+							<template slot="selection" slot-scope="data">
+							<v-chip
+								:selected="data.selected"
+								close
+								small
+								text-color="white"
+								:color="disableForm ? 'grey' : 'green'"
+								@input="remove(data.item)"
+							>
+								<strong>{{ data.item }}</strong>&nbsp;
+							</v-chip>
+							</template>
+						</v-combobox>
+						<div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
+							<HISTOGRAM ref='histogram'/>
+						</div>
+
 						<!-- Window Input Output -->
 						<!-- <v-layout>
 							<v-text-field label="Input Window Size"
@@ -113,9 +119,10 @@
 							</span>
 						</v-btn>
 					</v-form>
-					<div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
+					<!-- <div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
 						<HISTOGRAM ref='histogram'/>
-					</div>
+					</div> -->
+					<!-- training 結果預覽圖表部分 -->
 					<v-layout style="height:572px" v-if="recon_loss || dist_loss" row nowrap>
 						<div style="height:542px;width:512px">
 							<ColorScatter ref='latent_scatter'/>
@@ -135,8 +142,8 @@
 							</v-layout>
 						</div>
 						<v-layout  style="margin:10px" column>
-							<canvas v-if="recon_loss" style="height:256px" id="loss"></canvas>
-							<canvas v-if="dist_loss" style="height:256px" id="dis_loss"></canvas>
+							<canvas v-if="recon_loss" style="height:256px;width:521px" id="loss"></canvas>
+							<canvas v-if="dist_loss" style="height:256px;width:512px" id="dis_loss"></canvas>
 						</v-layout>
 					</v-layout>
 					</v-card-title>
@@ -261,9 +268,9 @@ export default {
 					vm.histogram_loading = false
 				}, 200);
 			}
-			else{
-				// histogram.clear()
-			}
+			// else{
+			// 	// histogram.clear()
+			// }
 		},
 		onNewTrain() {
 			let vm = this
@@ -726,6 +733,9 @@ export default {
 			vm.output_window = response.data.output_window
 			vm.$nextTick(function() {
 				vm.loaded = true
+				document.getElementsByClassName('v-input__icon v-input__icon--append')[2].onclick = () => {vm.onHistogram()}
+				document.getElementsByClassName('v-input__icon v-input__icon--append')[2]
+				.getElementsByTagName('i')[0].style.cursor = 'pointer'
 			})
 		})
 		// 一秒鐘詢問一次當前的 loss數值
