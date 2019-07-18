@@ -71,3 +71,7 @@
 - 计算该 group 的群中心点
 - 传入 backend,然 backend 维持其相对位置
  
+#### 2019/07/18
+- calendar view 存在 bug mask 後, pcp filter 狀態錯誤 (未修正)
+- 調整 latent scatter 相關操作的 ui 和部分操作邏輯
+- 繪製圖像時不再重複宣告 scale domain

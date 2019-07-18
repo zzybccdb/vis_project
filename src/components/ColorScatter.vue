@@ -1,6 +1,6 @@
 <template>
         <v-layout column>
-            <div id='colorScatter' style="width:512px;height:512px;margin:10px" ref='colorScatter'></div>
+            <div id='colorScatter' style="width:512px;height:512px;margin-left:8px;margin-top:8px" ref='colorScatter'></div>
         </v-layout>
 </template>
 
@@ -39,7 +39,7 @@ export default {
                 'cxy': [vm.x_scale.invert(mean[0]), vm.y_scale.invert(mean[1])],
                 'cdata':cdata
             }
-            // 将中心点坐标,原始数据传回后端
+            // 将中心点坐标,原始数据传回后端,同時清空當前的 vm.mask_pts
             vm.$axios.post(vm.$api + '/inference/confirm_latent',param)
             .then(() => {
                 console.log('Confirm ok')
@@ -52,7 +52,6 @@ export default {
         onReset(){
             vm.rotate_dirty = false
             vm.zoom_dirty = false
-            // vm.mask = false 
             vm.mask_pts = undefined
             vm.group_move = undefined
             // 重置 mask 选框
@@ -207,8 +206,8 @@ export default {
         },
         // d3 axis scale initial
         d3Init(){
-            vm.x_scale = d3.scaleLinear().range([0,512])
-            vm.y_scale = d3.scaleLinear().range([0,512])
+            vm.x_scale = d3.scaleLinear().range([0,512]).domain([-1,1])
+            vm.y_scale = d3.scaleLinear().range([0,512]).domain([-1,1])  
             // 縮放參數設定
             let zoom = d3.zoom()
                     .on('zoom',vm.zoomed)
@@ -240,7 +239,6 @@ export default {
         },
         // 將點放置到正確的位置
         pointsTransition(data){
-            vm.domainSetting(data)
             vm.ctn_pts.children.forEach((pt,i) => {
                 vm.setPointLocation(pt,data[i].slice(-2)[0],data[i].slice(-2)[1])
                 pt.data = data[i]
@@ -256,10 +254,12 @@ export default {
         },
         // scale domain 設定
         domainSetting(data){
-            let x_extent = d3.extent(data.map(d => parseFloat(d.slice(-2)[0])))
-            let y_extent = d3.extent(data.map(d => parseFloat(d.slice(-2)[1])))
-            vm.x_scale.domain(x_extent)
-            vm.y_scale.domain(y_extent)            
+            // let x_extent = d3.extent(data.map(d => parseFloat(d.slice(-2)[0])))
+            // let y_extent = d3.extent(data.map(d => parseFloat(d.slice(-2)[1])))
+            vm.x_scale.domain([-1,1])
+            vm.y_scale.domain([-1,1])  
+            // vm.x_scale.domain(x_extent)
+            // vm.y_scale.domain(y_extent)            
         },
         // 設定資料點的座標位置, 傳入pt, Latent_x, Latent_y
         setPointLocation(pt,x,y){
@@ -281,6 +281,8 @@ export default {
             console.log('remove pts')
             vm.latent = false
             vm.mask = false
+            if(vm.eventBus !== undefined)
+                vm.eventBus.root.adjust = 'zoom'
             if(vm.mask_pts !== undefined)
                 vm.mask_pts.removeChildren()
             vm.ctn_control_pts.removeChildren()
@@ -429,10 +431,6 @@ export default {
                 }
             })
             vm.rotate_dirty = true
-        },
-        // 調整點位置
-        onMask(){
-            vm.mask = false
         },
         // mask box
         maskBox(box,x1=0,y1=0,x2=0,y2=0){

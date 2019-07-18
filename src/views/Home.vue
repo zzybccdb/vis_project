@@ -119,14 +119,17 @@
 					<v-layout style="height:572px" v-if="recon_loss || dist_loss" row nowrap>
 						<div style="height:542px;width:512px">
 							<ColorScatter ref='latent_scatter'/>
-							<v-layout justify-space-around>
+							<v-layout style='width:528px' justify-space-between>
 								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onReset">
+									<v-icon>redo</v-icon>
 									Reset
 								</v-btn>
-								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onMask">
-									Ajuste
+								<v-btn ref='adjust' :disabled="disableNewTrainBtn" color="primary" @click="onMask">
+									<v-icon>swap_horiz</v-icon>
+									{{adjust}}
 								</v-btn>
 								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onConfirm">
+									<v-icon>check_circle_outline</v-icon>
 									Confirm
 								</v-btn>
 							</v-layout>
@@ -189,6 +192,7 @@ export default {
 		recon_loss:false,
 		histogram:false,
 		histogram_loading:false,
+		adjust: 'zoom'
 	}),
 	computed: {
 		anyError() {
@@ -234,7 +238,9 @@ export default {
 		onMask(){
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
-			latent_scatter.mask = !latent_scatter.mask
+			if(latent_scatter.mask_pts === undefined)
+				latent_scatter.mask = !latent_scatter.mask
+			vm.adjust = (latent_scatter.mask)?'adjust':'zoom'
 		},
 		// 對移動後的 color scatter 進行確認
 		onConfirm(){
@@ -373,7 +379,7 @@ export default {
 				vm.state = response.data.state
 				vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
 					let latent_scatter = vm.$refs.latent_scatter
-					let data = response.data.latent
+					let data = response.data.rawdata
 					latent_scatter.pointsTransition(data)
 				}).catch(error => {
 					console.log('Get progress went wrong! Home onPause -> pause', error)
@@ -737,6 +743,7 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+/* The switch - the box around the slider */
 #model-form {
 	width: 100%;
 }
