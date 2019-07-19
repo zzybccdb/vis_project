@@ -139,6 +139,10 @@
 									<v-icon>check_circle_outline</v-icon>
 									Confirm
 								</v-btn>
+								<!-- <v-btn :disabled="disableNewTrainBtn" color="primary" @click="onRemovePoints">
+									<v-icon>check_circle_outline</v-icon>
+									Remove
+								</v-btn> -->
 							</v-layout>
 						</div>
 						<v-layout  style="margin:10px" column>
@@ -235,6 +239,10 @@ export default {
 		}
 	},
 	methods: {
+		// 清除所有的控制点
+		onRemovePoints(){
+
+		},
 		// 對 color scatter 進行 reset
 		onReset(){
 			let vm = this
@@ -245,8 +253,9 @@ export default {
 		onMask(){
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
-			if(latent_scatter.mask_pts === undefined)
+			if(latent_scatter.mask_pts === undefined){
 				latent_scatter.mask = !latent_scatter.mask
+			}
 			vm.adjust = (latent_scatter.mask)?'adjust':'zoom'
 		},
 		// 對移動後的 color scatter 進行確認
@@ -377,7 +386,7 @@ export default {
 			});
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
-			latent_scatter.onReset()
+			latent_scatter.onContinue()
 			vm.histogram = false
 			vm.requesting = 'continue'
 			
@@ -465,9 +474,12 @@ export default {
 		},
 		remove (item) {
 			let vm = this
-			let histogram = vm.eventBus.histogram
-			histogram.board[item].alpha = 0.3
-			histogram.board[item].disable = true
+			// 防止沒有抓到 histogram 的時候出現 bug
+			if(vm.eventBus.histogram){
+				let histogram = vm.eventBus.histogram
+				histogram.board[item].alpha = 0.3
+				histogram.board[item].disable = true
+			}
 			vm.columns.splice(this.columns.indexOf(item), 1)
 			vm.columns = [...this.columns]
 
