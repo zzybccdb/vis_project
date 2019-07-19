@@ -253,6 +253,8 @@ export default {
                     }
                 })
             });
+            // 还原旋转前位置
+            d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)            
         },
         // scale domain 設定
         domainSetting(data){
