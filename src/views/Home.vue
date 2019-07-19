@@ -255,6 +255,7 @@ export default {
 			let latent_scatter = vm.$refs.latent_scatter
 			if(latent_scatter.mask_pts === undefined){
 				latent_scatter.mask = !latent_scatter.mask
+				latent_scatter.confirmControlPoints()
 			}
 			vm.adjust = (latent_scatter.mask)?'adjust':'zoom'
 		},
