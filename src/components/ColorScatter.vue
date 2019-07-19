@@ -16,20 +16,20 @@ export default {
     methods:{
         // confirm
         confirm(){
-            let cdata = []
-            let cxy = []
-            vm.ctn_control_pts.children.forEach(cpt => {
-                console.log("what")
-                let mask_pts = cpt.mask_pts
-                let mask_data = []
-                mask_pts.forEach(pt => {
-                    mask_data.push(pt.data.slice(1,-2))
-                    pt.curpos = [pt.x,pt.y]
-                    pt.rawpos = pt.curpos
-                })
-                cdata.push(mask_data)
-                cxy.push([vm.x_scale.invert(cpt.x), vm.y_scale.invert(cpt.y)],)
-            })
+            // let cdata = []
+            // let cxy = []
+            // vm.ctn_control_pts.children.forEach(cpt => {
+            //     let mask_pts = cpt.mask_pts
+            //     let mask_data = []
+            //     mask_pts.forEach(pt => {
+            //         mask_data.push(pt.data.slice(1,-2))
+            //         pt.curpos = [pt.x,pt.y]
+            //         pt.rawpos = pt.curpos
+            //     })
+            //     cdata.push(mask_data)
+            //     cxy.push([vm.x_scale.invert(cpt.x), vm.y_scale.invert(cpt.y)],)
+            // })
+            let [cdata, cxy] = vm.confirmControlPoints()
             // mask 资料点整理回传， 中心点设定，处理回传参数
             let param = {
                 'cxy': cxy,
@@ -325,16 +325,23 @@ export default {
                     vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
                     vm.rotate_dirty = false
                 }
+                // 資料點縮放控制
                 vm.ctn_pts.children.forEach(pt => {
                     let new_pos = vm.transform.apply(pt.refpos)
                     pt.curpos = new_pos
                     pt.x = pt.curpos[0]
                     pt.y = pt.curpos[1]
-                    pt.tint = vm.getColor(pt.x,pt.y)
-                    // if(pt.tint !== 0xffffff){
-                    //     pt.tint = vm.getColor(pt.x,pt.y)
-                    // }
+                    // pt.tint = vm.getColor(pt.x,pt.y)
+                    if(pt.tint !== 0xffffff){
+                        pt.tint = vm.getColor(pt.x,pt.y)
+                    }
                 })
+                // // 控制點縮放控制
+                // vm.ctn_control_pts.children.forEach(pt => {
+                //     let new_pos = vm.transform.apply([pt.x,pt.y])
+                //     pt.x = new_pos[0]
+                //     pt.y = new_pos[1]
+                // })
             }
         },
         // 左鍵拖動
@@ -356,6 +363,7 @@ export default {
                 vm.mask_box_draw = true
                 vm.mask_box.startx = e.data.global.x
                 vm.mask_box.starty = e.data.global.y
+                vm.confirmControlPoints()
             }
         },
         // 按鍵旋轉移動，拖拽控制
@@ -442,6 +450,7 @@ export default {
                 vm.$d3.select('#colorScatter').call(vm.zoom.transform, d3.zoomIdentity)
                 vm.zoom_dirty = false
             }
+            // 資料點旋轉
             vm.ctn_pts.children.forEach(pt => {
                 let tx = pt.refpos[0] - 256, ty = pt.refpos[1] - 256
                 pt.x = tx * cos - ty * sin + 256
@@ -451,6 +460,12 @@ export default {
                     pt.tint = vm.getColor(pt.x,pt.y)
                 }
             })
+            // // 控制點旋轉
+            // vm.ctn_control_pts.children.forEach(pt => {
+            //     let tx = pt.x - 256, ty = pt.y - 256
+            //     pt.x = tx * cos - ty * sin + 256
+            //     pt.y = tx * sin + ty * cos + 256      
+            // })
             vm.rotate_dirty = true
         },
         // mask box
@@ -565,6 +580,23 @@ export default {
             // sp.mask_pts.forEach(pt=>{
             //     pt.curpos = [pt.x,pt.y]
             // })
+        },
+        // 確定控制點，控制中心
+        confirmControlPoints(){
+            let cdata = []
+            let cxy = []
+            vm.ctn_control_pts.children.forEach(cpt => {
+                let mask_pts = cpt.mask_pts
+                let mask_data = []
+                mask_pts.forEach(pt => {
+                    mask_data.push(pt.data.slice(1,-2))
+                    pt.curpos = [pt.x,pt.y]
+                    pt.rawpos = pt.curpos
+                })
+                cdata.push(mask_data)
+                cxy.push([vm.x_scale.invert(cpt.x), vm.y_scale.invert(cpt.y)],)
+            })
+            return [cdata,cxy]
         },
     },
     mounted(){

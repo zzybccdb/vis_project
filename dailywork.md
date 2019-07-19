@@ -83,3 +83,5 @@
 #### 2019/07/20
 - 存在初次使用沒有顯示出 histogram 的狀況下，刪除Dimension錯誤(已修正)
 - 調整 control point 的過程中，如果使用者在設定後，不提交commit， 調整回 zoom 模式的情況，怎麼解決?
+- dimension histogram 按鈕第一次無反應？
+- 控制點在 zoom 模式下的旋轉縮放處理，
