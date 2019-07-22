@@ -11,6 +11,8 @@
 let vm = undefined
 let PIXI = undefined
 let d3 = undefined
+let moment = undefined
+const date_format = 'YYYY-MM-DD HH:mm:ss'
 
 export default {
     methods:{
@@ -251,27 +253,40 @@ export default {
         // 加入数据点
         addPoints(data){
             // vm.domainSetting(data)
+            vm.dataWrapper = {}
             vm.ctn_pts.count = data.length
             data.forEach((d) => {
+                let date_index = moment(d[0]).utc().format(date_format)
+                vm .dataWrapper[date_index] = {}
                 let sp = new PIXI.Sprite(vm.dotTexture)
                 vm.setPointLocation(sp,d.slice(-2)[0],d.slice(-2)[1])
                 sp.alpha = 0.3
                 sp.data = d
+                vm.dataWrapper[date_index].point = sp
                 vm.ctn_pts.addChild(sp)
             });
             vm.latent = true
         },
-        // 將點放置到正確的位置
+        // 測試新的資料transition 方式
         pointsTransition(data){
-            vm.ctn_pts.children.forEach((pt,i) => {
-                vm.setPointLocation(pt,data[i].slice(-2)[0],data[i].slice(-2)[1])
-                pt.data = data[i]
-                // vm.ctn_control_pts.children.forEach(cpt => {
-                // })
+            data.forEach(d => {
+                let date_index = moment(d[0]).utc().format(date_format)
+                let pt = vm.dataWrapper[date_index].point
+                vm.setPointLocation(pt,d.slice(-2)[0],d.slice(-2)[1],false)
             });
-            // 还原旋转前位置
-            d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)            
+            d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
         },
+        // 將點放置到正確的位置
+        // pointsTransition(data){
+        //     vm.ctn_pts.children.forEach((pt,i) => {
+        //         vm.setPointLocation(pt,data[i].slice(-2)[0],data[i].slice(-2)[1])
+        //         pt.data = data[i]
+        //         // vm.ctn_control_pts.children.forEach(cpt => {
+        //         // })
+        //     });
+        //     // 还原旋转前位置
+        //     d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)            
+        // },
         // scale domain 設定
         domainSetting(data){
             // let x_extent = d3.extent(data.map(d => parseFloat(d.slice(-2)[0])))
@@ -282,7 +297,7 @@ export default {
             // vm.y_scale.domain(y_extent)            
         },
         // 設定資料點的座標位置, 傳入pt, Latent_x, Latent_y
-        setPointLocation(pt,x,y){
+        setPointLocation(pt,x,y,first=true){
             x = vm.x_scale(x)
             y = vm.y_scale(y)
 
@@ -290,7 +305,8 @@ export default {
             pt.curpos = [x,y]
             // rotation 和 zooming 時的參考座標
             pt.refpos = [x,y]
-            pt.tint = vm.getColor(x,y)
+            if(pt.tint !== 0xffffff || first)
+                pt.tint = vm.getColor(x,y)
             pt.x = pt.curpos[0]
             pt.y = pt.curpos[1]
             pt.texture = vm.dotTexture
@@ -603,6 +619,7 @@ export default {
         vm = this
         d3 = vm.$d3
         PIXI = vm.$PIXI
+        moment = vm.$moment
         
         vm.latent = false
         vm.rotating = false

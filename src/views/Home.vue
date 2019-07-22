@@ -472,7 +472,7 @@ export default {
 
 						latent_scatter.data = data
 						latent_scatter.columns = columns
-						console.log(data)
+
 						if(latent_scatter.latent){
 							latent_scatter.pointsTransition(data)
 						}
