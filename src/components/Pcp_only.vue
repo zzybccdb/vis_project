@@ -80,11 +80,12 @@ export default {
             vm.app.renderer.resize(width,height)
             // 去除资料中原始包含的日期和latent信息
             vm.data = data.map(d => {
-                return d.slice(1,-2)
-            })
+               return d.slice(1,-2)
+             })
             vm.extent = extent
             vm.d3ScaleSetting(extent)
             vm.drawAxis()
+            // vm.drawAllDataLine()
         },
         // 處理維度的 scale 
         d3ScaleSetting(extent){
@@ -92,7 +93,6 @@ export default {
             for(let column in extent){
                 vm.scale[column] = {}
                 let domain = extent[column]
-                console.log(domain)
                 let range = domain[1] - domain[0]
                 let gap = range / 4
                 vm.scale[column]['scale'] = d3.scaleLinear().domain(domain).range([190,0])
@@ -189,14 +189,50 @@ export default {
             return axisTicks
         },
         // 繪製所有資料點
-        drawAllDataLine(data,color_cb){
+        drawAllDataLine(data=undefined,color_cb=undefined){
             let ctn_lines = vm.ctn_lines
-
-            data.forEach(data => {
-                data = data.slice(1,-2)
-                let latent = data.slice(-2) 
+            // data.forEach(data => {
+            //     rawdata = data.slice(1,-2)
+            //     let latent = data.slice(-2) 
+            let line = new PIXI.Graphics()
+            line.lineStyle(1, 0x000000, 1)
+            //     rawdata.forEach((d,i) => {
+            //         let c = vm.columns[i]
+            //         let scale = vm.scale[c].scale
+            //         let x = vm.axis[c].x
+            //         let y = vm.axis[c].axisLine.y + scale(d)
+            //         if( i === 0 ){
+            //             line.moveTo(x,y)
+            //         }
+            //         else{
+            //             line.lineTo(x,y)
+            //         }
+            //     })
+            //     ctn_lines.addChild(line)
+            // })
+            // 測試資料繪製
+            // let rawdata = [20.91,91.75,886,1]
+            // rawdata.forEach((d,i) => {
+            //     let c = vm.columns[i]
+            //     let scale = vm.scale[c].scale
+            //     let x = vm.axis[c].x
+            //     let y = vm.axis[c].axisLine.y + scale(d)
+            //     if( i === 0 ){
+            //         line.moveTo(x,y)
+            //     }
+            //     else{
+            //         line.lineTo(x,y)
+            //     }
+            // })
+            // ctn_lines.addChild(line)
+        },
+        // 繪製選中資料點
+        drawMaskDataLine(mask_pts, color_cb){
+            mask_pts.forEach(pt => {
+                let data = pt.data.slice(1,-2) 
                 let line = new PIXI.Graphics()
-                line.lineStyle(1, 0x000000, 0)
+                line.lineStyle(1, 0xffffff, 1)
+
                 data.forEach((d,i) => {
                     let c = vm.columns[i]
                     let scale = vm.scale[c].scale
@@ -208,9 +244,15 @@ export default {
                     else{
                         line.lineTo(x,y)
                     }
+                    line.tint = color_cb(pt.x,pt.y)
+                    line.alpha = 0.4
                 })
-                ctn_lines.addChild(line)
+                vm.ctn_lines.addChild(line)               
             })
+        },
+        // 移除當前的 data line
+        removeLines(){
+            vm.ctn_lines.removeChildren()
         }
 	},
 	mounted() {
