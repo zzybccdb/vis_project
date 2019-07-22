@@ -345,7 +345,7 @@ export default {
         // 右鍵旋轉操作
         rightdown(e){
             // 旋轉模式
-            if(!vm.mask_mode){
+            if(!vm.mask_mode && !vm.pcp_mode){
                 vm.rotating = true
                 //  以圖形中心爲旋轉點
                 // Math.atan2 回傳弧度
@@ -372,7 +372,9 @@ export default {
         // 清除 mask_pts
         clearMaskPts(){
             vm.mask_pts.forEach(pt => {
-                pt.tint = vm.getColor(pt.x,pt.y)
+                if(pt.tint !== 0xffffff){
+                    pt.tint = vm.getColor(pt.x,pt.y)
+                }
             })
         },
         // 按鍵旋轉移動，拖拽控制

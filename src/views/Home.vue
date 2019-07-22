@@ -241,7 +241,7 @@ export default {
 			let latent_scatter = vm.$refs.latent_scatter
 			vm.pcp = !vm.pcp
 			latent_scatter.pcp_mode = !latent_scatter.pcp_mode
-			vm.onMask()
+			latent_scatter.mask_mode = latent_scatter.pcp_mode
 			if(vm.pcp){
 				vm.$axios.get(vm.$api + '/inference/dimension_extent').then(response => {
 					let extents = response.data.extents
