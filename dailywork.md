@@ -82,6 +82,10 @@
 
 #### 2019/07/20
 - 存在初次使用沒有顯示出 histogram 的狀況下，刪除Dimension錯誤(已修正)
-- 調整 control point 的過程中，如果使用者在設定後，不提交commit， 調整回 zoom 模式的情況，怎麼解決?
+- 調整 control point 的過程中，如果使用者在設定後，不提交commit， 調整回 zoom 模式的情況，怎麼解決?（默認使用者已經確定當前佈局）
 - dimension histogram 按鈕第一次無反應？
-- 控制點在 zoom 模式下的旋轉縮放處理，
+- 控制點在 zoom 模式下的旋轉縮放處理(未處理)
+
+#### 2019/07/22
+- 在 home 的目錄下加入了 PCP（還未能實現圈選繪製）
+- 將 data 和 color scatter 以及 pcp 進行綁定（未修改完成）

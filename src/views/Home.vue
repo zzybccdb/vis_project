@@ -71,10 +71,9 @@
 							</v-chip>
 							</template>
 						</v-combobox>
-						<div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
+						<div ref='histWrapper' style="margin-top:10px;width:100%;" v-if='histogram'>	
 							<HISTOGRAM ref='histogram'/>
 						</div>
-
 						<!-- Window Input Output -->
 						<!-- <v-layout>
 							<v-text-field label="Input Window Size"
@@ -111,17 +110,10 @@
 								<v-icon light>cached</v-icon>
 							</span>
 						</v-btn>
-						<!-- <v-btn color="primary" :loading="histogram_loading" :disabled="disableNewTrainBtn" @click="onHistogram">
-							<v-icon>bar_chart</v-icon>
-							Histogram
-							<span slot="loader" class="arrow-loader">
-								<v-icon light>cached</v-icon>
-							</span>
-						</v-btn> -->
+						<div ref='pcpChart' style='margin:0px;width:100%'>
+							<PCP ref='pcp' v-if="pcp"/>
+						</div>
 					</v-form>
-					<!-- <div ref='histWrapper' style="margin-top:10px;width: 100%;" v-if='histogram'>	
-						<HISTOGRAM ref='histogram'/>
-					</div> -->
 					<!-- training 結果預覽圖表部分 -->
 					<v-layout style="height:572px" v-if="recon_loss || dist_loss" row nowrap>
 						<div style="height:542px;width:512px">
@@ -135,14 +127,15 @@
 									<v-icon>swap_horiz</v-icon>
 									{{adjust}}
 								</v-btn>
+								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onPCP">
+									<v-icon>check_circle_outline</v-icon>
+									PCP
+								</v-btn>
 								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onConfirm">
 									<v-icon>check_circle_outline</v-icon>
 									Confirm
 								</v-btn>
-								<!-- <v-btn :disabled="disableNewTrainBtn" color="primary" @click="onRemovePoints">
-									<v-icon>check_circle_outline</v-icon>
-									Remove
-								</v-btn> -->
+
 							</v-layout>
 						</div>
 						<v-layout  style="margin:10px" column>
@@ -162,6 +155,7 @@ import Chart from 'chart.js'
 import { setTimeout } from 'timers';
 import HISTOGRAM from '@/components/Histogram.vue'
 import ColorScatter from '@/components/ColorScatter.vue'
+import PCP from '@/components/Pcp_only.vue'
 // import { EventEmitter } from 'events';
 
 const EventBus = {}
@@ -169,7 +163,8 @@ const EventBus = {}
 export default {
 	components: {
 		HISTOGRAM,
-		ColorScatter
+		ColorScatter,
+		PCP
 	},
 	data: () => ({
 		state: 'reset',
@@ -202,6 +197,7 @@ export default {
 		dist_loss:false,
 		recon_loss:false,
 		histogram:false,
+		pcp: false,
 		// histogram_loading:false,
 		adjust: 'zoom'
 	}),
@@ -239,8 +235,25 @@ export default {
 		}
 	},
 	methods: {
-		// 清除所有的控制点
-		onRemovePoints(){
+		// 绘制 PCP
+		onPCP(){
+			let vm = this
+			let latent_scatter = vm.$refs.latent_scatter
+			vm.pcp = !vm.pcp
+			if(vm.pcp){
+				vm.$axios.get(vm.$api + '/inference/dimension_extent').then(response => {
+					let extents = response.data.extents
+					let pcp = vm.$refs.pcp
+					window.scroll({
+						top: 320,
+						left: 0,
+						behavior: 'smooth'
+					});
+					pcp.setDimensions(latent_scatter.columns,latent_scatter.data,extents)
+				}).catch(error => {
+					console.error('获取资料 extents 时错误',error)
+				})			
+			}
 
 		},
 		// 對 color scatter 進行 reset
@@ -346,7 +359,6 @@ export default {
 				vm.startTrain()
 			}
 		},
-
 		startTrain(){
 			let vm = this
 			this.$axios.post(this.$api + '/train/start', {
@@ -377,7 +389,6 @@ export default {
 					vm.dis_loss_plot.update()
 			})
 		},
-
 		onContinue() {
 			// 自動滾動，向下移動到最底部
 			window.scroll({
@@ -453,11 +464,15 @@ export default {
 							vm.addLoss(response.data.rec_loss,undefined,response.data.step)
 						}						
 					}
-					// 加载 latent 资料点
+					// 加载 latent 资料点， 资料结构 =》 {日期，dimension1，dimensin2，```，latentx，latenty}
 					vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
 						let latent_scatter = vm.$refs.latent_scatter
-						// let data = response.data.latent
 						let data = response.data.rawdata
+						let columns = response.data.columns
+
+						latent_scatter.data = data
+						latent_scatter.columns = columns
+						console.log(data)
 						if(latent_scatter.latent){
 							latent_scatter.pointsTransition(data)
 						}

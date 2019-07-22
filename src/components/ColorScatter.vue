@@ -138,7 +138,6 @@ export default {
             // 防止绘制出现模糊现象
             vm.app.renderer.roundPixels = true
             vm.app.renderer.view.style.display = 'block'
-            vm.app.autoResize = true
             vm.app.renderer.resize(width,height)
             // 設定 app 的鼠標操作
             vm.app.stage.interactive = true
@@ -251,7 +250,7 @@ export default {
         },
         // 加入数据点
         addPoints(data){
-            vm.domainSetting(data)
+            // vm.domainSetting(data)
             vm.ctn_pts.count = data.length
             data.forEach((d) => {
                 let sp = new PIXI.Sprite(vm.dotTexture)
@@ -307,6 +306,7 @@ export default {
                 vm.mask_pts = undefined
             vm.ctn_control_pts.removeChildren()
             vm.ctn_pts.removeChildren()
+            vm.dataWrapper = undefined
         },
         // 數據點的縮放 Zoom
         zoomed(){ 
@@ -614,7 +614,6 @@ export default {
         vm.group_move = undefined
         //記錄 mask 的資料點
         vm.mask_pts = undefined
-
         // 圖形起始位置的偏移角度
         vm.ang1 = undefined
         // 記錄當前旋轉量
@@ -623,6 +622,8 @@ export default {
         vm.rotation_acc = 0
         // 設定縮放矩陣
         vm.transform = d3.zoomIdentity
+        // 資料包裝盒　＝》point，line，data
+        vm.dataWrapper = undefined        
 
         vm.$refs.colorScatter.addEventListener('contextmenu',e => e.preventDefault())
         vm.pixiInit()
