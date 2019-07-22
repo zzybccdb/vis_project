@@ -119,11 +119,11 @@
 						<div style="height:542px;width:512px">
 							<ColorScatter ref='latent_scatter'/>
 							<v-layout style='width:528px' justify-space-between>
-								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onReset">
+								<!-- <v-btn :disabled="disableNewTrainBtn" color="primary" @click="onReset">
 									<v-icon>redo</v-icon>
 									Reset
-								</v-btn>
-								<v-btn ref='adjust' :disabled="disableNewTrainBtn" color="primary" @click="onMask">
+								</v-btn> -->
+								<v-btn ref='adjust' :disabled="disableNewTrainBtn || pcp" color="primary" @click="onMask">
 									<v-icon>swap_horiz</v-icon>
 									{{adjust}}
 								</v-btn>
@@ -199,7 +199,7 @@ export default {
 		histogram:false,
 		pcp: false,
 		// histogram_loading:false,
-		adjust: 'zoom'
+		adjust: 'pan'
 	}),
 	computed: {
 		anyError() {
@@ -240,10 +240,13 @@ export default {
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
 			vm.pcp = !vm.pcp
+			latent_scatter.pcp_mode = !latent_scatter.pcp_mode
+			vm.onMask()
 			if(vm.pcp){
 				vm.$axios.get(vm.$api + '/inference/dimension_extent').then(response => {
 					let extents = response.data.extents
 					let pcp = vm.$refs.pcp
+					vm.eventBus.pcp = pcp
 					window.scroll({
 						top: 320,
 						left: 0,
@@ -267,10 +270,10 @@ export default {
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
 			if(latent_scatter.mask_pts === undefined){
-				latent_scatter.mask = !latent_scatter.mask
+				latent_scatter.mask_mode = !latent_scatter.mask_mode
 				latent_scatter.confirmControlPoints()
 			}
-			vm.adjust = (latent_scatter.mask)?'adjust':'zoom'
+			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
 		},
 		// 對移動後的 color scatter 進行確認
 		onConfirm(){
@@ -310,6 +313,7 @@ export default {
 			vm.requesting = 'newTrain'
 			vm.start = true
 			vm.histogram = false
+			vm.pcp = false
 			if(vm.network === 'NN based MDS'){
 				vm.dist_loss = true
 				vm.recon_loss = true
@@ -400,6 +404,7 @@ export default {
 			let latent_scatter = vm.$refs.latent_scatter
 			latent_scatter.onContinue()
 			vm.histogram = false
+			vm.pcp = false
 			vm.requesting = 'continue'
 			
 			this.$axios.post(this.$api + '/train/continue').then(response => {
@@ -450,7 +455,7 @@ export default {
 		},
 		getProgress() {
 			let vm = this
-			if (vm.state == 'training' && vm.requesting == 'none' && !vm.histogram) {
+			if (vm.state == 'training' && vm.requesting == 'none' && !vm.histogram && !vm.pcp) {
 				this.$axios.post(this.$api + '/train/progress',{'start':vm.start}).then(response => {
 					vm.state = response.data.state
 					let model = response.data.model
@@ -546,6 +551,8 @@ export default {
 
 				// 设定 histogram 为 false
 				vm.histogram = !vm.histogram
+				// 設定 pcp 爲 false
+				vm.pcp = false
 				// // 清空 scatter 
 				// vm.$refs.latent_scatter.removePoints()
 
