@@ -57,14 +57,14 @@ export default {
             vm.wrapper.x = 0
             vm.wrapper.y = 0
             vm.app.stage.addChild(vm.wrapper)
-            // 轴线设定
-            vm.ctn_axis = new PIXI.Container()
-            vm.ctn_axis.name = 'ctn_axis'
-            vm.wrapper.addChild(vm.ctn_axis)
             // 资料折线设定
             vm.ctn_lines = new PIXI.Container()
             vm.ctn_lines.name = 'ctn_lines'
             vm.wrapper.addChild(vm.ctn_lines)
+            // 轴线设定
+            vm.ctn_axis = new PIXI.Container()
+            vm.ctn_axis.name = 'ctn_axis'
+            vm.wrapper.addChild(vm.ctn_axis)
         },
         // 维度设定
         setDimensions(columns,data,extent){ 
@@ -109,18 +109,20 @@ export default {
         drawAxis(){
             let margin = vm.app.layout.margin
             vm.columns.forEach((c,i) => {
+                vm.axis[c] = {}
                 // 軸線主體
                 let axis = new PIXI.Container()
                 // 欄位名稱顯示
                 let label = vm.drawLabel(c,axis)
                 // 軸線繪製主體
-                let axisLine = vm.drawAxisLine(axis)
+                let axisLine = vm.drawAxisLine(c,axis)
                 // ticks 繪製
                 let axisTicks = vm.drawAxisTicks(c,axis)
 
                 axis.x = i * vm.dim_slot + margin.left
                 
-                vm.axis[c] = axis
+                // vm.axis[c] = axis
+                vm.axis[c].ctn = axis
                 axis.addChild(label)
                 axis.addChild(axisLine)
                 axis.addChild(axisTicks)
@@ -128,17 +130,43 @@ export default {
             })
         },
         // 繪製軸線
-        drawAxisLine(axis){
+        drawAxisLine(c,axis){
+            // 单一 ctn_axisLine 包含两个 axisLine 以及 hitArea
+            let ctn_axisLine = new PIXI.Container()
             let axisLine = new PIXI.Graphics()
+            // let hitArea = new PIXI.Graphics()
             // lineStyle 控制圖形線條的（粗細，顏色，透明度）
             axisLine.lineStyle(1,0x000000,1)
             axisLine.begin
             axisLine.moveTo(0,0)
             axisLine.lineTo(0,vm.plot_height)
             axisLine.interactive = true
+            axisLine.buttonmode = true
+            
+            axisLine.mousedown = vm.drawFilterStart
+            axisLine.mousemove = vm.filterResize
+            axisLine.mouseup = vm.drawFilterEnd
+            axisLine.mouseout = vm.drawFilterEnd
+
+            axisLine.hitArea = new PIXI.Rectangle(axisLine.x-10, axisLine.y,20,190)
             axisLine.y = axis.label.y + axis.label.height + 5
-            axis.axisLine = axisLine
-            return axisLine
+            axisLine.label = c
+            let filter_box = new PIXI.Container()
+            axisLine.filter_box = filter_box
+            // 繪製 hitArea
+            // hitArea.lineStyle(1,0x000000,1)
+            // hitArea.beginFill(0xffffff)
+            // hitArea.drawRect(axisLine.x-10, axisLine.y,20,190)
+            // hitArea.endFill()
+            // ctn_axisLine.addChild(hitArea)
+
+            // 儲存當前的 axisLine
+            vm.axis[c].axisLine = axisLine
+            vm.axis[c].filter_box = filter_box  
+
+            ctn_axisLine.addChild(axisLine)
+            ctn_axisLine.addChild(filter_box)
+            return ctn_axisLine
         },
         // 繪製 Dimension 名稱
         drawLabel(column, axis){
@@ -173,13 +201,13 @@ export default {
                     }                       
                 )
                 tick_label.x = axis.label.x - tick_label.width - 10
-                tick_label.y = axis.axisLine.y + scale(tick) - tick_label.height/2
+                tick_label.y = vm.axis[column].axisLine.y + scale(tick) - tick_label.height/2
 
                 let tick_line = new PIXI.Graphics()
                 tick_line.lineStyle(1,0x000000,1)
                 tick_line.moveTo(0,0)
                 tick_line.lineTo(5,0)
-                tick_line.x = axis.axisLine.x - 5
+                tick_line.x = vm.axis[column].axisLine.x - 5
                 tick_line.y = tick_label.y + tick_label.height/2
 
                 axisTicks.addChild(tick_label)
@@ -194,8 +222,8 @@ export default {
             // data.forEach(data => {
             //     rawdata = data.slice(1,-2)
             //     let latent = data.slice(-2) 
-            let line = new PIXI.Graphics()
-            line.lineStyle(1, 0x000000, 1)
+            // let line = new PIXI.Graphics()
+            // line.lineStyle(1, 0x000000, 1)
             //     rawdata.forEach((d,i) => {
             //         let c = vm.columns[i]
             //         let scale = vm.scale[c].scale
@@ -227,7 +255,7 @@ export default {
             // ctn_lines.addChild(line)
         },
         // 繪製選中資料點
-        drawMaskDataLine(mask_pts, color_cb){
+        drawMaskDataLine(mask_pts, color_cb=undefined){
             mask_pts.forEach(pt => {
                 let data = pt.data.slice(1,-2) 
                 let line = new PIXI.Graphics()
@@ -236,7 +264,7 @@ export default {
                 data.forEach((d,i) => {
                     let c = vm.columns[i]
                     let scale = vm.scale[c].scale
-                    let x = vm.axis[c].x
+                    let x = vm.axis[c].ctn.x
                     let y = vm.axis[c].axisLine.y + scale(d)
                     if( i === 0 ){
                         line.moveTo(x,y)
@@ -244,7 +272,7 @@ export default {
                     else{
                         line.lineTo(x,y)
                     }
-                    line.tint = color_cb(pt.x,pt.y)
+                    line.tint = (color_cb)?color_cb(pt.x,pt.y):0x000000
                     line.alpha = 0.4
                 })
                 vm.ctn_lines.addChild(line)               
@@ -253,7 +281,63 @@ export default {
         // 移除當前的 data line
         removeLines(){
             vm.ctn_lines.removeChildren()
-        }
+        },
+        // 基本的 filter box 元件繪製
+        initFilterBox(axis,box,x1,y1,width,height){
+            box.lineStyle(1,0x000000,1)
+            box.beginFill(0xffffff)
+            box.drawRect(x1,y1,width,height)
+            box.endFill()
+            box.interactive = true
+            box.buttonmode = true
+            box.rightdown = () => {
+                axis.filter_box.removeChild(box)
+                vm.removeLines()
+                let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
+                vm.drawMaskDataLine(mask_pts,cb)
+            } 
+        },
+        // 開始繪製 filter box
+        drawFilterStart(e){
+            vm.filter_start = true
+            vm.filter_sp = [e.data.global.x, e.data.global.y]
+            let axis = e.currentTarget
+            let box = new PIXI.Graphics()
+            vm.initFilterBox(axis,box,0,0,0,0)
+            axis.filter_box.addChild(box)
+            e.axis = axis
+        },
+        // 改變 filter box 長度
+        filterResize(e){
+            if(vm.filter_start){
+                let y1 = vm.filter_sp[1]
+                let y2 = e.data.global.y
+                let axis = e.axis
+                let current_box = axis.filter_box.children.slice(-1)[0]
+                current_box.clear()
+                vm.initFilterBox(axis,current_box,axis.x-10,y1,20,y2-y1)
+                current_box.extent = [y1-axis.y,y2-axis.y]
+            }
+        },
+        // 結束繪製
+        drawFilterEnd(e){
+            if(vm.filter_start){
+                let axis = e.axis
+                let current_box = axis.filter_box.children.slice(-1)[0]
+                let label = axis.label
+                if(current_box){
+                    let scale = vm.scale[label].scale
+                    let max = scale.invert(current_box.extent[0])
+                    let min = scale.invert(current_box.extent[1])
+                    current_box.extent = [max,min]
+                }
+                vm.filter_sp = undefined
+                vm.filter_start = false
+                let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
+                vm.drawMaskDataLine(mask_pts,cb)
+            }
+        },
+
 	},
 	mounted() {
         vm = this
@@ -263,6 +347,7 @@ export default {
         vm.axis = {}
 
         vm.pixiInit()
+        vm.$refs.home.addEventListener('contextmenu', e => {e.preventDefault()})
 	},
 	beforeDestroy() {
 		if (vm.app !== undefined) {

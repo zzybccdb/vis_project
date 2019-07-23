@@ -15,6 +15,7 @@ let moment = undefined
 const date_format = 'YYYY-MM-DD HH:mm:ss'
 
 import PCP from '@/components/Pcp_only.vue'
+import { filter } from 'minimatch';
 
 export default {
     methods:{
@@ -401,6 +402,12 @@ export default {
                 }
             })
         },
+        // 所有点重新获取原本色颜色
+        resetColor(){
+            vm.ctn_pts.forEach(pt => {
+                pt.tint = vm.getColor(pt.x,pt.y)
+            })
+        },
         // 按鍵旋轉移動，拖拽控制
         mosuemove(e){
             // 邊界設定，超出結束控制
@@ -554,6 +561,24 @@ export default {
             if(vm.mask_pts.length === 0)
                 vm.mask_pts = undefined
         },
+        // 确认是否又被 filter box 选中'
+        pcpFilter(columns,axis){
+            let mask_pts = vm.ctn_pts.children.filter(pt => {
+                pt.tint = vm.getColor(pt.x,pt.y)
+                let data = pt.data
+                return columns.some((c,i) => {
+                    let filter_box = axis[c].filter_box.children
+                    return filter_box.some(box => {
+                        let [max,min] = box.extent
+                        return max >= data[i+1] && min <= data[i+1]
+                    })
+                }) 
+            })
+            mask_pts.forEach(pt => {
+                pt.tint = 0xffffff 
+            })
+            return [mask_pts,vm.getColor]
+        },
         // 以 min，max 順序回傳
         minMax(num1,num2){
             let min = Math.min(num1,num2)
@@ -593,6 +618,7 @@ export default {
                             pt.x = pt.curpos[0]
                             pt.y = pt.curpos[1]
                             pt.tint = vm.getColor(pt.x,pt.y)
+                            pt.centera_mark = false
                         })
                     }
                     vm.ctn_control_pts.removeChild(sp)

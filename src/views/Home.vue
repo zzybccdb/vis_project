@@ -247,8 +247,9 @@ export default {
 					let extents = response.data.extents
 					let pcp = vm.$refs.pcp
 					vm.eventBus.pcp = pcp
+					pcp.eventBus = vm.eventBus
 					window.scroll({
-						top: 320,
+						top: document.body.scrollHeight-980,
 						left: 0,
 						behavior: 'smooth'
 					});
@@ -256,6 +257,10 @@ export default {
 				}).catch(error => {
 					console.error('获取资料 extents 时错误',error)
 				})			
+			}
+			else{
+				console.log(latent_scatter.resetColor())
+				latent_scatter.resetColor()
 			}
 
 		},
