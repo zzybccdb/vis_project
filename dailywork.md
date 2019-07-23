@@ -91,6 +91,7 @@
 - 將 data 和 color scatter 以及 pcp 進行綁定（完成）
 
 #### 2019/07/23
-- 在 home 目錄下 pcp 中 加入 filter 功能
+- 在 home 目錄下 pcp 中 加入 filter 功能(未完成)
 - 切換到 pcp 模式後， 控制點mousemove出現錯誤(修正)
-- 关闭 rotating 的行为
+- 关闭 rotating 的行为(完成)
+- 将 confirm 向后端提交资料,修改为 continue 下呼叫(完成)

@@ -57,14 +57,32 @@ export default {
             }
         },
         // continue scatter plot data
-        onContinue(){
+        async onContinue(){
             vm.rotate_dirty = false
             vm.zoom_dirty = false
             vm.mask_pts = undefined
             vm.group_movve = undefined
             vm.maskBox(vm.mask_box)
-            vm.clearMaskPts()
+            if(vm.mask_pts){
+                vm.clearMaskPts()
+            }
             d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
+
+            let [cdata, cxy] = vm.confirmControlPoints()
+            // mask 资料点整理回传， 中心点设定，处理回传参数
+            let param = {
+                'cxy': cxy,
+                'cdata': cdata
+            }
+            console.log(param)
+
+            // 将中心点坐标,原始数据传回后端,同時清空當前的 vm.mask_pts
+            await vm.$axios.post(vm.$api + '/inference/confirm_latent',param)
+            .then(() => {
+                console.log('Confirm ok')
+            }).catch(error => {
+                console.error('Confirm latent error',error)
+            })            
         },
         // reset 空間內容
         onReset(){

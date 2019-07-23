@@ -131,10 +131,10 @@
 									<v-icon>check_circle_outline</v-icon>
 									PCP
 								</v-btn>
-								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onConfirm">
+								<!-- <v-btn :disabled="disableNewTrainBtn" color="primary" @click="onConfirm">
 									<v-icon>check_circle_outline</v-icon>
 									Confirm
-								</v-btn>
+								</v-btn> -->
 
 							</v-layout>
 						</div>
@@ -393,7 +393,7 @@ export default {
 					vm.dis_loss_plot.update()
 			})
 		},
-		onContinue() {
+		async onContinue() {
 			// 自動滾動，向下移動到最底部
 			window.scroll({
 				top: document.body.scrollHeight,
@@ -406,10 +406,11 @@ export default {
 			vm.histogram = false
 			vm.pcp = false
 
-			latent_scatter.onContinue()
+			await latent_scatter.onContinue()
+			console.log('continue model')
 			vm.requesting = 'continue'
 			
-			this.$axios.post(this.$api + '/train/continue').then(response => {
+			vm.$axios.post(vm.$api + '/train/continue').then(response => {
 				vm.state = response.data.state
 			}).catch(error => {
 				console.log('something went wrong! Home onContimue', error)
