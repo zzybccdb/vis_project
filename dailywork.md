@@ -93,3 +93,4 @@
 #### 2019/07/23
 - 在 home 目錄下 pcp 中 加入 filter 功能
 - 切換到 pcp 模式後， 控制點mousemove出現錯誤(修正)
+- 关闭 rotating 的行为

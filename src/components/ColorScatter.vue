@@ -351,7 +351,8 @@ export default {
         rightdown(e){
             // 旋轉模式
             if(!vm.mask_mode && !vm.pcp_mode){
-                vm.rotating = true
+                // 暂时关闭 rotating 的行为
+                vm.rotating = false
                 //  以圖形中心爲旋轉點
                 // Math.atan2 回傳弧度
                 vm.ang1 = Math.atan2(e.data.global.y - 256, e.data.global.x - 256)
