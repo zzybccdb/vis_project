@@ -524,10 +524,13 @@ export default {
             // pixi 5.0 之後可以使用 sortChildren() 來調整
             // vm.ctn_pts.sortChildren()
             //////////////////////////////
-            // 將選中的資料點移動至圖層的上層
-            vm.mask_pts.forEach((pt,i) => {
-                vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
-            })
+            // 在非 pcp_mode 的情况下將選中的資料點移動至圖層的上層
+            if(!vm.pcp_mode){
+                vm.mask_pts.forEach((pt,i) => {
+                    vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
+                })
+            }
+            // 防止出现没有选中任何点的情况
             if(vm.mask_pts.length === 0)
                 vm.mask_pts = undefined
         },
