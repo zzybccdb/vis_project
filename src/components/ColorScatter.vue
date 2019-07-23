@@ -449,7 +449,9 @@ export default {
                 else{
                     let pcp = vm.eventBus.pcp
                     pcp.removeLines()
-                    pcp.drawMaskDataLine(vm.mask_pts,vm.getColor)
+                    if(vm.mask_pts){
+                        pcp.drawMaskDataLine(vm.mask_pts,vm.getColor)
+                    }
                 }
             }
             vm.mask_box.clear()
