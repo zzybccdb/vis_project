@@ -402,9 +402,11 @@ export default {
 			});
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
-			latent_scatter.onContinue()
+			
 			vm.histogram = false
 			vm.pcp = false
+
+			latent_scatter.onContinue()
 			vm.requesting = 'continue'
 			
 			this.$axios.post(this.$api + '/train/continue').then(response => {

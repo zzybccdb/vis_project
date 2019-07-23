@@ -36,7 +36,7 @@ export default {
                 console.error('Confirm latent error',error)
             })
         },
-        // 计算 mask points 的中心位置,绘制出白色三角形控制中心点
+        // 计算 mask points 的中心位置,选中资料点将会标示为center_mark,绘制出白色三角形控制中心点,
         setCenterPoint(){
             if(vm.mask_pts !== undefined){
                 let mean = [0,0]
@@ -45,6 +45,7 @@ export default {
                     // pt.tint = vm.getColor(pt.x,pt.y)
                     mean[0] += pt.x
                     mean[1] += pt.y
+                    pt.centera_mark = true
                 })
                 mean[0] /= size
                 mean[1] /= size
@@ -62,6 +63,7 @@ export default {
             vm.mask_pts = undefined
             vm.group_movve = undefined
             vm.maskBox(vm.mask_box)
+            vm.clearMaskPts()
             d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
         },
         // reset 空間內容
@@ -255,6 +257,7 @@ export default {
                 vm.setPointLocation(sp,d.slice(-2)[0],d.slice(-2)[1])
                 sp.alpha = 0.3
                 sp.data = d
+                sp.centera_mark = false
                 vm.dataWrapper[date_index].point = sp
                 vm.ctn_pts.addChild(sp)
             });
@@ -338,7 +341,9 @@ export default {
         },
         // 左鍵拖動
         mousedown(e){
-            if(vm.mask_mode){
+            // 在 mask_mode -》 true 允许拖动 mask 数据点
+            // 在 pcp_mode 下禁止所有数据点移动
+            if(vm.mask_mode && !vm.pcp_mode){
                 vm.group_move = [e.data.global.x, e.data.global.y]
             }
         },
@@ -372,7 +377,7 @@ export default {
         // 清除 mask_pts
         clearMaskPts(){
             vm.mask_pts.forEach(pt => {
-                if(pt.tint !== 0xffffff){
+                if(!pt.centera_mark){
                     pt.tint = vm.getColor(pt.x,pt.y)
                 }
             })
@@ -428,7 +433,7 @@ export default {
                 pt.y = pt.curpos[1]+y_move
             })
         },
-        // 停止旋轉
+        // 旋转停止, mask pts 行为停止, 确认被标注的 mask pts
         rightup(){
             vm.rotating = false
             vm.mask_box_draw = false
@@ -496,7 +501,7 @@ export default {
             box.endFill()
             box.alpha = 0
         },
-        // mask box 與資料點 collision
+        // 确认被全选到的数据点内容, mask box 與資料點 collision
         maskBoxCollision(){
             let x1 = vm.mask_box.startx, x2 = vm.mask_box.endx
             let x_extent = vm.minMax(x1,x2)
@@ -545,8 +550,10 @@ export default {
             sp.stapos = [sp.x,sp.y]
             sp.remove = false 
             sp.mousedown = () => { 
-                sp.moving = true
-                sp.start_ps = [sp.x,sp.y]
+                if(!vm.pcp_mode){
+                    sp.moving = true
+                    sp.start_ps = [sp.x,sp.y]
+                }
             }
             sp.mousemove = (e) => { vm.controlPointsMove(e,sp) }
             sp.mouseup  = () => { vm.controlPointsMoveEnd(sp) }
