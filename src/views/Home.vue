@@ -259,7 +259,6 @@ export default {
 				})			
 			}
 			else{
-				console.log(latent_scatter.resetColor())
 				latent_scatter.resetColor()
 			}
 

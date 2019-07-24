@@ -27,8 +27,6 @@ export default {
                 'cxy': cxy,
                 'cdata': cdata
             }
-            console.log(param)
-
             // 将中心点坐标,原始数据传回后端,同時清空當前的 vm.mask_pts
             vm.$axios.post(vm.$api + '/inference/confirm_latent',param)
             .then(() => {
@@ -314,7 +312,6 @@ export default {
             pt.x = pt.curpos[0]
             pt.y = pt.curpos[1]
             pt.texture = vm.dotTexture
-            pt.mask = false
         },
         // 移除資料點
         removePoints(){
@@ -386,12 +383,6 @@ export default {
                 if(!vm.pcp_mode){
                     vm.confirmControlPoints()
                 }
-                else{
-                    // 如果前一輪 mask_pts 沒有清空，就把顏色還原
-                    if(vm.mask_pts){
-                        vm.clearMaskPts()
-                    }
-                }
             }
         },
         // 清除 mask_pts
@@ -404,9 +395,16 @@ export default {
         },
         // 所有点重新获取原本色颜色
         resetColor(){
-            vm.ctn_pts.forEach(pt => {
+            vm.ctn_pts.children.forEach(pt => {
                 pt.tint = vm.getColor(pt.x,pt.y)
             })
+            vm.ctn_control_pts.children.forEach(cpt => {
+                let mask_pts = cpt.mask_pts
+                mask_pts.forEach(pt => {
+                    pt.tint = 0xffffff
+                })
+            })    
+            vm.mask_pts = undefined        
         },
         // 按鍵旋轉移動，拖拽控制
         mosuemove(e){
@@ -426,6 +424,11 @@ export default {
             }
             // 執行 mask 選擇框
             if(vm.mask_mode && vm.mask_box_draw){
+                if(vm.mask_pts){
+                    vm.clearMaskPts()
+                    let pcp = vm.eventBus.pcp
+                    pcp.removeLines()
+                }
                 vm.maskBoxRisize(e)
             }
             // 移动 mask 标注数据点
@@ -597,7 +600,6 @@ export default {
         // 根据使用圈选结果绘制控制点
         controlPointsInit(texture,x,y){
             let sp = new PIXI.Sprite(texture)
-            sp.alpha = 0.5
             sp.x = x-7.5
             sp.y = y-7.5
             sp.tint = 0xffffff

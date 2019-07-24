@@ -258,8 +258,6 @@ export default{
             })      
         },
 
-        drawFilterbox(){},
-
         init(data){
             let vm =this
             vm.data = data

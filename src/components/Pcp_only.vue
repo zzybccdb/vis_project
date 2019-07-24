@@ -65,6 +65,8 @@ export default {
             vm.ctn_axis = new PIXI.Container()
             vm.ctn_axis.name = 'ctn_axis'
             vm.wrapper.addChild(vm.ctn_axis)
+            // 记录 filter box
+            vm.filter_box = []
         },
         // 维度设定
         setDimensions(columns,data,extent){ 
@@ -280,6 +282,7 @@ export default {
         },
         // 移除當前的 data line
         removeLines(){
+            console.log('removelines')
             vm.ctn_lines.removeChildren()
         },
         // 基本的 filter box 元件繪製
@@ -331,6 +334,7 @@ export default {
                     let min = scale.invert(current_box.extent[1])
                     current_box.extent = [max,min]
                 }
+                // filter box start position
                 vm.filter_sp = undefined
                 vm.filter_start = false
                 vm.removeLines()
