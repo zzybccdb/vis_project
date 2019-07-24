@@ -54,7 +54,7 @@ export default {
                     t:20,
                 },
                 height: 100,
-                chartNum:3
+                chartNum:4
             }
             vm.appWidth = vm.$refs.histogram.clientWidth
             // Math.ceil(number) 向上取整
@@ -217,13 +217,13 @@ export default {
             let format1 = d3.format('.2s')
             let format2 = d3.format('.2f')
             let scale = vm.dimensions[label].bin_edges_scale
-            let ticks = scale.ticks(5)
+            let ticks = scale.ticks(4)
             ticks.forEach(tick =>{
                 let text = undefined
                 if(tick > 1)
-                    text = vm.Text(format1(tick),10)
+                    text = vm.Text(format1(tick),11)
                 else
-                    text = vm.Text(format2(tick),10)
+                    text = vm.Text(format2(tick),11)
                 text.y = y+10
                 text.x = x + scale(tick) 
                 let line = vm.drawSolidLine(text.x,y,text.x,y+5)
@@ -241,13 +241,13 @@ export default {
             let scale = vm.dimensions[label].hist_scale
             let extent = vm.dimensions[label].hist_extent
             let range = extent[1] - extent[0]
-            let gap = range / 4
-            let ticks = [1,2,3].map(i => {
+            let gap = range / 3
+            let ticks = [1,2,].map(i => {
                 return (i * gap) + extent[0]
             })
 
             ticks.forEach(tick =>{
-                let text = vm.Text(format(tick),10)
+                let text = vm.Text(format(tick),12)
                 text.y = y - scale(tick)
                 text.x = x
                 let line = vm.drawSolidLine(orgx,text.y,orgx-5,text.y)
