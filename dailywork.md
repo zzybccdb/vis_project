@@ -99,5 +99,7 @@
 
 #### 2019/07/24
 - pcp filter 多轴线过滤还有错误(已修正)
-- 修正了位移错误在 Adjust pan 切换时候
+- 修正了位移错误在 Adjust pan 切换时候(完成,在 Adjust 下關閉 zoom)
 - 修改 adjust mode 下 mask 方式, 以圆形半径的方式
+- 修正 hist, y 軸 ticks 數量,字體大小,每個 row 呈現圖表數(修正)
+- 直接在 pcp mode 下 continue 後 button 失效(修正)

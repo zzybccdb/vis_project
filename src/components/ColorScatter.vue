@@ -363,7 +363,7 @@ export default {
             if(vm.mask_mode && !vm.pcp_mode){
                 vm.group_move = [e.data.global.x, e.data.global.y]
             }
-            vm.circleFilter(10,[e.data.global.x, e.data.global.y])
+            // vm.circleFilter(10,[e.data.global.x, e.data.global.y])
         },
         // 半径搜索
         circleFilter(r,center){

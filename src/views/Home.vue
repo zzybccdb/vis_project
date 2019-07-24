@@ -414,7 +414,7 @@ export default {
 			let latent_scatter = vm.$refs.latent_scatter
 			
 			vm.histogram = false
-			vm.pcp = false
+			vm.onPCP()
 
 			await latent_scatter.onContinue()
 			console.log('continue model')
