@@ -102,4 +102,5 @@
 - 修正了位移错误在 Adjust pan 切换时候(完成,在 Adjust 下關閉 zoom)
 - 修改 adjust mode 下 mask 方式, 以圆形半径的方式
 - 修正 hist, y 軸 ticks 數量,字體大小,每個 row 呈現圖表數(修正)
-- 直接在 pcp mode 下 continue 後 button 失效(修正)
+- 直接在 pcp mode 下 continue 後 button 失效(修正, continue 時直接呼叫 onPCP)
+- 修改了 continue 的規則,只有在圖表全部呈現的情況下才能使用 continue

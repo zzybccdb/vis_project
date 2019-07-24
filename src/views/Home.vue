@@ -220,7 +220,7 @@ export default {
 			return this.requesting !== 'none' || this.state == 'training' || this.anyError
 		},
 		disableContinueBtn() {
-			return this.requesting !== 'none' || this.state == 'training' || this.state == 'reset' || this.anyError
+			return (this.requesting !== 'none' || this.state == 'training' || this.state == 'reset' || this.anyError) || !(this.recon_loss || this.dist_loss)
 		},
 		disablePauseBtn() {
 			// return this.requesting !== 'none' || this.state == 'paused' || this.state == 'reset'
@@ -417,13 +417,12 @@ export default {
 			vm.onPCP()
 
 			await latent_scatter.onContinue()
-			console.log('continue model')
 			vm.requesting = 'continue'
 			
 			vm.$axios.post(vm.$api + '/train/continue').then(response => {
 				vm.state = response.data.state
 			}).catch(error => {
-				console.log('something went wrong! Home onContimue', error)
+				console.error('something went wrong! Home onContimue', error)
 			}).finally(() => {
 				vm.requesting = 'none'
 			})
