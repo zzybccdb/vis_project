@@ -312,6 +312,7 @@ export default {
             pt.x = pt.curpos[0]
             pt.y = pt.curpos[1]
             pt.texture = vm.dotTexture
+            pt.mask_group = undefined
         },
         // 移除資料點
         removePoints(){
@@ -362,6 +363,29 @@ export default {
             if(vm.mask_mode && !vm.pcp_mode){
                 vm.group_move = [e.data.global.x, e.data.global.y]
             }
+            vm.circleFilter(10,[e.data.global.x, e.data.global.y])
+        },
+        // 半径搜索
+        circleFilter(r,center){
+            let group = []
+            vm.ctn_pts.children.every((pt,i) => {
+                // 检查是否在半径内
+                if(!pt.mask_group){
+                    let value = Math.pow((pt.x-center[0]),2) + Math.pow((pt.y-center[1]),2)
+                    if(value <= Math.pow(r,2)){
+                        pt.tint = 0x0000ff
+                        vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
+                        pt.mask_group = group
+                        group.push(pt)
+                    }
+                    return true
+                }
+                else{
+                    group = pt.mask_group
+                    return false
+                }
+            })
+            console.log(group)
         },
         // 右鍵旋轉操作
         rightdown(e){
@@ -711,6 +735,8 @@ export default {
         vm.transform = d3.zoomIdentity
         // 資料包裝盒　＝》point，line，data
         vm.dataWrapper = undefined        
+        // 过滤半径
+        vm.filter_radius
 
         vm.$refs.colorScatter.addEventListener('contextmenu',e => e.preventDefault())
         vm.pixiInit()

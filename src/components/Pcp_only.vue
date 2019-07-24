@@ -282,7 +282,6 @@ export default {
         },
         // 移除當前的 data line
         removeLines(){
-            console.log('removelines')
             vm.ctn_lines.removeChildren()
         },
         // 基本的 filter box 元件繪製
