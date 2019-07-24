@@ -279,6 +279,12 @@ export default {
 				latent_scatter.confirmControlPoints()
 			}
 			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
+			if(vm.adjust !== 'pan'){
+				vm.$d3.select('#colorScatter').on('.zoom',null)
+			}
+			else{
+				vm.$d3.select('#colorScatter').call(latent_scatter.zoom)
+			}
 		},
 		// 對移動後的 color scatter 進行確認
 		onConfirm(){

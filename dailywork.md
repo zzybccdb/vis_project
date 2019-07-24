@@ -98,5 +98,6 @@
 - 取消控制中心时,清除 pt 的 tint 没有修正
 
 #### 2019/07/24
-- pcp filter 多轴线过滤还有错误
+- pcp filter 多轴线过滤还有错误(已修正)
+- 修正了位移错误在 Adjust pan 切换时候
 - 修改 adjust mode 下 mask 方式, 以圆形半径的方式

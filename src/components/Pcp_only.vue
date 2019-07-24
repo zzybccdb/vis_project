@@ -333,6 +333,7 @@ export default {
                 }
                 vm.filter_sp = undefined
                 vm.filter_start = false
+                vm.removeLines()
                 let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
                 vm.drawMaskDataLine(mask_pts,cb)
             }

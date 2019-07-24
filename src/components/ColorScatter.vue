@@ -566,16 +566,25 @@ export default {
             let mask_pts = vm.ctn_pts.children.filter(pt => {
                 pt.tint = vm.getColor(pt.x,pt.y)
                 let data = pt.data
-                return columns.some((c,i) => {
+                let box_count = 0
+                let bool =  columns.every((c,i) => {
                     let filter_box = axis[c].filter_box.children
-                    return filter_box.some(box => {
-                        let [max,min] = box.extent
-                        return max >= data[i+1] && min <= data[i+1]
-                    })
-                }) 
+                    if(filter_box.length !== 0){
+                        return filter_box.some(box => {
+                            box_count += 1
+                            let [max,min] = box.extent
+                            return max >= data[i+1] && min <= data[i+1]
+                        })
+                    }
+                    else{
+                        return true
+                    }
+                })
+                return bool && box_count 
             })
-            mask_pts.forEach(pt => {
+            mask_pts.forEach((pt,i) => {
                 pt.tint = 0xffffff 
+                vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
             })
             return [mask_pts,vm.getColor]
         },
