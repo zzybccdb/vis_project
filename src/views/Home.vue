@@ -127,6 +127,10 @@
 									<v-icon>swap_horiz</v-icon>
 									{{adjust}}
 								</v-btn>
+								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onClearAllMask">
+									<v-icon>check_circle_outline</v-icon>
+									Clear All Mask
+								</v-btn>
 								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onPCP">
 									<v-icon>check_circle_outline</v-icon>
 									PCP
@@ -242,6 +246,15 @@ export default {
 			vm.pcp = !vm.pcp
 			latent_scatter.pcp_mode = !latent_scatter.pcp_mode
 			latent_scatter.mask_mode = latent_scatter.pcp_mode
+			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
+
+			// if(vm.adjust !== 'pan'){
+			// 	vm.$d3.select('#colorScatter').on('.zoom',null)
+			// }
+			// else{
+			// 	vm.$d3.select('#colorScatter').call(latent_scatter.zoom)
+			// }
+
 			if(vm.pcp){
 				vm.$axios.get(vm.$api + '/inference/dimension_extent').then(response => {
 					let extents = response.data.extents
@@ -278,18 +291,25 @@ export default {
 				latent_scatter.confirmControlPoints()
 			}
 			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
-			if(vm.adjust !== 'pan'){
-				vm.$d3.select('#colorScatter').on('.zoom',null)
-			}
-			else{
-				vm.$d3.select('#colorScatter').call(latent_scatter.zoom)
-			}
+			// if(vm.adjust !== 'pan'){
+			// 	vm.$d3.select('#colorScatter').on('.zoom',null)
+			// }
+			// else{
+			// 	vm.$d3.select('#colorScatter').call(latent_scatter.zoom)
+			// }
 		},
-		// 對移動後的 color scatter 進行確認
-		onConfirm(){
+		//////////////// 對移動後的 color scatter 進行確認
+		// onConfirm(){
+		// 	let vm = this
+		// 	let latent_scatter = vm.$refs.latent_scatter
+		// 	latent_scatter.confirm()
+		// },
+		////////////////
+		// 清空所有 mask 内容
+		onClearAllMask(){
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
-			latent_scatter.confirm()
+			latent_scatter.clearAllMask()
 		},
 		onHistogram(){
 			let vm = this 
@@ -349,6 +369,7 @@ export default {
 					let latent_scatter = vm.$refs.latent_scatter
 					EventBus.latent_scatter = latent_scatter
 					latent_scatter.eventBus = EventBus
+					latent_scatter.mask_group = []
 					
 					vm.startTrain()
 					// 自動滾動，向下移動到最底部
@@ -433,6 +454,14 @@ export default {
 		onPause() {
 			let vm = this
 			vm.requesting = 'pause'
+			let latent_scatter = vm.eventBus.latent_scatter
+			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
+			// if(vm.adjust !== 'pan'){
+			// 	vm.$d3.select('#colorScatter').on('.zoom',null)
+			// }
+			// else{
+			// 	vm.$d3.select('#colorScatter').call(latent_scatter.zoom)
+			// }			
 			this.$axios.post(this.$api + '/train/pause').then(response => {
 				vm.state = response.data.state
 				vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
