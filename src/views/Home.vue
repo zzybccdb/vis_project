@@ -414,7 +414,10 @@ export default {
 			let latent_scatter = vm.$refs.latent_scatter
 			
 			vm.histogram = false
-			vm.onPCP()
+			vm.pcp = false
+			latent_scatter.pcp_mode = false
+			latent_scatter.mask_mode = false
+			// latent_scatter.resetColor()
 
 			await latent_scatter.onContinue()
 			vm.requesting = 'continue'

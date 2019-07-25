@@ -100,7 +100,17 @@
 #### 2019/07/24
 - pcp filter 多轴线过滤还有错误(已修正)
 - 修正了位移错误在 Adjust pan 切换时候(完成,在 Adjust 下關閉 zoom)
-- 修改 adjust mode 下 mask 方式, 以圆形半径的方式
+- 修改 adjust mode 下 mask 方式, 以圆形半径的方式(暂时可以使用)
 - 修正 hist, y 軸 ticks 數量,字體大小,每個 row 呈現圖表數(修正)
 - 直接在 pcp mode 下 continue 後 button 失效(修正, continue 時直接呼叫 onPCP)
-- 修改了 continue 的規則,只有在圖表全部呈現的情況下才能使用 continue
+- 修改了 continue 的規則,只有在圖表全部呈現的情況下才能使用 continue(修正)
+
+#### 2019/07/25
+- 思考
+    - 暂时应该取消 mask_group 的保留
+    - 如何选取到之前选中的 mask_pts
+    - 如果取消选中的 mask_pts
+
+- 保留 mask_group(bug) 
+- 选中先前选中的 mask_pts(完成) (左键点击)
+- 取消选中的 mask_pts(完成) (右键点击)

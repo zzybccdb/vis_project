@@ -35,7 +35,7 @@ export default {
                 console.error('Confirm latent error',error)
             })
         },
-        // 计算 mask points 的中心位置,选中资料点将会标示为center_mark,绘制出白色三角形控制中心点,
+        // （使用控制點時呼叫）计算 mask points 的中心位置,选中资料点将会标示为center_mark,绘制出白色三角形控制中心点,
         setCenterPoint(){
             if(vm.mask_pts !== undefined){
                 let mean = [0,0]
@@ -44,7 +44,7 @@ export default {
                     // pt.tint = vm.getColor(pt.x,pt.y)
                     mean[0] += pt.x
                     mean[1] += pt.y
-                    pt.centera_mark = true
+                    pt.center_mark = true
                 })
                 mean[0] /= size
                 mean[1] /= size
@@ -60,14 +60,19 @@ export default {
             vm.rotate_dirty = false
             vm.zoom_dirty = false
             vm.mask_pts = undefined
-            vm.group_movve = undefined
-            vm.maskBox(vm.mask_box)
-            if(vm.mask_pts){
-                vm.clearMaskPts()
-            }
-            d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
+            vm.group_move = undefined
+            // vm.maskBox(vm.mask_box)
+            // if(vm.mask_pts){
+            //     vm.clearPCPMaskPts()
+            // }
+            // d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
 
-            let [cdata, cxy] = vm.confirmControlPoints()
+            ///////////////////（使用控制點時呼叫）確定控制點，控制中心
+            // let [cdata, cxy] = vm.confirmControlPoints()
+            ///////////////////
+            
+            // （不使用控制點時）　確定控制中心
+            let [cdata,cxy] = vm.confirmCenterPoints() 
             // mask 资料点整理回传， 中心点设定，处理回传参数
             let param = {
                 'cxy': cxy,
@@ -83,7 +88,7 @@ export default {
                 console.error('Confirm latent error',error)
             })            
         },
-        // reset 空間內容
+        //(Home reset button 使用)reset 空間內容
         onReset(){
             vm.rotate_dirty = false
             vm.zoom_dirty = false
@@ -274,7 +279,7 @@ export default {
                 vm.setPointLocation(sp,d.slice(-2)[0],d.slice(-2)[1])
                 sp.alpha = 0.3
                 sp.data = d
-                sp.centera_mark = false
+                sp.center_mark = false
                 vm.dataWrapper[date_index].point = sp
                 vm.ctn_pts.addChild(sp)
             });
@@ -339,16 +344,20 @@ export default {
             vm.zoom_dirty = true
             vm.rotation_acc = 0
             if(!vm.mask_mode){
-                if(vm.rotate_dirty){
-                    vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
-                    vm.rotate_dirty = false
-                }
+                /////////////////// 旋轉控制時呼叫
+                // if(vm.rotate_dirty){
+                //     vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
+                //     vm.rotate_dirty = false
+                // }
+                ///////////////////
+
                 // 資料點縮放控制
                 vm.ctn_pts.children.forEach(pt => {
                     let new_pos = vm.transform.apply(pt.refpos)
                     pt.curpos = new_pos
                     pt.x = pt.curpos[0]
                     pt.y = pt.curpos[1]
+                    pt.rawpos = pt.curpos
                     // pt.tint = vm.getColor(pt.x,pt.y)
                     if(pt.tint !== 0xffffff){
                         pt.tint = vm.getColor(pt.x,pt.y)
@@ -358,18 +367,16 @@ export default {
         },
         // 左鍵拖動
         mousedown(e){
+            console.log('plan mouse down')
             // 在 mask_mode -》 true 允许拖动 mask 数据点
             // 在 pcp_mode 下禁止所有数据点移动
             if(vm.mask_mode && !vm.pcp_mode){
-                vm.group_move = [e.data.global.x, e.data.global.y]
-                if(vm.mask_pts){
-                    vm.mask_pts.forEach((pt,i) => {
-                        pt.tint = vm.getColor(pt.x,pt.y)
-                        pt.mask_group = undefined
-                    })
+                // 记录鼠标点击的初始位置
+                if(!vm.mask_pt_clicked){
+                    // 根据设定半径进行搜索
+                    vm.group_move = [e.data.global.x, e.data.global.y]
+                    vm.circleFilter(vm.filter_radius,[e.data.global.x, e.data.global.y])
                 }
-                vm.mask_pts = undefined
-                vm.circleFilter(vm.filter_radius,[e.data.global.x, e.data.global.y])
             }
         },
         // 半径搜索
@@ -382,42 +389,74 @@ export default {
                     pt.tint = 0xffffff
                     pt.mask_group = group
                     group.push(pt)
+                    pt.center_mark = true
+                    pt.interactive = true
+                    pt.buttonmode = true
+                    pt.mousedown = vm.mask_pts_click
+                    pt.rightdown = vm.mask_pts_remove
+                    // pt.mousemove = vm.mask_pt_move
                     return true
                 }
                 return false
             })
-            console.log(vm.mask_pts)
             // 避免在上面 filter 中修改到了 vm.ctn_pts.children 的順序,所以在這裏再執行一次
             vm.mask_pts.forEach((pt,i) => {
                 vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
             })
+
+            vm.mask_group.push(vm.mask_pts)
+            vm.mask_pts = undefined
         },
-        // 右鍵旋轉操作
+        mask_pts_click(e){
+            console.log('mask_pt_click')
+            if(vm.mask_mode && !vm.pcp_mode){
+                vm.mask_pt_clicked = true
+                vm.group_move = [e.data.global.x, e.data.global.y]
+                vm.current_mask_pts = e.currentTarget.mask_group
+            }
+        },
+        mask_pts_remove(e){
+            let mask_pts = e.currentTarget.mask_group
+            mask_pts.forEach(pt => {
+                pt.x = pt.rawpos[0]
+                pt.y = pt.rawpos[1]
+                pt.curpos = pt.rawpos
+                pt.mask_group = undefined
+                pt.center_mark = false
+                pt.interactive = false
+                pt.buttonmode = false
+                pt.tint = vm.getColor(pt.x,pt.y)
+            })
+            let index = vm.mask_group.indexOf(mask_pts)
+            vm.mask_group.splice(index,1)
+            console.log(vm.mask_group)
+        },
+        // 右鍵旋轉操作,以及選取框開始
         rightdown(e){
             // 旋轉模式
-            if(!vm.mask_mode && !vm.pcp_mode){
-                // 暂时关闭 rotating 的行为
-                vm.rotating = false
-                //  以圖形中心爲旋轉點
-                // Math.atan2 回傳弧度
-                vm.ang1 = Math.atan2(e.data.global.y - 256, e.data.global.x - 256)
-            }
+            // if(!vm.mask_mode && !vm.pcp_mode){
+            //     // 暂时关闭 rotating 的行为
+            //     vm.rotating = false
+            //     //  以圖形中心爲旋轉點
+            //     // Math.atan2 回傳弧度
+            //     vm.ang1 = Math.atan2(e.data.global.y - 256, e.data.global.x - 256)
+            // }
             // 選擇框模式
-            if(vm.mask_mode){
+            if(vm.mask_mode　&& vm.pcp_mode){
                 // 控制是否 mask_box 绘制模式
                 vm.mask_box_draw = true
                 vm.mask_box.startx = e.data.global.x
                 vm.mask_box.starty = e.data.global.y
-                // 非 PCP 模式下
-                if(!vm.pcp_mode){
-                    vm.confirmControlPoints()
-                }
+                // // 非 PCP 模式下
+                // if(!vm.pcp_mode){
+                //     vm.confirmControlPoints()
+                // }
             }
         },
         // 清除 mask_pts
-        clearMaskPts(){
-            vm.mask_pts.forEach(pt => {
-                if(!pt.centera_mark){
+        clearPCPMaskPts(){
+            vm.pcp_mask_pts.forEach(pt => {
+                if(!pt.center_mark){
                     pt.tint = vm.getColor(pt.x,pt.y)
                 }
             })
@@ -425,15 +464,16 @@ export default {
         // 所有点重新获取原本色颜色
         resetColor(){
             vm.ctn_pts.children.forEach(pt => {
-                pt.tint = vm.getColor(pt.x,pt.y)
+                if(!pt.center_mark){
+                    pt.tint = vm.getColor(pt.x,pt.y)
+                }
             })
             vm.ctn_control_pts.children.forEach(cpt => {
                 let mask_pts = cpt.mask_pts
                 mask_pts.forEach(pt => {
                     pt.tint = 0xffffff
                 })
-            })    
-            vm.mask_pts = undefined        
+            })     
         },
         // 按鍵旋轉移動，拖拽控制
         mosuemove(e){
@@ -454,29 +494,33 @@ export default {
             // }
             ///////////////////
 
-            /////////////////// 執行 mask 選擇框
-            // if(vm.mask_mode && vm.mask_box_draw){
-            //     if(vm.mask_pts){
-            //         vm.clearMaskPts()
-            //         let pcp = vm.eventBus.pcp
-            //         pcp.removeLines()
-            //     }
-            //     vm.maskBoxRisize(e)
-            // }
-            //////////////////
+            ///////////////// 執行 PCP mask 選擇框
+            if(vm.mask_mode && vm.mask_box_draw){
+                if(vm.mask_pts){
+                    vm.clearPCPMaskPts()
+                    let pcp = vm.eventBus.pcp
+                    pcp.removeLines()
+                }
+                vm.maskBoxRisize(e)
+            }
+            ////////////////
 
             // 直接移动 mask 标注数据点
-            if(vm.mask_mode && vm.group_move){    
-                if(vm.mask_pts){
-                    vm.mask_group.push(vm.mask_pts)
+            if(vm.mask_mode && vm.group_move){  
+                let mask_pts = undefined
+                if (vm.mask_pt_clicked){
+                    mask_pts = vm.current_mask_pts
+                } 
+                else{
+                    // 注意 slice 回傳的是一個 array
+                    mask_pts = vm.mask_group.slice(-1)[0]
                 }
-                // 注意 slice 回傳的是一個 array
-                let mask_pts = vm.mask_group.slice(-1)[0]
-                vm.maskPointsMove(e,mask_pts)
-                vm.mask_pts = undefined
+                if(mask_pts !== undefined){
+                    vm.maskPointsMove(e,mask_pts)
+                }
             }    
         },
-        // mask 选择框绘制调整
+        // (使用圈选框搜索)mask 选择框绘制调整
         maskBoxRisize(e){
             let x1 = vm.mask_box.startx
             let y1 = vm.mask_box.starty
@@ -500,7 +544,6 @@ export default {
             mask_pts.forEach(pt => {
                 pt.x = pt.curpos[0]+x_move
                 pt.y = pt.curpos[1]+y_move
-                pt.curpos = [pt.x,pt.y]
             })
         },
         // 旋转停止, mask pts 行为停止, 确认被标注的 mask pts
@@ -509,13 +552,24 @@ export default {
             vm.mask_box_draw = false
             vm.mask_box.alpha = 0
             vm.rotation_acc = vm.rotation
-            if(vm.mask_mode && vm.mask_box.width !== 0){
+            if(vm.mask_mode && vm.mask_box.width !== 0 && vm.pcp_mode){
                 vm.maskBoxCollision()
-                // 不在 pcp 模式下就是mask模式
-                if(!vm.pcp_mode){
-                    vm.setCenterPoint()
-                }
-                else{
+
+                //////////////////  不在 pcp 模式下就是mask模式
+                // if(!vm.pcp_mode){
+                //     vm.setCenterPoint()
+                // }
+                // else{
+                //     let pcp = vm.eventBus.pcp
+                //     pcp.removeLines()
+                //     if(vm.mask_pts){
+                //         pcp.drawMaskDataLine(vm.mask_pts,vm.getColor)
+                //     }
+                // }
+                //////////////////
+
+                //　取消右鍵選取框設定
+                if(vm.pcp_mode){
                     let pcp = vm.eventBus.pcp
                     pcp.removeLines()
                     if(vm.mask_pts){
@@ -528,6 +582,20 @@ export default {
         // 左鍵停止移動
         mouseup(){
             vm.group_move = undefined
+            let mask_pts = undefined
+            if(vm.mask_pt_clicked){
+                mask_pts = vm.current_mask_pts
+            }
+            else{
+                mask_pts = vm.mask_group.slice(-1)[0]
+            }
+            if(mask_pts !== undefined){
+                mask_pts.forEach(pt => {
+                    pt.curpos = [pt.x,pt.y]
+                    // pt.rawpos = pt.curpos 
+                })
+            }
+            vm.mask_pt_clicked = false
         },
         // 旋轉矩陣公式
         // [ cos角度 -sin角度 ] [x] => [x']
@@ -551,12 +619,6 @@ export default {
                     pt.tint = vm.getColor(pt.x,pt.y)
                 }
             })
-            // // 控制點旋轉
-            // vm.ctn_control_pts.children.forEach(pt => {
-            //     let tx = pt.x - 256, ty = pt.y - 256
-            //     pt.x = tx * cos - ty * sin + 256
-            //     pt.y = tx * sin + ty * cos + 256      
-            // })
             vm.rotate_dirty = true
         },
         // mask box
@@ -573,7 +635,7 @@ export default {
             let x_extent = vm.minMax(x1,x2)
             let y1 = vm.mask_box.starty, y2 = vm.mask_box.endy
             let y_extent = vm.minMax(y1,y2)
-            vm.mask_pts = vm.ctn_pts.children.filter(pt => {
+            vm.pcp_mask_pts = vm.ctn_pts.children.filter(pt => {
                 if(x_extent[0] <= pt.x &&  x_extent[1] >= pt.x && y_extent[0] <= pt.y && y_extent[1] >= pt.y){
                     pt.tint = 0xffffff
                     return true
@@ -596,7 +658,7 @@ export default {
                 })
             }
             // 防止出现没有选中任何点的情况
-            if(vm.mask_pts.length === 0)
+            if(vm.pcp_mask_pts.length === 0)
                 vm.mask_pts = undefined
         },
         // 确认是否又被 filter box 选中'
@@ -632,7 +694,7 @@ export default {
             let max = Math.max(num1,num2)
             return [min,max]
         },
-        // 根据使用圈选结果绘制控制点
+        // （使用控制點時呼叫）根据使用圈选结果绘制控制点
         controlPointsInit(texture,x,y){
             let sp = new PIXI.Sprite(texture)
             sp.x = x-7.5
@@ -664,7 +726,7 @@ export default {
                             pt.x = pt.curpos[0]
                             pt.y = pt.curpos[1]
                             pt.tint = vm.getColor(pt.x,pt.y)
-                            pt.centera_mark = false
+                            pt.center_mark = false
                         })
                     }
                     vm.ctn_control_pts.removeChild(sp)
@@ -675,7 +737,7 @@ export default {
             }
             return sp
         },
-        // 控制点移动
+        // （使用控制點時呼叫）控制点移动
         controlPointsMove(e,sp){
             if(sp.mask_pts && sp.moving){                
                 let x_move = e.data.global.x - sp.stapos[0]
@@ -693,7 +755,7 @@ export default {
                     console.error("this center point dont have any mask pts")    
             }
         },
-        // 控制点移动结束，数据点不会储存当前坐标
+        // （使用控制點時呼叫）控制点移动结束，数据点不会储存当前坐标
         controlPointsMoveEnd(sp){
             sp.moving = false
             sp.stapos = [sp.x,sp.y]
@@ -701,7 +763,7 @@ export default {
                 pt.curpos = [pt.x,pt.y]
             })
         },
-        // 確定控制點，控制中心
+        // （使用控制點時呼叫）確定控制點，控制中心
         confirmControlPoints(){
             let cdata = []
             let cxy = []
@@ -718,6 +780,30 @@ export default {
             })
             return [cdata,cxy]
         },
+        // 確定控制中心,整理回传参数
+        confirmCenterPoints(){
+            let cdata = []
+            let cxy = []
+            vm.mask_group.forEach((mask_pts) => {
+                let mask_data = []
+                let mean = [0,0]
+                let size = mask_pts.length
+                mask_pts.forEach(pt => {
+                    mask_data.push(pt.data.slice(1,-2))
+                    mean[0] += pt.x
+                    mean[1] += pt.y
+                })
+                mean[0] /= size
+                mean[1] /= size
+                cdata.push(mask_data)
+                cxy.push([vm.x_scale.invert(mean[0]),vm.y_scale.invert(mean[1])])
+            })
+            return [cdata,cxy]
+        },
+        // 取消 mask_pts 
+        clearMask_pts(){
+
+        }
     },
     mounted(){
         vm = this
