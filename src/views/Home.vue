@@ -128,7 +128,7 @@
 									{{adjust}}
 								</v-btn>
 								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onClearAllMask">
-									<v-icon>check_circle_outline</v-icon>
+									<v-icon>delete_outline</v-icon>
 									Clear All Mask
 								</v-btn>
 								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onPCP">
@@ -163,7 +163,7 @@ import PCP from '@/components/Pcp_only.vue'
 // import { EventEmitter } from 'events';
 
 const EventBus = {}
-
+let id = 0
 export default {
 	components: {
 		HISTOGRAM,
@@ -346,31 +346,30 @@ export default {
 			vm.pcp = false
 			if(vm.network === 'NN based MDS'){
 				vm.dist_loss = true
-				vm.recon_loss = true
-				window.recon_loss = true
 				window.dist_loss = true 
+				// vm.recon_loss = true
+				// window.recon_loss = true
 				setTimeout(()=>{
-					// 清除殘留圖像
-					if(vm.loss_plot){
-						vm.loss_plot.destroy()
-					}					
-					if(vm.dis_loss_plot){
-						vm.dis_loss_plot.destroy()
-					}
-					// 清空 scatter 
-					vm.$refs.latent_scatter.removePoints()
-					// 重新宣告曲线图
-					let ctx = document.getElementById('loss').getContext('2d');
-					vm.loss_plot = new Chart(ctx, vm.config)
-
-					let dis = document.getElementById('dis_loss').getContext('2d')
-					vm.dis_loss_plot = new Chart(dis,vm.dis_config)
-
 					let latent_scatter = vm.$refs.latent_scatter
 					EventBus.latent_scatter = latent_scatter
 					latent_scatter.eventBus = EventBus
 					latent_scatter.mask_group = []
-					
+					// 清除殘留圖像
+					// if(vm.loss_plot){
+					// 	vm.loss_plot.destroy()
+					// }					
+					if(vm.dis_loss_plot){
+						vm.dis_loss_plot.destroy()
+					}
+					// 清空 scatter 
+					latent_scatter.removePoints()
+					// 重新宣告曲线图
+					// let ctx = document.getElementById('loss').getContext('2d');
+					// vm.loss_plot = new Chart(ctx, vm.config)
+
+					let dis = document.getElementById('dis_loss').getContext('2d')
+					vm.dis_loss_plot = new Chart(dis,vm.dis_config)
+
 					vm.startTrain()
 					// 自動滾動，向下移動到最底部
 					window.scroll({
@@ -384,10 +383,29 @@ export default {
 				vm.recon_loss = true
 				window.recon_loss = true
 				setTimeout(()=>{
+					let latent_scatter = vm.$refs.latent_scatter
+					EventBus.latent_scatter = latent_scatter
+					latent_scatter.eventBus = EventBus
+					latent_scatter.mask_group = []
+
+					// 清除残留影像
+					if(vm.loss_plot){
+						vm.loss_plot.destroy()
+					}
+
+					latent_scatter.removePoints()
+
 					let ctx = document.getElementById('loss').getContext('2d');
 					vm.loss_plot = new Chart(ctx, vm.config)
 
 					vm.startTrain()
+					// 自動滾動，向下移動到最底部
+					window.scroll({
+						top: document.body.scrollHeight,
+						left: 0,
+						behavior: 'smooth'
+					});
+
 				},500)
 			}
 			else{
@@ -461,10 +479,11 @@ export default {
 			// }
 			// else{
 			// 	vm.$d3.select('#colorScatter').call(latent_scatter.zoom)
-			// }			
+			// }		
 			this.$axios.post(this.$api + '/train/pause').then(response => {
 				vm.state = response.data.state
-				vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
+				id += 1
+				vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':id}).then(response => {
 					let latent_scatter = vm.$refs.latent_scatter
 					let data = response.data.rawdata
 					latent_scatter.pointsTransition(data)
@@ -479,13 +498,15 @@ export default {
 		},
 		addLoss(rec_loss,dis_loss=undefined,step) {
 			let vm = this;
-			vm.config.data.labels.push(String(step));
-			vm.config.data.datasets[0].data.push(rec_loss);
-			if (vm.config.data.labels.length > 100) {
-				vm.config.data.labels.shift();
-				vm.config.data.datasets[0].data.shift();
+			if(rec_loss){
+				vm.config.data.labels.push(String(step));
+				vm.config.data.datasets[0].data.push(rec_loss);
+				if (vm.config.data.labels.length > 100) {
+					vm.config.data.labels.shift();
+					vm.config.data.datasets[0].data.shift();
+				}
+				vm.loss_plot.update()	
 			}
-			vm.loss_plot.update()	
 
 			if(dis_loss){
 				vm.dis_config.data.labels.push(String(step));
@@ -505,7 +526,7 @@ export default {
 					let model = response.data.model
 					if(model === 'NN based MDS'){
 						if(response.data.rec_loss && response.data.dis_loss){
-							vm.addLoss(response.data.rec_loss,response.data.dis_loss,response.data.step)
+							vm.addLoss(undefined,response.data.dis_loss,response.data.step)
 						}
 					}
 					else{
@@ -514,7 +535,7 @@ export default {
 						}						
 					}
 					// 加载 latent 资料点， 资料结构 =》 {日期，dimension1，dimensin2，```，latentx，latenty}
-					vm.$axios.get(vm.$api + '/inference/get_training_latent').then(response => {
+					vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':0}).then(response => {
 						let latent_scatter = vm.$refs.latent_scatter
 						let data = response.data.rawdata
 						let columns = response.data.columns
@@ -564,13 +585,17 @@ export default {
 				vm.network_errors = []
 				vm.requesting = 'none'
 
-				vm.config.data.labels = []
-				vm.config.data.datasets[0].data = []
-				vm.loss_plot.update()
+				if(vm.recon_loss){
+					vm.config.data.labels = []
+					vm.config.data.datasets[0].data = []
+					vm.loss_plot.update()
+				}
 
-				vm.dis_config.data.labels = []
-				vm.dis_config.data.datasets[0].data = []
-				vm.dis_loss_plot.update()
+				if(vm.dist_loss){
+					vm.dis_config.data.labels = []
+					vm.dis_config.data.datasets[0].data = []
+					vm.dis_loss_plot.update()
+				}
 
 				vm.dist_loss = false
 				vm.recon_loss = false

@@ -514,7 +514,7 @@ export default {
             // }
             ///////////////////
             // 執行 PCP mask 選擇框
-            if(vm.mask_mode && vm.mask_box_draw){
+            if(vm.mask_mode && vm.mask_box_draw && vm.pcp_mode){
                 if(vm.pcp_mask_pts){
                     vm.clearPCPMaskPts()
                     let pcp = vm.eventBus.pcp
@@ -523,7 +523,7 @@ export default {
                 vm.maskBoxRisize(e)
             }
             // 直接移动 mask 标注数据点
-            if(vm.mask_mode && vm.group_move){  
+            if(vm.mask_mode && vm.group_move && !vm.pcp_mode){  
                 let mask_pts = undefined
                 if (vm.mask_pt_clicked){
                     mask_pts = vm.current_mask_pts
