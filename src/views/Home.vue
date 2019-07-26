@@ -89,6 +89,10 @@
 							@change="onWindowSizeChange">
 							</v-text-field>
 						</v-layout> -->
+						<div ref='pcpChart' style='margin:0px;width:100%'>
+							<PCP ref='pcp' v-if="pcp"/>
+						</div>
+
 						<v-btn :loading="requesting == 'newTrain'" color="primary" :disabled="disableNewTrainBtn" @click="onNewTrain">
 							<v-icon>add_box</v-icon>
 							New Training
@@ -110,9 +114,6 @@
 								<v-icon light>cached</v-icon>
 							</span>
 						</v-btn>
-						<div ref='pcpChart' style='margin:0px;width:100%'>
-							<PCP ref='pcp' v-if="pcp"/>
-						</div>
 					</v-form>
 					<!-- training 結果預覽圖表部分 -->
 					<v-layout style="height:572px" v-if="recon_loss || dist_loss" row nowrap>

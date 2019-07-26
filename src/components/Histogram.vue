@@ -58,7 +58,7 @@ export default {
             }
             vm.appWidth = vm.$refs.histogram.clientWidth
             // Math.ceil(number) 向上取整
-            vm.appHeight = vm.layout.height * Math.ceil(vm.count/vm.layout.chartNum)
+            vm.appHeight = vm.layout.height * Math.ceil(vm.count/vm.layout.chartNum)+20
             vm.root.$refs.histWrapper.style.height = vm.appHeight
             // 初始化绘图内容
             vm.app = new PIXI.Application({
@@ -91,7 +91,7 @@ export default {
         d3Init(data){
             vm.dimensions = {}
             // 每行绘制 4 个
-            let width = vm.appWidth / vm.layout.chartNum
+            let width = (vm.appWidth-vm.layout.margin.l-vm.layout.margin.r) / vm.layout.chartNum
             let height = vm.layout.height
             for(let d in data){
                 let temp = {}
