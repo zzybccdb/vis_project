@@ -421,24 +421,13 @@ export default {
             }
         },
         mask_pts_rightClick(e){
-            let mask_pts = e.currentTarget.mask_group
-            let index = vm.mask_group.indexOf(mask_pts)
-            
-            vm.mask_pts_remove(mask_pts)
-            vm.mask_group.splice(index,1)       
-            // mask_pts.forEach(pt => {
-            //     pt.x = pt.rawpos[0]
-            //     pt.y = pt.rawpos[1]
-            //     pt.curpos = pt.rawpos
-            //     pt.mask_group = undefined
-            //     pt.center_mark = false
-            //     pt.interactive = false
-            //     pt.buttonmode = false
-            //     pt.tint = vm.getColor(pt.x,pt.y)
-            // })
-            // let index = vm.mask_group.indexOf(mask_pts)
-            // vm.mask_group.splice(index,1)
-            // console.log(vm.mask_group)
+            if(vm.mask_mode && !vm.pcp_mode){
+                let mask_pts = e.currentTarget.mask_group
+                let index = vm.mask_group.indexOf(mask_pts)
+                
+                vm.mask_pts_remove(mask_pts)
+                vm.mask_group.splice(index,1)       
+            }
         },
         mask_pts_remove(mask_pts){
             mask_pts.forEach(pt => {
