@@ -14,11 +14,55 @@ let d3 = undefined
 let moment = undefined
 const date_format = 'YYYY-MM-DD HH:mm:ss'
 
-import PCP from '@/components/Pcp_only.vue'
-import { filter } from 'minimatch';
-
 export default {
     methods:{
+        // temporal pause
+        tempPause(){
+            let root = vm.eventBus.root
+            console.log(root.state)
+            if(root.state === 'training'){
+                console.log('暂时停止')
+                vm.temp_pause = true
+                root.requesting = 'pause'
+                vm.mask_mode = true 
+                root.adjust = (vm.mask_mode)?'adjust':'pan'
+                root.$axios.post(root.$api + '/train/pause').then(response => {
+                    root.state = response.data.state
+                }).catch(error => {
+                    console.log('something went wrong! ColorScatter onPause', error)
+                }).finally(() => {
+                    root.requesting = 'none'
+                })
+            }
+        },
+        // // temporal continue
+        // async tempContinue(){
+    
+        //     let root = vm.eventBus.root
+        //     vm.group_move = undefined
+
+        //     await vm.onContinue()
+        //     root.requesting = 'continue'
+
+        //     console.log('继续执行')
+
+		// 	root.$axios.post(root.$api + '/train/continue').then(response => {
+		// 		vm.state = response.data.state
+		// 	}).catch(error => {
+		// 		console.error('something went wrong! ColorScatter onContimue', error)
+		// 	}).finally(() => {
+		// 		vm.requesting = 'none'
+		// 	})            
+
+        // },
+
+        tempContinue(){
+            let root = vm.eventBus.root
+            if(vm.temp_pause){
+                root.onContinue()
+                vm.temp_pause = false
+            }
+        },
         // confirm
         confirm(){
             let [cdata, cxy] = vm.confirmControlPoints()
@@ -57,21 +101,21 @@ export default {
         },
         // continue scatter plot data
         async onContinue(){
-            vm.rotate_dirty = false
-            vm.zoom_dirty = false
+            console.log('后端传递')
+            // vm.rotate_dirty = false
+            // vm.zoom_dirty = false
             vm.mask_pts = undefined
             vm.group_move = undefined
             // vm.maskBox(vm.mask_box)
             // if(vm.mask_pts){
             //     vm.clearPCPMaskPts()
             // }
-            // d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
 
             ///////////////////（使用控制點時呼叫）確定控制點，控制中心
             // let [cdata, cxy] = vm.confirmControlPoints()
             ///////////////////
             
-            // （不使用控制點時）　確定控制中心
+            // （不使用控制點時） 確定控制中心
             let [cdata,cxy] = vm.confirmCenterPoints() 
             // mask 资料点整理回传， 中心点设定，处理回传参数
             let param = {
@@ -105,9 +149,6 @@ export default {
                 pt.refpos = pt.rawpos
                 // reset 還原 position 原始顏色
                 pt.tint = vm.getColor(pt.x,pt.y)
-                // if(pt.tint !== 0xffffff){
-                //     pt.tint = vm.getColor(pt.x,pt.y)
-                // }
             })
         },
         // 设定色碼表
@@ -269,7 +310,6 @@ export default {
         },
         // 加入数据点
         addPoints(data){
-            // vm.domainSetting(data)
             vm.dataWrapper = {}
             vm.ctn_pts.count = data.length
             data.forEach((d) => {
@@ -294,15 +334,6 @@ export default {
                 vm.setPointLocation(pt,d.slice(-2)[0],d.slice(-2)[1],false)
             });
             // d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
-        },
-        // scale domain 設定
-        domainSetting(data){
-            // let x_extent = d3.extent(data.map(d => parseFloat(d.slice(-2)[0])))
-            // let y_extent = d3.extent(data.map(d => parseFloat(d.slice(-2)[1])))
-            vm.x_scale.domain([-1,1])
-            vm.y_scale.domain([-1,1])  
-            // vm.x_scale.domain(x_extent)
-            // vm.y_scale.domain(y_extent)            
         },
         // 設定資料點的座標位置, 傳入pt, Latent_x, Latent_y
         setPointLocation(pt,x,y,first=true){
@@ -331,49 +362,9 @@ export default {
             vm.ctn_pts.removeChildren()
             vm.dataWrapper = undefined
         },
-
-        /*
-        ////////////////// d3 zoom 使用數據點的縮放 Zoom
-        // zoomed(){ 
-        //     vm.transform = d3.event.transform
-        //     vm.applyZoom()
-        // },
-
-
-        // 縮放，平移 矩陣公式
-        // [ 1, 0, x軸平移距離 ] [x] => [x']
-        // [ 0, 1, y軸平移距離 ] [y] => [y']
-        // [ 0, 0, 1 ]         [1] => [1]
-        // applyZoom(){
-        //     vm.zoom_dirty = true
-        //     vm.rotation_acc = 0
-        //     if(!vm.mask_mode){
-        //         /////////////////// 旋轉控制時呼叫
-        //         // if(vm.rotate_dirty){
-        //         //     vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
-        //         //     vm.rotate_dirty = false
-        //         // }
-        //         ///////////////////
-
-        //         // 資料點縮放控制
-        //         vm.ctn_pts.children.forEach(pt => {
-        //             let new_pos = vm.transform.apply(pt.refpos)
-        //             pt.curpos = new_pos
-        //             pt.x = pt.curpos[0]
-        //             pt.y = pt.curpos[1]
-        //             pt.rawpos = pt.curpos
-        //             // pt.tint = vm.getColor(pt.x,pt.y)
-        //             if(pt.tint !== 0xffffff){
-        //                 pt.tint = vm.getColor(pt.x,pt.y)
-        //             }
-        //         })
-        //     }
-        // },
-        ///////////////////*/
-
         // 左鍵拖動
         mousedown(e){
-            console.log('plan mouse down')
+            vm.tempPause()
             // 在 mask_mode -》 true 允许拖动 mask 数据点
             // 在 pcp_mode 下禁止所有数据点移动
             vm.group_move = [e.data.global.x, e.data.global.y]
@@ -388,7 +379,7 @@ export default {
         // 半径搜索
         circleFilter(r,center){
             let group = []
-            vm.mask_pts = vm.ctn_pts.children.filter((pt,i) => {
+            vm.mask_pts = vm.ctn_pts.children.filter((pt) => {
                 // 检查是否在半径内
                 let value = Math.pow((pt.x-center[0]),2) + Math.pow((pt.y-center[1]),2)
                 if(value <= Math.pow(r,2)){
@@ -400,7 +391,6 @@ export default {
                     pt.buttonmode = true
                     pt.mousedown = vm.mask_pts_click
                     pt.rightdown = vm.mask_pts_rightClick
-                    // pt.mousemove = vm.mask_pt_move
                     return true
                 }
                 return false
@@ -451,7 +441,7 @@ export default {
         // 右鍵旋轉操作,以及選取框開始
         rightdown(e){
             // 選擇框模式
-            if(vm.mask_mode　&& vm.pcp_mode){
+            if(vm.mask_mode && vm.pcp_mode){
                 // 控制是否 mask_box 绘制模式
                 vm.mask_box_draw = true
                 vm.mask_box.startx = e.data.global.x
@@ -503,7 +493,7 @@ export default {
             // }
             ///////////////////
             // 執行 PCP mask 選擇框
-            if(vm.mask_mode && vm.mask_box_draw && vm.pcp_mode){
+            if(vm.mask_box_draw && vm.pcp_mode){
                 if(vm.pcp_mask_pts){
                     vm.clearPCPMaskPts()
                     let pcp = vm.eventBus.pcp
@@ -566,7 +556,7 @@ export default {
         },
         // 旋转停止, mask pts 行为停止, 确认被标注的 mask pts
         rightup(){
-            vm.rotating = false
+            // vm.rotating = false
             vm.mask_box_draw = false
             vm.mask_box.alpha = 0
             vm.rotation_acc = vm.rotation
@@ -586,7 +576,7 @@ export default {
                 // }
                 //////////////////
 
-                //　取消右鍵選取框設定
+                // 取消右鍵選取框設定
                 if(vm.pcp_mode){
                     let pcp = vm.eventBus.pcp
                     pcp.removeLines()
@@ -624,6 +614,10 @@ export default {
 
             vm.mask_pt_clicked = false
             vm.group_move = undefined
+            if(vm.temp_pause){
+                console.log('恢复执行')
+                vm.tempContinue()
+            }
         },
         // 旋轉矩陣公式
         // [ cos角度 -sin角度 ] [x] => [x']
@@ -713,9 +707,8 @@ export default {
                 return bool && box_count 
             })
             // 不允許其出現在最上方
-            mask_pts.forEach((pt,i) => {
+            mask_pts.forEach((pt) => {
                 pt.tint = 0xffffff 
-                //vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
             })
             return [mask_pts,vm.getColor]
         },
@@ -861,12 +854,14 @@ export default {
         vm.rotation_acc = 0
         // 設定縮放矩陣
         vm.transform = d3.zoomIdentity
-        // 資料包裝盒　＝》point，line，data
+        // 資料包裝盒 ＝》point，line，data
         vm.dataWrapper = undefined        
         // 过滤半径
         vm.filter_radius = 20
         // 記錄 mask group
         vm.mask_group = []
+        // 暂时停止
+        vm.temp_pause = false
 
         vm.$refs.colorScatter.addEventListener('contextmenu',e => e.preventDefault())
         vm.pixiInit()

@@ -148,7 +148,8 @@ export default {
             axisLine.mousedown = vm.drawFilterStart
             axisLine.mousemove = vm.filterResize
             axisLine.mouseup = vm.drawFilterEnd
-            axisLine.mouseout = vm.drawFilterEnd
+            axisLine.mouseout = vm.drawMouseOut
+            axisLine.rightdown = vm.removeFilterBox
 
             axisLine.hitArea = new PIXI.Rectangle(axisLine.x-10, axisLine.y,20,190)
             axisLine.y = axis.label.y + axis.label.height + 5
@@ -284,20 +285,35 @@ export default {
         removeLines(){
             vm.ctn_lines.removeChildren()
         },
+        // 刪除 filter box 
+        removeFilterBox(e){
+            let axisLine = e.currentTarget
+            let label = axisLine.label
+            let py = e.data.global.y - axisLine.y
+            let box = axisLine.filter_box.children.filter(box => {
+                let [min,max] = box.extent.map(y => {
+                    return vm.scale[label].scale(y)
+                })
+                return max >= py && min <= py
+            })[0]  
+            axisLine.filter_box.removeChild(box)
+            vm.removeLines()
+            let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
+            vm.drawMaskDataLine(mask_pts,cb)
+        },
         // 基本的 filter box 元件繪製
         initFilterBox(axis,box,x1,y1,width,height){
+            box.clear()
             box.lineStyle(1,0x000000,1)
             box.beginFill(0xffffff)
             box.drawRect(x1,y1,width,height)
             box.endFill()
-            box.interactive = true
-            box.buttonmode = true
-            box.rightdown = () => {
-                axis.filter_box.removeChild(box)
-                vm.removeLines()
-                let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
-                vm.drawMaskDataLine(mask_pts,cb)
-            } 
+            // box.rightdown = () => {
+            //     axis.filter_box.removeChild(box)
+            //     vm.removeLines()
+            //     let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
+            //     vm.drawMaskDataLine(mask_pts,cb)
+            // } 
         },
         // 開始繪製 filter box
         drawFilterStart(e){
@@ -312,26 +328,33 @@ export default {
         // 改變 filter box 長度
         filterResize(e){
             if(vm.filter_start){
+                let axis_y = - e.currentTarget.y
                 let y1 = vm.filter_sp[1]
                 let y2 = e.data.global.y
                 let axis = e.axis
                 let current_box = axis.filter_box.children.slice(-1)[0]
-                current_box.clear()
-                vm.initFilterBox(axis,current_box,axis.x-10,y1,20,y2-y1)
+                if(y2-y1 < 0){
+                    vm.initFilterBox(axis,current_box,axis.x-10,y2,20,y1-y2)
+                    // 這種繪製的方式，在開啓交互模式時會錯誤
+                }
+                else{
+                    vm.initFilterBox(axis,current_box,axis.x-10,y1,20,y2-y1)
+                }
                 current_box.extent = [y1-axis.y,y2-axis.y]
             }
         },
         // 結束繪製
         drawFilterEnd(e){
+            console.log('draw end')
             if(vm.filter_start){
                 let axis = e.axis
                 let current_box = axis.filter_box.children.slice(-1)[0]
                 let label = axis.label
                 if(current_box){
                     let scale = vm.scale[label].scale
-                    let max = scale.invert(current_box.extent[0])
-                    let min = scale.invert(current_box.extent[1])
-                    current_box.extent = [max,min]
+                    let x1 = scale.invert(current_box.extent[0])
+                    let x2 = scale.invert(current_box.extent[1])
+                    current_box.extent = [Math.max.apply(null,[x1,x2]),Math.min.apply(null,[x1,x2])]
                 }
                 // filter box start position
                 vm.filter_sp = undefined
@@ -341,6 +364,11 @@ export default {
                 vm.drawMaskDataLine(mask_pts,cb)
             }
         },
+        // mouseout
+        drawMouseOut(e){
+            console.log('mouseout')
+            vm.drawFilterEnd(e)
+        }
 
 	},
 	mounted() {

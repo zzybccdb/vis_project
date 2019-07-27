@@ -456,7 +456,8 @@ export default {
 			vm.histogram = false
 			vm.pcp = false
 			latent_scatter.pcp_mode = false
-			latent_scatter.mask_mode = false
+			latent_scatter.mask_mode = true
+			// latent_scatter.mask_mode = false
 			// latent_scatter.resetColor()
 
 			await latent_scatter.onContinue()
@@ -474,6 +475,7 @@ export default {
 			let vm = this
 			vm.requesting = 'pause'
 			let latent_scatter = vm.eventBus.latent_scatter
+			latent_scatter.mask_mode = false
 			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
 			// if(vm.adjust !== 'pan'){
 			// 	vm.$d3.select('#colorScatter').on('.zoom',null)
