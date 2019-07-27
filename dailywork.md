@@ -119,3 +119,7 @@
 - 超过数量随机选取点
 - 将 VAE 和 AE 也可以使用控制点控制
 - 修正了一点 UI 界面上的内容. home pcp 位置调整, histgram 加入 bottom margin
+
+#### 2019/07/27
+- 修正了 home pcp 下 filter box 由下往上繪製的錯誤
+- 加入不需要暫停即可對視圖進行調整的功能
