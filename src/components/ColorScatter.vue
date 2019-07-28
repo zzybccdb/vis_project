@@ -23,46 +23,25 @@ export default {
             if(root.state === 'training'){
                 console.log('暂时停止')
                 vm.temp_pause = true
-                root.requesting = 'pause'
                 vm.mask_mode = true 
-                root.adjust = (vm.mask_mode)?'adjust':'pan'
-                root.$axios.post(root.$api + '/train/pause').then(response => {
-                    root.state = response.data.state
-                }).catch(error => {
-                    console.log('something went wrong! ColorScatter onPause', error)
-                }).finally(() => {
-                    root.requesting = 'none'
-                })
+                // root.requesting = 'pause'
+                // root.adjust = (vm.mask_mode)?'adjust':'pan'
+                // root.$axios.post(root.$api + '/train/pause').then(response => {
+                //     root.state = response.data.state
+                // }).catch(error => {
+                //     console.log('something went wrong! ColorScatter onPause', error)
+                // }).finally(() => {
+                //     root.requesting = 'none'
+                // })
             }
         },
-        // // temporal continue
-        // async tempContinue(){
-    
+        // tempContinue(){
         //     let root = vm.eventBus.root
-        //     vm.group_move = undefined
-
-        //     await vm.onContinue()
-        //     root.requesting = 'continue'
-
-        //     console.log('继续执行')
-
-		// 	root.$axios.post(root.$api + '/train/continue').then(response => {
-		// 		vm.state = response.data.state
-		// 	}).catch(error => {
-		// 		console.error('something went wrong! ColorScatter onContimue', error)
-		// 	}).finally(() => {
-		// 		vm.requesting = 'none'
-		// 	})            
-
+        //     if(vm.temp_pause){
+        //         root.onContinue()
+        //         vm.temp_pause = false
+        //     }
         // },
-
-        tempContinue(){
-            let root = vm.eventBus.root
-            if(vm.temp_pause){
-                root.onContinue()
-                vm.temp_pause = false
-            }
-        },
         // confirm
         confirm(){
             let [cdata, cxy] = vm.confirmControlPoints()
@@ -102,19 +81,9 @@ export default {
         // continue scatter plot data
         async onContinue(){
             console.log('后端传递')
-            // vm.rotate_dirty = false
-            // vm.zoom_dirty = false
             vm.mask_pts = undefined
+            // 起始標註點
             vm.group_move = undefined
-            // vm.maskBox(vm.mask_box)
-            // if(vm.mask_pts){
-            //     vm.clearPCPMaskPts()
-            // }
-
-            ///////////////////（使用控制點時呼叫）確定控制點，控制中心
-            // let [cdata, cxy] = vm.confirmControlPoints()
-            ///////////////////
-            
             // （不使用控制點時） 確定控制中心
             let [cdata,cxy] = vm.confirmCenterPoints() 
             // mask 资料点整理回传， 中心点设定，处理回传参数
@@ -328,11 +297,13 @@ export default {
         },
         // 測試新的資料transition 方式
         pointsTransition(data){
-            data.forEach(d => {
-                let date_index = moment(d[0]).utc().format(date_format)
-                let pt = vm.dataWrapper[date_index].point
-                vm.setPointLocation(pt,d.slice(-2)[0],d.slice(-2)[1],false)
-            });
+            if(!vm.temp_pause){
+                data.forEach(d => {
+                    let date_index = moment(d[0]).utc().format(date_format)
+                    let pt = vm.dataWrapper[date_index].point
+                    vm.setPointLocation(pt,d.slice(-2)[0],d.slice(-2)[1],false)
+                });
+            }
             // d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
         },
         // 設定資料點的座標位置, 傳入pt, Latent_x, Latent_y
@@ -367,9 +338,9 @@ export default {
             vm.tempPause()
             // 在 mask_mode -》 true 允许拖动 mask 数据点
             // 在 pcp_mode 下禁止所有数据点移动
+            // 记录鼠标点击的初始位置
             vm.group_move = [e.data.global.x, e.data.global.y]
             if(vm.mask_mode && !vm.pcp_mode){
-                // 记录鼠标点击的初始位置
                 if(!vm.mask_pt_clicked){
                     // 根据设定半径进行搜索
                     vm.circleFilter(vm.filter_radius,[e.data.global.x, e.data.global.y])
@@ -486,12 +457,6 @@ export default {
             if(!vm.mask_mode && vm.group_move){
                 vm.allPointsMove(e)
             }
-            //////////////////// 旋轉控制執行
-            // if (vm.rotating && !vm.mask_mode) {
-            //     vm.rotation = Math.atan2(e.data.global.y - 256, e.data.global.x - 256) - vm.ang1 + vm.rotation_acc
-            //     vm.rotate(vm.rotation)
-            // }
-            ///////////////////
             // 執行 PCP mask 選擇框
             if(vm.mask_box_draw && vm.pcp_mode){
                 if(vm.pcp_mask_pts){
@@ -614,9 +579,11 @@ export default {
 
             vm.mask_pt_clicked = false
             vm.group_move = undefined
+
             if(vm.temp_pause){
-                console.log('恢复执行')
-                vm.tempContinue()
+                console.log('恢復執行')
+                vm.onContinue()
+                vm.temp_pause = false
             }
         },
         // 旋轉矩陣公式
