@@ -388,6 +388,7 @@ export default {
                 
                 vm.mask_pts_remove(mask_pts)
                 vm.mask_group.splice(index,1)       
+                vm.onContinue()
             }
         },
         mask_pts_remove(mask_pts){
