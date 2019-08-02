@@ -120,8 +120,8 @@
 							<div ref='histWrapper' style="margin-top:10px;width:100%;height:362px;overflow-y:scroll">	
 								<HISTOGRAM ref='histogram'/>
 							</div>
-							<canvas v-if="recon_loss" style="height:256px;maxwidth:521px" id="loss"></canvas>
-							<canvas v-if="dist_loss" style="height:256px;maxwidth:512px" id="dis_loss"></canvas>
+							<canvas v-if="recon_loss" style="height:150px;maxwidth:521px" id="loss"></canvas>
+							<canvas v-if="dist_loss" style="height:150px;maxwidth:512px" id="dis_loss"></canvas>
 						</v-layout>
 					</v-layout>
 					</v-card-title>

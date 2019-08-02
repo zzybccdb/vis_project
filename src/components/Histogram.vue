@@ -54,7 +54,7 @@ export default {
                     b:20,
                     t:20,
                 },
-                height: 100,
+                height: 120,
                 chartNum:3
             }
             vm.appWidth = vm.$refs.histogram.clientWidth

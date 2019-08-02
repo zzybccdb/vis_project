@@ -497,14 +497,25 @@ export default {
 
             // 以每個月爲一個 main_ctn 
 			for(let m=startMonth;m<=endMonth;++m) {
-				let m_ctn = vm.addMonth(year, m)
+                let m_ctn = vm.addMonth(year, m)
 
 				if(m%2 === 1){
-					m_ctn.y = (m - startMonth -1)/2 * gap_size  + vm.padding + 20
-					m_ctn.x = 31 * vm.cellSize + 60
+                    if(startMonth%2 === 0){
+                        m_ctn.y = (m - startMonth -1)/2 * gap_size  + vm.padding + 20
+					    m_ctn.x = 31 * vm.cellSize + 60
+                    }
+                    else if(startMonth%2 === 1){
+                        m_ctn.y = (m - startMonth)/2 * gap_size  + vm.padding + 20
+                        m_ctn.x = 31 * vm.cellSize + 60
+                    }
 				}
 				else{
-					m_ctn.y = (m - startMonth)/2 * gap_size  + vm.padding + 20
+                    if(startMonth%2 === 0){
+                        m_ctn.y = (m - startMonth)/2 * gap_size  + vm.padding + 20
+                    }
+                    else if(startMonth%2 === 1){
+                        m_ctn.y = (m - startMonth+1)/2 * gap_size  + vm.padding + 20
+                    }
 				}
 				height = m_ctn.y + gap_size
             }
