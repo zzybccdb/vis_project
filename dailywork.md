@@ -127,8 +127,8 @@
 #### 2019/08/02
 - 允许使用者直接在 pcp mode 下通过左键点选绘制 pcp
 - 当有选中控制群时, 打开 pcp 绘制这些群
-- 将 histogram 调整到当前 loss chart 的位置
-- loss chart 高度降低
-- plot 重置错误
+- 将 histogram 调整到当前 loss chart 的位置 (done)
+- loss chart 高度降低 (done)
+- plot 重置错误 (done)
 - calender view 位置错误
-- histogram 重置错误
+- histogram 重置错误 (done)

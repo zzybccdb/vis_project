@@ -45,7 +45,7 @@
 							@change="onLossWeightChange">
 							</v-text-field>
 						</v-layout>
-						<!-- 欄位選擇 以及 histogram 呼叫 -->
+						<!-- 欄位選擇 -->
 						<v-combobox
 						:error-messages="columns_errors"
 						v-model="columns"
@@ -53,7 +53,6 @@
 						label="Dimension"
 						multiple
 						chips
-						clearable
 						@change="updateParam(onColumnsChange)"
 						:disabled="disableForm"
 						readonly
