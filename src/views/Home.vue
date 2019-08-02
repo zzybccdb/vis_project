@@ -71,24 +71,6 @@
 							</v-chip>
 							</template>
 						</v-combobox>
-						<div ref='histWrapper' style="margin-top:10px;width:100%;" v-if='histogram'>	
-							<HISTOGRAM ref='histogram'/>
-						</div>
-						<!-- Window Input Output -->
-						<!-- <v-layout>
-							<v-text-field label="Input Window Size"
-							:error-messages="input_window_errors"
-							:disabled="disableForm"
-							v-model="input_window"
-							@change="onWindowSizeChange">
-							</v-text-field>
-							<v-text-field label="Output Window Size"
-							:error-messages="output_window_errors"
-							:disabled="disableForm"
-							v-model="output_window"
-							@change="onWindowSizeChange">
-							</v-text-field>
-						</v-layout> -->
 						<div ref='pcpChart' style='margin:0px;width:100%'>
 							<PCP ref='pcp' v-if="pcp"/>
 						</div>
@@ -116,14 +98,11 @@
 						</v-btn>
 					</v-form>
 					<!-- training 結果預覽圖表部分 -->
-					<v-layout style="height:572px" v-if="recon_loss || dist_loss" row nowrap>
+					<!-- <v-layout style="height:572px" v-if="recon_loss || dist_loss" row nowrap> -->
+					<v-layout style="height:572px" row nowrap>
 						<div style="height:542px;width:512px">
 							<ColorScatter ref='latent_scatter'/>
 							<v-layout style='width:528px' justify-space-between>
-								<!-- <v-btn :disabled="disableNewTrainBtn" color="primary" @click="onReset">
-									<v-icon>redo</v-icon>
-									Reset
-								</v-btn> -->
 								<v-btn ref='adjust' :disabled="disableNewTrainBtn || pcp" color="primary" @click="onMask">
 									<v-icon>swap_horiz</v-icon>
 									{{adjust}}
@@ -136,16 +115,14 @@
 									<v-icon>check_circle_outline</v-icon>
 									PCP
 								</v-btn>
-								<!-- <v-btn :disabled="disableNewTrainBtn" color="primary" @click="onConfirm">
-									<v-icon>check_circle_outline</v-icon>
-									Confirm
-								</v-btn> -->
-
 							</v-layout>
 						</div>
 						<v-layout  style="margin:10px" column>
-							<canvas v-if="recon_loss" style="height:256px;width:521px" id="loss"></canvas>
-							<canvas v-if="dist_loss" style="height:256px;width:512px" id="dis_loss"></canvas>
+							<div ref='histWrapper' style="margin-top:10px;width:100%;height:362px;overflow-y:scroll">	
+								<HISTOGRAM ref='histogram'/>
+							</div>
+							<canvas v-if="recon_loss" style="height:256px;maxwidth:521px" id="loss"></canvas>
+							<canvas v-if="dist_loss" style="height:256px;maxwidth:512px" id="dis_loss"></canvas>
 						</v-layout>
 					</v-layout>
 					</v-card-title>
@@ -219,17 +196,16 @@ export default {
 				this.requesting !== 'none'
 		},
 		disableForm() {
-			return this.requesting !== 'none' || this.state == 'training' || !this.loaded
+			return this.requesting !== 'none' || this.state === 'training' || !this.loaded
 		},
 		disableNewTrainBtn() {
-			return this.requesting !== 'none' || this.state == 'training' || this.anyError
+			return this.requesting !== 'none' || this.state === 'training' || this.anyError
 		},
 		disableContinueBtn() {
-			return (this.requesting !== 'none' || this.state == 'training' || this.state == 'reset' || this.anyError) || !(this.recon_loss || this.dist_loss)
+			return (this.requesting !== 'none' || this.state === 'training' || this.state === 'reset' || this.anyError) || !(this.recon_loss || this.dist_loss)
 		},
 		disablePauseBtn() {
-			// return this.requesting !== 'none' || this.state == 'paused' || this.state == 'reset'
-			return this.requesting !== 'none' || this.state == 'ready' || this.state == 'reset'
+			return this.requesting !== 'none' || this.state === 'ready' || this.state === 'reset'
 		},
 
 		showAnalysis() {
@@ -312,38 +288,10 @@ export default {
 			let latent_scatter = vm.$refs.latent_scatter
 			latent_scatter.clearAllMask()
 		},
-		onHistogram(){
-			let vm = this 
-			vm.histogram = !vm.histogram
-			vm.histogram_loading = vm.histogram
-			if(vm.histogram_loading){
-				vm.$refs.Home.style.cursor = 'wait'
-				vm.combobox.getElementsByTagName('i')[0].style.cursor = 'wait'
-			}
-			else{
-				vm.$refs.Home.style.cursor = 'default'
-				vm.combobox.getElementsByTagName('i')[0].style.cursor = 'pointer'
-			}
-			if(vm.histogram){
-				setTimeout(() => {
-					let histogram = vm.$refs.histogram
-					EventBus.histogram = histogram
-					histogram.eventBus = EventBus
-					histogram.loadData()
-					vm.histogram_loading = false
-					vm.$refs.Home.style.cursor = 'default'
-					vm.combobox.getElementsByTagName('i')[0].style.cursor = 'pointer'
-				}, 200);
-			}
-			// else{
-			// 	// histogram.clear()
-			// }
-		},
 		onNewTrain() {
 			let vm = this
 			vm.requesting = 'newTrain'
 			vm.start = true
-			vm.histogram = false
 			vm.pcp = false
 			if(vm.network === 'NN based MDS'){
 				vm.dist_loss = true
@@ -425,6 +373,7 @@ export default {
 				'input_window':Number(vm.input_window),
 				'output_window':Number(vm.output_window),
 			}).then(response => {
+				console.log('startTrain')
 				vm.state = response.data.state
 			}).catch(error => {
 				console.log('something went wrong! Home startTrain', error)
@@ -434,13 +383,15 @@ export default {
 
 				vm.config.data.labels = []
 				vm.config.data.datasets[0].data = []
-				if(vm.recon_loss)
+				if(vm.recon_loss){
 					vm.loss_plot.update()
+				}
 
 				vm.dis_config.data.labels = []
 				vm.dis_config.data.datasets[0].data = []
-				if(vm.dist_loss)
+				if(vm.dist_loss){
 					vm.dis_loss_plot.update()
+				}
 			})
 		},
 		async onContinue() {
@@ -453,7 +404,6 @@ export default {
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
 			
-			vm.histogram = false
 			vm.pcp = false
 			latent_scatter.pcp_mode = false
 			latent_scatter.mask_mode = true
@@ -464,6 +414,7 @@ export default {
 			vm.requesting = 'continue'
 			
 			vm.$axios.post(vm.$api + '/train/continue').then(response => {
+				console.log('on Continue')
 				vm.state = response.data.state
 			}).catch(error => {
 				console.error('something went wrong! Home onContimue', error)
@@ -484,6 +435,7 @@ export default {
 			// 	vm.$d3.select('#colorScatter').call(latent_scatter.zoom)
 			// }		
 			this.$axios.post(this.$api + '/train/pause').then(response => {
+				console.log('on Pause')
 				vm.state = response.data.state
 				id += 1
 				vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':id}).then(response => {
@@ -508,7 +460,9 @@ export default {
 					vm.config.data.labels.shift();
 					vm.config.data.datasets[0].data.shift();
 				}
-				vm.loss_plot.update()	
+				if(vm.loss_plot !== undefined){
+					vm.loss_plot.update()
+				}
 			}
 
 			if(dis_loss){
@@ -518,12 +472,14 @@ export default {
 					vm.dis_config.data.labels.shift();
 					vm.dis_config.data.datasets[0].data.shift();
 				}
-				vm.dis_loss_plot.update()
+				if(vm.dis_loss_plot !== undefined){
+					vm.dis_loss_plot.update()
+				}
 			}
 		},
 		getProgress() {
 			let vm = this
-			if (vm.state == 'training' && vm.requesting == 'none' && !vm.histogram && !vm.pcp) {
+			if (vm.state == 'training' && vm.requesting == 'none' && !vm.pcp) {
 				this.$axios.post(this.$api + '/train/progress',{'start':vm.start}).then(response => {
 					vm.state = response.data.state
 					let model = response.data.model
@@ -579,55 +535,56 @@ export default {
 			}
 		},
 		onNetworkChange() {
-			var vm = this
+			let vm = this
 			this.$axios.post(this.$api + '/train/set_param', {
 				'network': vm.network
 			}).then(response => {
 				// 清空當前 loss 圖表的圖表內容,已經清除圖表暫存數據
-				vm.state = response.data.state
-				vm.network_errors = []
-				vm.requesting = 'none'
-
-				if(vm.recon_loss){
-					vm.config.data.labels = []
-					vm.config.data.datasets[0].data = []
-					vm.loss_plot.update()
+				if(response.data.success){
+					vm.state = response.data.state
+					vm.network_errors = []
+					vm.requesting = 'none'
+	
+					if(vm.recon_loss){
+						vm.config.data.labels = []
+						vm.config.data.datasets[0].data = []
+						if(vm.loss_plot !== undefined){
+							vm.loss_plot.update()
+						}
+					}
+	
+					if(vm.dist_loss){
+						vm.dis_config.data.labels = []
+						vm.dis_config.data.datasets[0].data = []
+						if(vm.dis_loss_plot !== undefined){
+							vm.dis_loss_plot.update()
+						}
+					}
 				}
-
-				if(vm.dist_loss){
-					vm.dis_config.data.labels = []
-					vm.dis_config.data.datasets[0].data = []
-					vm.dis_loss_plot.update()
-				}
-
-				vm.dist_loss = false
-				vm.recon_loss = false
-				window.recon_loss = false
-				window.dist_loss = false
 			}).catch(error => {
 				vm.network_errors = [error]
 			})
 		},
 		onDatasetChange() {
-			var vm = this
-			console.log(vm.dataset)
+			let vm = this	
+			let histogram = vm.$refs.histogram
 			vm.start = true
 			this.$axios.post(this.$api + '/train/change_dataset', {
 				'name': vm.dataset
 			}).then(response => {
-				vm.state = response.data.state
-				vm.switch_dataset = true
-				vm.columns_all = response.data.columns_all
-				vm.columns = response.data.columns
-				vm.dataset_errors = []
-
-				// 设定 histogram 为 false
-				vm.histogram = !vm.histogram
-				// 設定 pcp 爲 false
-				vm.pcp = false
-				// // 清空 scatter 
-				// vm.$refs.latent_scatter.removePoints()
-
+				if(response.data.success){
+					vm.state = response.data.state
+					vm.switch_dataset = true
+					vm.columns_all = response.data.columns_all
+					vm.columns = response.data.columns
+					vm.dataset_errors = []
+					// 設定 pcp 爲 false
+					vm.pcp = false
+					histogram.clear()
+					histogram.loadData()
+					// // 清空 scatter 
+					// vm.$refs.latent_scatter.removePoints()
+				}
 			}).catch(error => {
 				vm.dataset_errors = [error]
 			})
@@ -852,12 +809,11 @@ export default {
 			vm.loss_weight = response.data.loss_weight
 			vm.input_window = response.data.input_window
 			vm.output_window = response.data.output_window
-			vm.$nextTick(function() {
-				vm.loaded = true
-				vm.combobox = document.getElementsByClassName('v-input__icon v-input__icon--append')[2]
-				vm.combobox.onclick = () => {vm.onHistogram()}
-				vm.combobox.getElementsByTagName('i')[0].style.cursor = 'pointer'
-			})
+			let histogram = vm.$refs.histogram
+			EventBus.histogram = histogram
+			histogram.eventBus = EventBus
+			histogram.loadData()
+			vm.loaded = true
 		})
 		// 一秒鐘詢問一次當前的 loss數值
 		vm.timer = setInterval(vm.getProgress.bind(vm), 1000)

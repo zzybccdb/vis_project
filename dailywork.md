@@ -123,3 +123,12 @@
 #### 2019/07/27
 - 修正了 home pcp 下 filter box 由下往上繪製的錯誤
 - 加入不需要暫停即可對視圖進行調整的功能
+
+#### 2019/08/02
+- 允许使用者直接在 pcp mode 下通过左键点选绘制 pcp
+- 当有选中控制群时, 打开 pcp 绘制这些群
+- 将 histogram 调整到当前 loss chart 的位置
+- loss chart 高度降低
+- plot 重置错误
+- calender view 位置错误
+- histogram 重置错误

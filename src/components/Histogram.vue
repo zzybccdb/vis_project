@@ -35,9 +35,10 @@ export default {
                 vm.columns = response.data.columns
                 vm.columns_all = response.data.columns_all
                 vm.count = vm.columns_all.length
-                vm.pixiInit()
+                 vm.pixiInit()
                 vm.d3Init(vm.data)
                 vm.drawGraph()
+
             })
             .catch(error => {
                 window.error = error
@@ -54,38 +55,44 @@ export default {
                     t:20,
                 },
                 height: 100,
-                chartNum:4
+                chartNum:3
             }
             vm.appWidth = vm.$refs.histogram.clientWidth
             // Math.ceil(number) 向上取整
+            // vm.appHeight = 0
             vm.appHeight = vm.layout.height * Math.ceil(vm.count/vm.layout.chartNum)+20
+            console.log(vm.appHeight)
             vm.root.$refs.histWrapper.style.height = vm.appHeight
             // 初始化绘图内容
-            vm.app = new PIXI.Application({
-                autoResize:true,
-                backgroundColor: 0xffffff, //白色背景畫布
-                antialias:false,
-                transparent: false,
-                resolution:1,
-            })
-            vm.app.renderer.roundPixels = true
-            vm.app.renderer.view.style.display = 'block'
-            vm.app.renderer.resize(vm.appWidth,vm.appHeight)
-            // PIXI.settings.PRECISION_FRAGMENT= 'highp'
-            // 將圖表加入 DOM tree
-            vm.$refs.histogram.appendChild(vm.app.view)
-            // 圖表整體外包裝
-            vm.wrapper = new PIXI.Container()
-            vm.wrapper.name = 'histogram_wrapper'
-            vm.wrapper.x = 0
-            vm.wrapper.y = 0 
-            // 將包裝紙加入畫布
-            vm.app.stage.addChild(vm.wrapper)
-            // 主體容器 
-            vm.ctn  = new PIXI.Container()
-            vm.ctn.name = 'main_ctn'
-            vm.wrapper.addChild(vm.ctn)
-
+            if(vm.app === undefined){
+                vm.app = new PIXI.Application({
+                    autoResize:true,
+                    backgroundColor: 0xffffff, //白色背景畫布
+                    antialias:false,
+                    transparent: false,
+                    resolution:1,
+                })
+                vm.app.renderer.roundPixels = true
+                vm.app.renderer.view.style.display = 'block'
+                vm.app.renderer.resize(vm.appWidth,vm.appHeight)
+                // PIXI.settings.PRECISION_FRAGMENT= 'highp'
+                // 將圖表加入 DOM tree
+                vm.$refs.histogram.appendChild(vm.app.view)
+                // 圖表整體外包裝
+                vm.wrapper = new PIXI.Container()
+                vm.wrapper.name = 'histogram_wrapper'
+                vm.wrapper.x = 0
+                vm.wrapper.y = 0 
+                // 將包裝紙加入畫布
+                vm.app.stage.addChild(vm.wrapper)
+                // 主體容器 
+                vm.ctn  = new PIXI.Container()
+                vm.ctn.name = 'main_ctn'
+                vm.wrapper.addChild(vm.ctn)
+            }
+            else{
+                vm.app.renderer.resize(vm.appWidth,vm.appHeight)
+            }
         },      
         // d3初始化设定,绑定资料和 scale
         d3Init(data){
@@ -217,7 +224,7 @@ export default {
             let format1 = d3.format('.2s')
             let format2 = d3.format('.2f')
             let scale = vm.dimensions[label].bin_edges_scale
-            let ticks = scale.ticks(4)
+            let ticks = scale.ticks(2)
             ticks.forEach(tick =>{
                 let text = undefined
                 if(tick > 1)
@@ -237,7 +244,8 @@ export default {
         // y 轴固定3个ticks
         drawyTicks(label,x,y,orgx){
             let ticks_ctn = new PIXI.Container()
-            let format = d3.format('.2s')
+            let format1 = d3.format('.2s')
+            let format2 = d3.format('.2f')
             let scale = vm.dimensions[label].hist_scale
             let extent = vm.dimensions[label].hist_extent
             let range = extent[1] - extent[0]
@@ -247,7 +255,13 @@ export default {
             })
 
             ticks.forEach(tick =>{
-                let text = vm.Text(format(tick),12)
+                let text = undefined
+                if(tick > 1){
+                    text = vm.Text(format1(tick),11)
+                }
+                else{
+                    text = vm.Text(format2(tick),11)
+                }
                 text.y = y - scale(tick)
                 text.x = x
                 let line = vm.drawSolidLine(orgx,text.y,orgx-5,text.y)
@@ -308,7 +322,7 @@ export default {
         },
         clear(){
             if (vm.app !== undefined) {
-                vm.app.destroy()
+                vm.ctn.removeChildren()
             }
         }
     },
@@ -319,6 +333,7 @@ export default {
 
         PIXI = vm.$PIXI
         d3 = vm.$d3
+       
         // 动态调整 app 长宽比例
         // window.addEventListener('resize', vm.handleResize)
     },

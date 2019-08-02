@@ -582,7 +582,6 @@ export default {
             vm.group_move = undefined
 
             if(vm.temp_pause){
-                console.log('恢復執行')
                 vm.onContinue()
                 vm.temp_pause = false
             }
