@@ -23,24 +23,8 @@ export default {
                 console.log('暂时停止')
                 vm.temp_pause = true
                 vm.mask_mode = true 
-                // root.requesting = 'pause'
-                // root.adjust = (vm.mask_mode)?'adjust':'pan'
-                // root.$axios.post(root.$api + '/train/pause').then(response => {
-                //     root.state = response.data.state
-                // }).catch(error => {
-                //     console.log('something went wrong! ColorScatter onPause', error)
-                // }).finally(() => {
-                //     root.requesting = 'none'
-                // })
             }
         },
-        // tempContinue(){
-        //     let root = vm.eventBus.root
-        //     if(vm.temp_pause){
-        //         root.onContinue()
-        //         vm.temp_pause = false
-        //     }
-        // },
         // confirm
         confirm(){
             let [cdata, cxy] = vm.confirmControlPoints()
@@ -587,30 +571,30 @@ export default {
                 vm.temp_pause = false
             }
         },
-        // 旋轉矩陣公式
-        // [ cos角度 -sin角度 ] [x] => [x']
-        // [ sin角度 cos角度 ]  [y] => [y']
-        rotate(rad){
-            // 旋轉矩陣公式
-            let cos = Math.cos(rad)
-            let sin = Math.sin(rad)
-            if(vm.zoom_dirty){
-                vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
-                vm.$d3.select('#colorScatter').call(vm.zoom.transform, d3.zoomIdentity)
-                vm.zoom_dirty = false
-            }
-            // 資料點旋轉
-            vm.ctn_pts.children.forEach(pt => {
-                let tx = pt.refpos[0] - 256, ty = pt.refpos[1] - 256
-                pt.x = tx * cos - ty * sin + 256
-                pt.y = tx * sin + ty * cos + 256
-                pt.curpos = [pt.x,pt.y]
-                if(pt.tint !== 0xffffff){
-                    pt.tint = vm.getColor(pt.x,pt.y)
-                }
-            })
-            vm.rotate_dirty = true
-        },
+        // // 旋轉矩陣公式
+        // // [ cos角度 -sin角度 ] [x] => [x']
+        // // [ sin角度 cos角度 ]  [y] => [y']
+        // rotate(rad){
+        //     // 旋轉矩陣公式
+        //     let cos = Math.cos(rad)
+        //     let sin = Math.sin(rad)
+        //     if(vm.zoom_dirty){
+        //         vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
+        //         vm.$d3.select('#colorScatter').call(vm.zoom.transform, d3.zoomIdentity)
+        //         vm.zoom_dirty = false
+        //     }
+        //     // 資料點旋轉
+        //     vm.ctn_pts.children.forEach(pt => {
+        //         let tx = pt.refpos[0] - 256, ty = pt.refpos[1] - 256
+        //         pt.x = tx * cos - ty * sin + 256
+        //         pt.y = tx * sin + ty * cos + 256
+        //         pt.curpos = [pt.x,pt.y]
+        //         if(pt.tint !== 0xffffff){
+        //             pt.tint = vm.getColor(pt.x,pt.y)
+        //         }
+        //     })
+        //     vm.rotate_dirty = true
+        // },
         // mask box
         maskBox(box,x1=0,y1=0,x2=0,y2=0){
             box.lineStyle(1,0x000000,0)
@@ -685,92 +669,6 @@ export default {
             let min = Math.min(num1,num2)
             let max = Math.max(num1,num2)
             return [min,max]
-        },
-        // （使用控制點時呼叫）根据使用圈选结果绘制控制点
-        controlPointsInit(texture,x,y){
-            let sp = new PIXI.Sprite(texture)
-            sp.x = x-7.5
-            sp.y = y-7.5
-            sp.tint = 0xffffff
-            sp.interactive = true
-            sp.buttonmode = true
-            sp.moving = false
-            sp.mask_pts = undefined
-            sp.stapos = [sp.x,sp.y]
-            sp.remove = false 
-            sp.mousedown = () => { 
-                if(!vm.pcp_mode){
-                    sp.moving = true
-                    sp.start_ps = [sp.x,sp.y]
-                }
-            }
-            sp.mousemove = (e) => { vm.controlPointsMove(e,sp) }
-            sp.mouseup  = () => { vm.controlPointsMoveEnd(sp) }
-            sp.rightdown = () => {
-                if(vm.mask_mode){
-                    sp.remove = true
-                }
-            }
-            sp.rightup = () => {
-                if(sp.remove){
-                    if(sp.mask_pts){
-                        sp.mask_pts.forEach(pt => {
-                            pt.x = pt.curpos[0]
-                            pt.y = pt.curpos[1]
-                            pt.tint = vm.getColor(pt.x,pt.y)
-                            pt.center_mark = false
-                        })
-                    }
-                    vm.ctn_control_pts.removeChild(sp)
-                    vm.mask_box_draw = false
-                    vm.mask_box.alpha = 0
-                    vm.mask_box.clear()
-                }
-            }
-            return sp
-        },
-        // （使用控制點時呼叫）控制点移动
-        controlPointsMove(e,sp){
-            if(sp.mask_pts && sp.moving){                
-                let x_move = e.data.global.x - sp.stapos[0]
-                let y_move = e.data.global.y - sp.stapos[1]
-                sp.x = sp.stapos[0] + x_move
-                sp.y = sp.stapos[1] + y_move
-                sp.mask_pts.forEach(pt=>{
-                    pt.x = pt.curpos[0] + x_move
-                    pt.y = pt.curpos[1] + y_move
-                    // pt.tint = vm.getColor(pt.x,pt.y)
-                })
-            }
-            else{
-                if(sp.mask_pts===undefined)
-                    console.error("this center point dont have any mask pts")    
-            }
-        },
-        // （使用控制點時呼叫）控制点移动结束，数据点不会储存当前坐标
-        controlPointsMoveEnd(sp){
-            sp.moving = false
-            sp.stapos = [sp.x,sp.y]
-            sp.mask_pts.forEach(pt=>{
-                pt.curpos = [pt.x,pt.y]
-            })
-        },
-        // （使用控制點時呼叫）確定控制點，控制中心
-        confirmControlPoints(){
-            let cdata = []
-            let cxy = []
-            vm.ctn_control_pts.children.forEach(cpt => {
-                let mask_pts = cpt.mask_pts
-                let mask_data = []
-                mask_pts.forEach(pt => {
-                    mask_data.push(pt.data.slice(1,-2))
-                    pt.curpos = [pt.x,pt.y]
-                    pt.rawpos = pt.curpos
-                })
-                cdata.push(mask_data)
-                cxy.push([vm.x_scale.invert(cpt.x), vm.y_scale.invert(cpt.y)],)
-            })
-            return [cdata,cxy]
         },
         // 確定控制中心,整理回传参数
         confirmCenterPoints(){
