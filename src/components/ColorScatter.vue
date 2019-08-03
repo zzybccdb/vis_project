@@ -19,7 +19,6 @@ export default {
         // temporal pause
         tempPause(){
             let root = vm.eventBus.root
-            console.log(root.state)
             if(root.state === 'training'){
                 console.log('暂时停止')
                 vm.temp_pause = true
@@ -340,7 +339,8 @@ export default {
             // 在 pcp_mode 下禁止所有数据点移动
             // 记录鼠标点击的初始位置
             vm.group_move = [e.data.global.x, e.data.global.y]
-            if(vm.mask_mode && !vm.pcp_mode){
+            // if(vm.mask_mode && !vm.pcp_mode){
+            if(vm.mask_mode){
                 if(!vm.mask_pt_clicked){
                     // 根据设定半径进行搜索
                     vm.circleFilter(vm.filter_radius,[e.data.global.x, e.data.global.y])
@@ -370,10 +370,11 @@ export default {
             vm.mask_pts.forEach((pt,i) => {
                 vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
             })
-
             vm.mask_group.push(vm.mask_pts)
+            vm.mask_group_drawPCP()
             vm.mask_pts = undefined
         },
+        // 选中点群的拖拽开始
         mask_pts_click(e){
             if(vm.mask_mode && !vm.pcp_mode){
                 vm.mask_pt_clicked = true
@@ -381,16 +382,29 @@ export default {
                 vm.current_mask_pts = e.currentTarget.mask_group
             }
         },
+        // 删除当前选中点群
         mask_pts_rightClick(e){
-            if(vm.mask_mode && !vm.pcp_mode){
+            // if(vm.mask_mode && !vm.pcp_mode){
+            if(vm.mask_mode){
                 let mask_pts = e.currentTarget.mask_group
                 let index = vm.mask_group.indexOf(mask_pts)
-                
                 vm.mask_pts_remove(mask_pts)
                 vm.mask_group.splice(index,1)       
                 vm.onContinue()
+                vm.mask_group_drawPCP()
             }
         },
+        // 绘制 mask group 的 pcp line
+        mask_group_drawPCP(){
+            if(vm.pcp_mode){
+                let pcp = vm.eventBus.pcp
+                pcp.removeLines()
+                vm.mask_group.forEach(mask_pts => {
+                    pcp.drawMaskDataLine(mask_pts,vm.getColor)
+                })
+            }
+        },
+
         mask_pts_remove(mask_pts){
             mask_pts.forEach(pt => {
                 pt.x = pt.rawpos[0]
@@ -468,7 +482,8 @@ export default {
                 vm.maskBoxRisize(e)
             }
             // 直接移动 mask 标注数据点
-            if(vm.mask_mode && vm.group_move && !vm.pcp_mode){  
+            // if(vm.mask_mode && vm.group_move && !vm.pcp_mode){  
+            if(vm.mask_mode && vm.group_move){
                 let mask_pts = undefined
                 if (vm.mask_pt_clicked){
                     mask_pts = vm.current_mask_pts
@@ -526,22 +541,8 @@ export default {
             vm.mask_box_draw = false
             vm.mask_box.alpha = 0
             vm.rotation_acc = vm.rotation
-            if(vm.mask_mode && vm.mask_box.width !== 0 && vm.pcp_mode){
+            if(vm.mask_mode && vm.mask_box.width >= 3 && vm.pcp_mode){
                 vm.maskBoxCollision()
-
-                //////////////////  不在 pcp 模式下就是mask模式
-                // if(!vm.pcp_mode){
-                //     vm.setCenterPoint()
-                // }
-                // else{
-                //     let pcp = vm.eventBus.pcp
-                //     pcp.removeLines()
-                //     if(vm.mask_pts){
-                //         pcp.drawMaskDataLine(vm.mask_pts,vm.getColor)
-                //     }
-                // }
-                //////////////////
-
                 // 取消右鍵選取框設定
                 if(vm.pcp_mode){
                     let pcp = vm.eventBus.pcp
@@ -791,10 +792,6 @@ export default {
             })
             return [cdata,cxy]
         },
-        // 取消 mask_pts 
-        clearMask_pts(){
-
-        }
     },
     mounted(){
         vm = this

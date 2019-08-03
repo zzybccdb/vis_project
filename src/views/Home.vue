@@ -221,9 +221,8 @@ export default {
 			let latent_scatter = vm.$refs.latent_scatter
 			vm.pcp = !vm.pcp
 			latent_scatter.pcp_mode = !latent_scatter.pcp_mode
-			latent_scatter.mask_mode = latent_scatter.pcp_mode
+			latent_scatter.mask_mode = true
 			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
-
 			// if(vm.adjust !== 'pan'){
 			// 	vm.$d3.select('#colorScatter').on('.zoom',null)
 			// }
@@ -242,7 +241,11 @@ export default {
 						left: 0,
 						behavior: 'smooth'
 					});
-					pcp.setDimensions(latent_scatter.columns,latent_scatter.data,extents)
+					pcp.setDimensions(vm.columns,latent_scatter.data,extents)
+					let cb = latent_scatter.getColor
+					latent_scatter.mask_group.forEach(mask_pts => {
+						pcp.drawMaskDataLine(mask_pts,cb)
+					})
 				}).catch(error => {
 					console.error('获取资料 extents 时错误',error)
 				})			

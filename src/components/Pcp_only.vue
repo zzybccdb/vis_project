@@ -219,44 +219,6 @@ export default {
             axis.axisTicks = axisTicks
             return axisTicks
         },
-        // 繪製所有資料點
-        drawAllDataLine(data=undefined,color_cb=undefined){
-            let ctn_lines = vm.ctn_lines
-            // data.forEach(data => {
-            //     rawdata = data.slice(1,-2)
-            //     let latent = data.slice(-2) 
-            // let line = new PIXI.Graphics()
-            // line.lineStyle(1, 0x000000, 1)
-            //     rawdata.forEach((d,i) => {
-            //         let c = vm.columns[i]
-            //         let scale = vm.scale[c].scale
-            //         let x = vm.axis[c].x
-            //         let y = vm.axis[c].axisLine.y + scale(d)
-            //         if( i === 0 ){
-            //             line.moveTo(x,y)
-            //         }
-            //         else{
-            //             line.lineTo(x,y)
-            //         }
-            //     })
-            //     ctn_lines.addChild(line)
-            // })
-            // 測試資料繪製
-            // let rawdata = [20.91,91.75,886,1]
-            // rawdata.forEach((d,i) => {
-            //     let c = vm.columns[i]
-            //     let scale = vm.scale[c].scale
-            //     let x = vm.axis[c].x
-            //     let y = vm.axis[c].axisLine.y + scale(d)
-            //     if( i === 0 ){
-            //         line.moveTo(x,y)
-            //     }
-            //     else{
-            //         line.lineTo(x,y)
-            //     }
-            // })
-            // ctn_lines.addChild(line)
-        },
         // 繪製選中資料點
         drawMaskDataLine(mask_pts, color_cb=undefined){
             mask_pts.forEach(pt => {
@@ -308,12 +270,6 @@ export default {
             box.beginFill(0xffffff)
             box.drawRect(x1,y1,width,height)
             box.endFill()
-            // box.rightdown = () => {
-            //     axis.filter_box.removeChild(box)
-            //     vm.removeLines()
-            //     let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
-            //     vm.drawMaskDataLine(mask_pts,cb)
-            // } 
         },
         // 開始繪製 filter box
         drawFilterStart(e){
@@ -345,7 +301,6 @@ export default {
         },
         // 結束繪製
         drawFilterEnd(e){
-            console.log('draw end')
             if(vm.filter_start){
                 let axis = e.axis
                 let current_box = axis.filter_box.children.slice(-1)[0]
@@ -366,7 +321,6 @@ export default {
         },
         // mouseout
         drawMouseOut(e){
-            console.log('mouseout')
             vm.drawFilterEnd(e)
         }
 
