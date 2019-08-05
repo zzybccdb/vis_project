@@ -132,3 +132,6 @@
 - plot 重置错误 (done)
 - calender view 位置错误 (done)
 - histogram 重置错误 (done)
+
+#### 2019/08/05
+- 修正了存在 mask_mode 无法切换的问题

@@ -106,10 +106,10 @@
 									<v-icon>swap_horiz</v-icon>
 									{{adjust}}
 								</v-btn>
-								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onClearAllMask">
+								<!-- <v-btn :disabled="disableNewTrainBtn" color="primary" @click="onClearAllMask">
 									<v-icon>delete_outline</v-icon>
 									Clear All Mask
-								</v-btn>
+								</v-btn> -->
 								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onPCP">
 									<v-icon>check_circle_outline</v-icon>
 									PCP
@@ -223,12 +223,6 @@ export default {
 			latent_scatter.pcp_mode = !latent_scatter.pcp_mode
 			latent_scatter.mask_mode = true
 			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
-			// if(vm.adjust !== 'pan'){
-			// 	vm.$d3.select('#colorScatter').on('.zoom',null)
-			// }
-			// else{
-			// 	vm.$d3.select('#colorScatter').call(latent_scatter.zoom)
-			// }
 
 			if(vm.pcp){
 				vm.$axios.get(vm.$api + '/inference/dimension_extent').then(response => {
@@ -265,10 +259,10 @@ export default {
 		onMask(){
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
-			if(latent_scatter.mask_pts === undefined){
-				latent_scatter.mask_mode = !latent_scatter.mask_mode
-				latent_scatter.confirmControlPoints()
-			}
+			// if(latent_scatter.mask_pts === undefined){
+			// 	latent_scatter.confirmControlPoints()
+			// }
+			latent_scatter.mask_mode = !latent_scatter.mask_mode
 			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
 			// if(vm.adjust !== 'pan'){
 			// 	vm.$d3.select('#colorScatter').on('.zoom',null)
