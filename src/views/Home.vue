@@ -120,7 +120,7 @@
 							<div ref='histWrapper' style="margin-top:10px;width:100%;height:362px;overflow-y:scroll">	
 								<HISTOGRAM ref='histogram'/>
 							</div>
-							<canvas v-if="recon_loss" style="height:150px;maxwidth:521px" id="loss"></canvas>
+							<canvas v-if="recon_loss" style="height:150px;maxwidth:512px" id="loss"></canvas>
 							<canvas v-if="dist_loss" style="height:150px;maxwidth:512px" id="dis_loss"></canvas>
 						</v-layout>
 					</v-layout>
@@ -137,6 +137,7 @@ import { setTimeout } from 'timers';
 import HISTOGRAM from '@/components/Histogram.vue'
 import ColorScatter from '@/components/ColorScatter.vue'
 import PCP from '@/components/Pcp_only.vue'
+import { Promise } from 'q';
 // import { EventEmitter } from 'events';
 
 const EventBus = {}
@@ -290,8 +291,12 @@ export default {
 			vm.start = true
 			vm.pcp = false
 			if(vm.network === 'NN based MDS'){
-				vm.dist_loss = true
-				window.dist_loss = true 
+				vm.recon_loss = false
+				window.recon_loss = false
+				if(!vm.dist_loss){
+					vm.dist_loss = true
+					window.dist_loss = true 
+				}
 				// vm.recon_loss = true
 				// window.recon_loss = true
 				setTimeout(()=>{
@@ -299,23 +304,29 @@ export default {
 					EventBus.latent_scatter = latent_scatter
 					latent_scatter.eventBus = EventBus
 					latent_scatter.mask_group = []
-					// 清除殘留圖像
-					// if(vm.loss_plot){
-					// 	vm.loss_plot.destroy()
-					// }					
+					// 清除殘留圖像			
 					if(vm.dis_loss_plot){
-						vm.dis_loss_plot.destroy()
+						vm.dis_loss_plot.clear()
 					}
 					// 清空 scatter 
 					latent_scatter.removePoints()
 					// 重新宣告曲线图
-					// let ctx = document.getElementById('loss').getContext('2d');
-					// vm.loss_plot = new Chart(ctx, vm.config)
-
 					let dis = document.getElementById('dis_loss').getContext('2d')
-					vm.dis_loss_plot = new Chart(dis,vm.dis_config)
+					if(!vm.dis_loss_plot){
+						let promise = new Promise((resolve,reject) => {
+							vm.dis_loss_plot = new Chart(dis,vm.dis_config)
+							document.getElementById('dis_loss').style.height=150
+							resolve('chart loading over')
+						}).then(resolve => {
+							console.log(resolve)
+							vm.startTrain()
+						}).catch(error => {
+							console.error('new train plot error')
+						})
+					}else{
+						vm.startTrain()
+					}
 
-					vm.startTrain()
 					// 自動滾動，向下移動到最底部
 					window.scroll({
 						top: document.body.scrollHeight,
@@ -325,25 +336,37 @@ export default {
 
 				},500)
 			}else if(vm.network === 'Autoencoder' || vm.network === 'VAE'){
-				vm.recon_loss = true
-				window.recon_loss = true
+				vm.dist_loss = false
+				window.dist_loss = false
+				if(!vm.dist_loss){
+					vm.recon_loss = true
+					window.recon_loss = true
+				}
 				setTimeout(()=>{
 					let latent_scatter = vm.$refs.latent_scatter
 					EventBus.latent_scatter = latent_scatter
 					latent_scatter.eventBus = EventBus
 					latent_scatter.mask_group = []
-
 					// 清除残留影像
 					if(vm.loss_plot){
-						vm.loss_plot.destroy()
+						vm.loss_plot.clear()
+					}
+					// 清空 scatter
+					latent_scatter.removePoints()
+					if(!vm.loss_plot){
+						let promise = new Promise((resolve,reject) => {
+							let ctx = document.getElementById('loss').getContext('2d');
+							vm.loss_plot = new Chart(ctx, vm.config)
+							resolve('chart loading over')
+						}).then(resolve => {
+							console.log(resolve)
+							vm.startTrain()
+						})
+					}
+					else{
+						vm.startTrain()
 					}
 
-					latent_scatter.removePoints()
-
-					let ctx = document.getElementById('loss').getContext('2d');
-					vm.loss_plot = new Chart(ctx, vm.config)
-
-					vm.startTrain()
 					// 自動滾動，向下移動到最底部
 					window.scroll({
 						top: document.body.scrollHeight,
@@ -730,6 +753,7 @@ export default {
 				}]
 			},
 			options: {
+				height:150,
 				legend: {
 					display: false
 				},
