@@ -181,7 +181,8 @@ export default {
 		histogram:false,
 		pcp: false,
 		// histogram_loading:false,
-		adjust: 'pan'
+		adjust: 'pan',
+		progress : true,
 	}),
 	computed: {
 		anyError() {
@@ -498,21 +499,24 @@ export default {
 		},
 		getProgress() {
 			let vm = this
-			if (vm.state == 'training' && vm.requesting == 'none' && !vm.pcp) {
+			if (vm.state == 'training' && vm.requesting == 'none' && !vm.pcp && vm.progress) {
+				vm.progress = false
 				this.$axios.post(this.$api + '/train/progress',{'start':vm.start}).then(response => {
 					vm.state = response.data.state
 					let model = response.data.model
-					if(model === 'NN based MDS'){
-						if(response.data.rec_loss && response.data.dis_loss){
-							vm.addLoss(undefined,response.data.dis_loss,response.data.step)
-						}
-					}
-					else{
-						if(response.data.rec_loss){
-							vm.addLoss(response.data.rec_loss,undefined,response.data.step)
-						}						
-					}
+					let progress_response = response
+					// if(model === 'NN based MDS'){
+					// 	if(response.data.rec_loss && response.data.dis_loss){
+					// 		vm.addLoss(undefined,response.data.dis_loss,response.data.step)
+					// 	}
+					// }
+					// else{
+					// 	if(response.data.rec_loss){
+					// 		vm.addLoss(response.data.rec_loss,undefined,response.data.step)
+					// 	}						
+					// }
 					// 加载 latent 资料点， 资料结构 =》 {日期，dimension1，dimensin2，```，latentx，latenty}
+					
 					vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':0}).then(response => {
 						let latent_scatter = vm.$refs.latent_scatter
 						let data = response.data.rawdata
@@ -527,8 +531,22 @@ export default {
 						else{
 							latent_scatter.addPoints(data)
 						}
+
+						if(model === 'NN based MDS'){
+							if(progress_response.data.rec_loss && progress_response.data.dis_loss){
+								vm.addLoss(undefined,progress_response.data.dis_loss,progress_response.data.step)
+							}
+							console.log('NN based MDS')
+						}
+						else{
+							if(progress_response.data.rec_loss){
+								vm.addLoss(progress_response.data.rec_loss,undefined,progress_response.data.step)
+							}						
+						}
 					}).catch(error => {
 						console.error('Home Get progress went wrong!',error)
+					}).finally(() => {
+						vm.progress = true
 					})
 				}).catch(error => {
 					console.error('Something went wrong!',error)
