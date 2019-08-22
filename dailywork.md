@@ -135,3 +135,9 @@
 
 #### 2019/08/05
 - 修正了存在 mask_mode 无法切换的问题
+
+#### 2019/08/22
+- 將 pcp 功能整合到原本dimension表單的按鈕
+- 調整 Home pan/activate button 位置
+- 調整 loss graph 位置,擴大 hist 繪製區域
+- calendar view 調整, 只有 pcp filter 才使用 正圓形, 其它狀態都是圓形

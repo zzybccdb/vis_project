@@ -55,6 +55,7 @@
 						chips
 						@change="updateParam(onColumnsChange)"
 						:disabled="disableForm"
+						ref="pcp_button"
 						readonly
 						>
 							<template slot="selection" slot-scope="data">
@@ -72,6 +73,9 @@
 						</v-combobox>
 						<div ref='pcpChart' style='margin:0px;width:100%'>
 							<PCP ref='pcp' v-if="pcp"/>
+						<div id='error_info' style='height:100px;width:100px' v-if='pcp_error_info'>
+							<h4>No PCP Chart, please run Training!And try again</h4>
+						</div>
 						</div>
 
 						<v-btn :loading="requesting == 'newTrain'" color="primary" :disabled="disableNewTrainBtn" @click="onNewTrain">
@@ -183,6 +187,7 @@ export default {
 		// histogram_loading:false,
 		adjust: 'pan',
 		progress : true,
+		pcp_error_info: false,
 	}),
 	computed: {
 		anyError() {
@@ -221,35 +226,35 @@ export default {
 		onPCP(){
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
-			vm.pcp = !vm.pcp
 			latent_scatter.pcp_mode = !latent_scatter.pcp_mode
 			latent_scatter.mask_mode = true
 			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
-
-			if(vm.pcp){
-				vm.$axios.get(vm.$api + '/inference/dimension_extent').then(response => {
-					let extents = response.data.extents
-					let pcp = vm.$refs.pcp
-					vm.eventBus.pcp = pcp
-					pcp.eventBus = vm.eventBus
-					window.scroll({
-						top: document.body.scrollHeight-980,
-						left: 0,
-						behavior: 'smooth'
-					});
-					pcp.setDimensions(vm.columns,latent_scatter.data,extents)
-					let cb = latent_scatter.getColor
-					latent_scatter.mask_group.forEach(mask_pts => {
-						pcp.drawMaskDataLine(mask_pts,cb)
-					})
-				}).catch(error => {
-					console.error('获取资料 extents 时错误',error)
-				})			
+			
+			if( latent_scatter.data !== undefined){
+				vm.pcp = !vm.pcp
+				if(vm.pcp){
+					vm.$axios.get(vm.$api + '/inference/dimension_extent').then(response => {
+						let pcp = vm.$refs.pcp
+						let extents = response.data.extents
+						let cb = latent_scatter.getColor
+						
+						vm.eventBus.pcp = pcp
+						pcp.eventBus = vm.eventBus
+	
+						pcp.setDimensions(vm.columns,latent_scatter.data,extents)
+						latent_scatter.mask_group.forEach(mask_pts => {
+							pcp.drawMaskDataLine(mask_pts,cb)
+						})
+					}).catch(error => {
+						console.error('获取资料 extents 时错误',error)
+					})	
+				}
+				else{
+					latent_scatter.resetColor()
+				}
+			}else{
+				vm.pcp_error_info = !vm.pcp_error_info
 			}
-			else{
-				latent_scatter.resetColor()
-			}
-
 		},
 		// 對 color scatter 進行 reset
 		onReset(){
@@ -329,11 +334,11 @@ export default {
 					}
 
 					// 自動滾動，向下移動到最底部
-					window.scroll({
-						top: document.body.scrollHeight,
-						left: 0,
-						behavior: 'smooth'
-					});
+					// window.scroll({
+					// 	top: document.body.scrollHeight,
+					// 	left: 0,
+					// 	behavior: 'smooth'
+					// });
 
 				},500)
 			}else if(vm.network === 'Autoencoder' || vm.network === 'VAE'){
@@ -369,11 +374,11 @@ export default {
 					}
 
 					// 自動滾動，向下移動到最底部
-					window.scroll({
-						top: document.body.scrollHeight,
-						left: 0,
-						behavior: 'smooth'
-					});
+					// window.scroll({
+					// 	top: document.body.scrollHeight,
+					// 	left: 0,
+					// 	behavior: 'smooth'
+					// });
 
 				},500)
 			}
@@ -416,11 +421,11 @@ export default {
 		},
 		async onContinue() {
 			// 自動滾動，向下移動到最底部
-			window.scroll({
-				top: document.body.scrollHeight,
-				left: 0,
-				behavior: 'smooth'
-			});
+			// window.scroll({
+			// 	top: document.body.scrollHeight,
+			// 	left: 0,
+			// 	behavior: 'smooth'
+			// });
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
 			
@@ -447,13 +452,7 @@ export default {
 			vm.requesting = 'pause'
 			let latent_scatter = vm.eventBus.latent_scatter
 			latent_scatter.mask_mode = false
-			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
-			// if(vm.adjust !== 'pan'){
-			// 	vm.$d3.select('#colorScatter').on('.zoom',null)
-			// }
-			// else{
-			// 	vm.$d3.select('#colorScatter').call(latent_scatter.zoom)
-			// }		
+			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'	
 			this.$axios.post(this.$api + '/train/pause').then(response => {
 				console.log('on Pause')
 				vm.state = response.data.state
@@ -858,6 +857,8 @@ export default {
 
 		EventBus.root = vm
 		vm.eventBus = EventBus
+		// 將 v-combobox 的 click event 修改爲 pcp 繪製
+		vm.$refs.pcp_button.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].onclick = vm.onPCP
 	},
 
 	beforeDestroy() {
