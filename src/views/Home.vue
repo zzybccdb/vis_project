@@ -99,26 +99,30 @@
 								<v-icon light>cached</v-icon>
 							</span>
 						</v-btn>
+						<v-btn ref='adjust' :disabled="disableNewTrainBtn || pcp" color="primary" @click="onMask">
+							<v-icon>swap_horiz</v-icon>
+							{{adjust}}
+						</v-btn>
 					</v-form>
 					<!-- training 結果預覽圖表部分 -->
 					<!-- <v-layout style="height:572px" v-if="recon_loss || dist_loss" row nowrap> -->
 					<v-layout style="height:572px" row nowrap>
 						<div style="height:542px;width:512px">
 							<ColorScatter ref='latent_scatter'/>
-							<v-layout style='width:528px' justify-space-between>
+							<!-- <v-layout style='width:528px' justify-space-between>
 								<v-btn ref='adjust' :disabled="disableNewTrainBtn || pcp" color="primary" @click="onMask">
 									<v-icon>swap_horiz</v-icon>
 									{{adjust}}
 								</v-btn>
-								<!-- <v-btn :disabled="disableNewTrainBtn" color="primary" @click="onClearAllMask">
+								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onClearAllMask">
 									<v-icon>delete_outline</v-icon>
 									Clear All Mask
-								</v-btn> -->
+								</v-btn>
 								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onPCP">
 									<v-icon>check_circle_outline</v-icon>
 									PCP
 								</v-btn>
-							</v-layout>
+							</v-layout> -->
 						</div>
 						<v-layout  style="margin:10px" column>
 							<div ref='histWrapper' style="margin-top:10px;width:100%;height:362px;overflow-y:scroll">	
@@ -873,11 +877,6 @@ export default {
 #model-form {
 	width: 100%;
 }
-#loss {
-	max-width: 1024px;
-	max-height: 784px;
-}
-
 .arrow-loader {
 	animation: loader 1s infinite;
 	display: flex;
