@@ -71,13 +71,16 @@
 							</v-chip>
 							</template>
 						</v-combobox> -->
-						<v-combobox
-						:error-messages="columns_errors"
-						label="Covariance matrix & Scatter plots"
-						ref="covariance_matrix_btn"
-						readonly
-						>
-						</v-combobox>
+						<v-layout column>
+							<v-combobox
+							:error-messages="columns_errors"
+							label="Covariance matrix & Scatter plots"
+							ref="covariance_matrix_btn"
+							readonly
+							>
+							</v-combobox>
+							<Covariance style='max-height:450px' v-if='covanriance_plot' />
+						</v-layout>
 						<v-combobox
 						:error-messages="columns_errors"
 						label="Parallel Coordinates Plot"
@@ -121,7 +124,6 @@
 						</v-btn>
 					</v-form>
 					<v-layout column>
-						<Covariance style='max-height:450px' v-if='covanriance_plot' />
 						<v-layout style='padding:24px' row nowrap>
 							<div style="height:662px;width:520px">
 								<v-layout column>
