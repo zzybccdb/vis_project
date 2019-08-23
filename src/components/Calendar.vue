@@ -662,7 +662,7 @@ export default {
             let data = sp.data
             if(!vm.highLightBlock){
                 sp.msover = true
-                sp.texture = vm.cellFilterTexture
+                // sp.texture = vm.cellFilterTexture
             }
             // 繪製 tooltip
             if (data && sp.tint != 0xFFFFFF) {
@@ -693,11 +693,11 @@ export default {
         spMouseOut(sp,ctn_box){
             if(!vm.highLightBlock){
                 sp.msover = false;
-                sp.texture = vm.cellTexture
+                // sp.texture = vm.cellTexture
             }
             if (sp.selected && !ctn_box.selecting) {
                 if(!vm.highLightBlock){
-                    sp.texture = vm.cellTextureSelected
+                    // sp.texture = vm.cellTextureSelected
                     vm.eventBus.pcp.highLight();
                 }
             }
