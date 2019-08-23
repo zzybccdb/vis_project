@@ -1,6 +1,6 @@
 <template>
     <!-- <v-layout ref='layout'> -->
-        <div style="width:100%;" ref='histogram'></div>
+        <div style="width:100%" ref='histogram'></div>
     <!-- </v-layout> -->
 </template>
 <script>
@@ -58,6 +58,7 @@ export default {
                 chartNum:3
             }
             vm.appWidth = vm.$refs.histogram.clientWidth
+            console.log(vm.appWidth)
             // Math.ceil(number) 向上取整
             // vm.appHeight = 0
             vm.appHeight = vm.layout.height * Math.ceil(vm.count/vm.layout.chartNum)+20
@@ -97,7 +98,7 @@ export default {
         // d3初始化设定,绑定资料和 scale
         d3Init(data){
             vm.dimensions = {}
-            // 每行绘制 4 个
+            // 每行绘制 3 个
             let width = (vm.appWidth-vm.layout.margin.l-vm.layout.margin.r) / vm.layout.chartNum
             let height = vm.layout.height
             for(let d in data){
