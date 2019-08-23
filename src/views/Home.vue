@@ -73,6 +73,13 @@
 						</v-combobox> -->
 						<v-combobox
 						:error-messages="columns_errors"
+						label="Covariance matrix & Scatter plots"
+						ref="covariance_matrix_btn"
+						readonly
+						>
+						</v-combobox>
+						<v-combobox
+						:error-messages="columns_errors"
 						label="Parallel Coordinates Plot"
 						multiple
 						chips
@@ -86,15 +93,7 @@
 							<h4>No PCP Chart, please run Training!And try again</h4>
 						</div>
 						</div>
-						<v-combobox
-						:error-messages="columns_errors"
-						label="Covariance matrix & Scatter plots"
-						multiple
-						chips
-						ref="covariance_matrix_btn"
-						readonly
-						>
-						</v-combobox>
+
 						<v-btn :loading="requesting == 'newTrain'" color="primary" :disabled="disableNewTrainBtn" @click="onNewTrain">
 							<v-icon>add_box</v-icon>
 							New Training
@@ -698,8 +697,13 @@ export default {
 		EventBus.root = vm
 		vm.eventBus = EventBus
 		// 將 v-combobox 的 click event 修改爲 pcp 繪製
+		vm.$refs.pcp_button.$el.getElementsByClassName('v-select__slot')[0].getElementsByTagName('input')[0].remove()
 		vm.$refs.pcp_button.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].onclick = vm.onPCP
+		vm.$refs.pcp_button.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].style.cursor = 'pointer'
+
+		vm.$refs.covariance_matrix_btn.$el.getElementsByClassName('v-select__slot')[0].getElementsByTagName('input')[0].remove()
 		vm.$refs.covariance_matrix_btn.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].onclick = vm.onCovariance
+		vm.$refs.covariance_matrix_btn.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].style.cursor = 'pointer'
 	},
 
 	beforeDestroy() {
