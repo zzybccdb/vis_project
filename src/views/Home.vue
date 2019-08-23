@@ -104,32 +104,18 @@
 							{{adjust}}
 						</v-btn>
 					</v-form>
-					<!-- training 結果預覽圖表部分 -->
-					<!-- <v-layout style="height:572px" v-if="recon_loss || dist_loss" row nowrap> -->
-					<v-layout style="height:572px" row nowrap>
-						<div style="height:542px;width:512px">
+					<v-layout row nowrap>
+						<div style="height:662px;width:520px">
+							<v-layout column>
+								<!-- training 結果預覽圖表部分 -->
+								<canvas style="height:150px;maxwidth:512px" id="model_loss"></canvas>
+							</v-layout>
 							<ColorScatter ref='latent_scatter'/>
-							<!-- <v-layout style='width:528px' justify-space-between>
-								<v-btn ref='adjust' :disabled="disableNewTrainBtn || pcp" color="primary" @click="onMask">
-									<v-icon>swap_horiz</v-icon>
-									{{adjust}}
-								</v-btn>
-								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onClearAllMask">
-									<v-icon>delete_outline</v-icon>
-									Clear All Mask
-								</v-btn>
-								<v-btn :disabled="disableNewTrainBtn" color="primary" @click="onPCP">
-									<v-icon>check_circle_outline</v-icon>
-									PCP
-								</v-btn>
-							</v-layout> -->
 						</div>
-						<v-layout  style="margin:10px" column>
-							<div ref='histWrapper' style="margin-top:10px;width:100%;height:362px;overflow-y:scroll">	
+						<v-layout  style="margin-left:10px" column>
+							<div ref='histWrapper' style="width:540px;height:662px;overflow-y:scroll">	
 								<HISTOGRAM ref='histogram'/>
 							</div>
-							<canvas v-if="recon_loss" style="height:150px;maxwidth:512px" id="loss"></canvas>
-							<canvas v-if="dist_loss" style="height:150px;maxwidth:512px" id="dis_loss"></canvas>
 						</v-layout>
 					</v-layout>
 					</v-card-title>
@@ -184,8 +170,7 @@ export default {
 		input_window:1,
 		output_window:1,
 		loss_weight:1.00,
-		dist_loss:false,
-		recon_loss:false,
+		model_loss:true,
 		histogram:false,
 		pcp: false,
 		// histogram_loading:false,
@@ -212,7 +197,7 @@ export default {
 			return this.requesting !== 'none' || this.state === 'training' || this.anyError
 		},
 		disableContinueBtn() {
-			return (this.requesting !== 'none' || this.state === 'training' || this.state === 'reset' || this.anyError) || !(this.recon_loss || this.dist_loss)
+			return (this.requesting !== 'none' || this.state === 'training' || this.state === 'reset' || this.anyError) 
 		},
 		disablePauseBtn() {
 			return this.requesting !== 'none' || this.state === 'ready' || this.state === 'reset'
@@ -270,26 +255,9 @@ export default {
 		onMask(){
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
-			// if(latent_scatter.mask_pts === undefined){
-			// 	latent_scatter.confirmControlPoints()
-			// }
 			latent_scatter.mask_mode = !latent_scatter.mask_mode
 			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
-			// if(vm.adjust !== 'pan'){
-			// 	vm.$d3.select('#colorScatter').on('.zoom',null)
-			// }
-			// else{
-			// 	vm.$d3.select('#colorScatter').call(latent_scatter.zoom)
-			// }
 		},
-		//////////////// 對移動後的 color scatter 進行確認
-		// onConfirm(){
-		// 	let vm = this
-		// 	let latent_scatter = vm.$refs.latent_scatter
-		// 	latent_scatter.confirm()
-		// },
-		////////////////
-		// 清空所有 mask 内容
 		onClearAllMask(){
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
@@ -300,95 +268,35 @@ export default {
 			vm.requesting = 'newTrain'
 			vm.start = true
 			vm.pcp = false
-			if(vm.network === 'NN based MDS'){
-				vm.recon_loss = false
-				window.recon_loss = false
-				if(!vm.dist_loss){
-					vm.dist_loss = true
-					window.dist_loss = true 
+			let latent_scatter = vm.$refs.latent_scatter
+			EventBus.latent_scatter = latent_scatter
+			latent_scatter.eventBus = EventBus
+			latent_scatter.mask_group = []
+			// 清除殘留圖像	
+			vm.loss_plot.clear()
+			// 清空 scatter 
+			latent_scatter.removePoints()
+			let ctx = document.getElementById('model_loss').getContext('2d')
+			let promise = new Promise((resolve,reject) => {
+				if(vm.network === 'NN based MDS'){
+					vm.config.options.title.text = 'Distance Loss'
+					vm.loss_plot = new Chart(ctx,vm.config)
+					resolve('chart loading over')
 				}
-				// vm.recon_loss = true
-				// window.recon_loss = true
-				setTimeout(()=>{
-					let latent_scatter = vm.$refs.latent_scatter
-					EventBus.latent_scatter = latent_scatter
-					latent_scatter.eventBus = EventBus
-					latent_scatter.mask_group = []
-					// 清除殘留圖像			
-					if(vm.dis_loss_plot){
-						vm.dis_loss_plot.clear()
-					}
-					// 清空 scatter 
-					latent_scatter.removePoints()
-					// 重新宣告曲线图
-					let dis = document.getElementById('dis_loss').getContext('2d')
-					if(!vm.dis_loss_plot){
-						let promise = new Promise((resolve,reject) => {
-							vm.dis_loss_plot = new Chart(dis,vm.dis_config)
-							document.getElementById('dis_loss').style.height=150
-							resolve('chart loading over')
-						}).then(resolve => {
-							console.log(resolve)
-							vm.startTrain()
-						}).catch(error => {
-							console.error('new train plot error')
-						})
-					}else{
-						vm.startTrain()
-					}
-
-					// 自動滾動，向下移動到最底部
-					// window.scroll({
-					// 	top: document.body.scrollHeight,
-					// 	left: 0,
-					// 	behavior: 'smooth'
-					// });
-
-				},500)
-			}else if(vm.network === 'Autoencoder' || vm.network === 'VAE'){
-				vm.dist_loss = false
-				window.dist_loss = false
-				if(!vm.dist_loss){
-					vm.recon_loss = true
-					window.recon_loss = true
+				else if(vm.network === 'Autoencoder' || vm.network === 'VAE'){
+					vm.config.options.title.text = 'Reconstruction Loss'
+					vm.loss_plot = new Chart(ctx, vm.config)
+					resolve('chart loading over')
 				}
-				setTimeout(()=>{
-					let latent_scatter = vm.$refs.latent_scatter
-					EventBus.latent_scatter = latent_scatter
-					latent_scatter.eventBus = EventBus
-					latent_scatter.mask_group = []
-					// 清除残留影像
-					if(vm.loss_plot){
-						vm.loss_plot.clear()
-					}
-					// 清空 scatter
-					latent_scatter.removePoints()
-					if(!vm.loss_plot){
-						let promise = new Promise((resolve,reject) => {
-							let ctx = document.getElementById('loss').getContext('2d');
-							vm.loss_plot = new Chart(ctx, vm.config)
-							resolve('chart loading over')
-						}).then(resolve => {
-							console.log(resolve)
-							vm.startTrain()
-						})
-					}
-					else{
-						vm.startTrain()
-					}
 
-					// 自動滾動，向下移動到最底部
-					// window.scroll({
-					// 	top: document.body.scrollHeight,
-					// 	left: 0,
-					// 	behavior: 'smooth'
-					// });
-
-				},500)
-			}
-			else{
+			}).then(resolve => {
+				console.log(resolve)
+				// vm.startTrain()
+			}).catch(error => {
+				console.error('new train plot error',error)
+			}).finally(() => {
 				vm.startTrain()
-			}
+			})
 		},
 		startTrain(){
 			let vm = this
@@ -412,24 +320,10 @@ export default {
 
 				vm.config.data.labels = []
 				vm.config.data.datasets[0].data = []
-				if(vm.recon_loss){
-					vm.loss_plot.update()
-				}
-
-				vm.dis_config.data.labels = []
-				vm.dis_config.data.datasets[0].data = []
-				if(vm.dist_loss){
-					vm.dis_loss_plot.update()
-				}
+				vm.loss_plot.update()
 			})
 		},
 		async onContinue() {
-			// 自動滾動，向下移動到最底部
-			// window.scroll({
-			// 	top: document.body.scrollHeight,
-			// 	left: 0,
-			// 	behavior: 'smooth'
-			// });
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
 			
@@ -474,31 +368,23 @@ export default {
 				vm.requesting = 'none'
 			})
 		},
-		addLoss(rec_loss,dis_loss=undefined,step) {
+		addLoss(rec_loss=undefined,dis_loss=undefined,step) {
 			let vm = this;
 			if(rec_loss){
 				vm.config.data.labels.push(String(step));
-				vm.config.data.datasets[0].data.push(rec_loss);
-				if (vm.config.data.labels.length > 100) {
-					vm.config.data.labels.shift();
-					vm.config.data.datasets[0].data.shift();
-				}
-				if(vm.loss_plot !== undefined){
-					vm.loss_plot.update()
-				}
+				vm.config.data.datasets[0].data.push(rec_loss);				
 			}
 
 			if(dis_loss){
-				vm.dis_config.data.labels.push(String(step));
-				vm.dis_config.data.datasets[0].data.push(dis_loss);
-				if (vm.dis_config.data.labels.length > 100) {
-					vm.dis_config.data.labels.shift();
-					vm.dis_config.data.datasets[0].data.shift();
-				}
-				if(vm.dis_loss_plot !== undefined){
-					vm.dis_loss_plot.update()
-				}
+				vm.config.data.labels.push(String(step));
+				vm.config.data.datasets[0].data.push(dis_loss);
 			}
+
+			if (vm.config.data.labels > 100) {
+				vm.config.data.labels.shift();
+				vm.config.data.datasets[0].data.shift();
+			}
+			vm.loss_plot.update()
 		},
 		getProgress() {
 			let vm = this
@@ -508,16 +394,6 @@ export default {
 					vm.state = response.data.state
 					let model = response.data.model
 					let progress_response = response
-					// if(model === 'NN based MDS'){
-					// 	if(response.data.rec_loss && response.data.dis_loss){
-					// 		vm.addLoss(undefined,response.data.dis_loss,response.data.step)
-					// 	}
-					// }
-					// else{
-					// 	if(response.data.rec_loss){
-					// 		vm.addLoss(response.data.rec_loss,undefined,response.data.step)
-					// 	}						
-					// }
 					// 加载 latent 资料点， 资料结构 =》 {日期，dimension1，dimensin2，```，latentx，latenty}
 					
 					vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':0}).then(response => {
@@ -584,22 +460,10 @@ export default {
 					vm.state = response.data.state
 					vm.network_errors = []
 					vm.requesting = 'none'
-	
-					if(vm.recon_loss){
-						vm.config.data.labels = []
-						vm.config.data.datasets[0].data = []
-						if(vm.loss_plot !== undefined){
-							vm.loss_plot.update()
-						}
-					}
-	
-					if(vm.dist_loss){
-						vm.dis_config.data.labels = []
-						vm.dis_config.data.datasets[0].data = []
-						if(vm.dis_loss_plot !== undefined){
-							vm.dis_loss_plot.update()
-						}
-					}
+
+					vm.config.data.labels = []
+					vm.config.data.datasets[0].data = []
+					vm.loss_plot.update()	
 				}
 			}).catch(error => {
 				vm.network_errors = [error]
@@ -733,7 +597,8 @@ export default {
 				responsive: true,
 				title: {
 					display: true,
-					text: 'Reconstruction Loss'
+					text: 'Distance Loss',
+					// text: 'Reconstruction Loss'
 				},
 				tooltips: {
 					mode: 'index',
@@ -760,69 +625,9 @@ export default {
 					}]
 				}
 			}
-		}
-		vm.dis_config = {
-			type: 'line',
-			data: {
-				labels: [],
-				datasets: [{
-					label: '',
-					backgroundColor: 'rgb(99, 132, 255)',
-					borderColor: 'rgb(99, 132, 255)',
-					data: [],
-					fill: false,
-				}]
-			},
-			options: {
-				height:150,
-				legend: {
-					display: false
-				},
-				responsive: true,
-				title: {
-					display: true,
-					text: 'Distance Loss'
-				},
-				tooltips: {
-					mode: 'index',
-					intersect: false,
-				},
-				hover: {
-					mode: 'nearest',
-					intersect: true
-				},
-				scales: {
-					xAxes: [{
-						display: true,
-						scaleLabel: {
-							display: true,
-							labelString: 'Gradient Step'
-						}
-					}],
-					yAxes: [{
-						display: true,
-						scaleLabel: {
-							display: true,
-							labelString: 'Value'
-						}
-					}]
-				}
-			}
-		}
-
-		vm.recon_loss = window.recon_loss
-		vm.dist_loss = window.dist_loss
-		
-		setTimeout(() => {			
-			if(vm.recon_loss){
-				let ctx = document.getElementById('loss').getContext('2d');
-				vm.loss_plot = new Chart(ctx, vm.config)
-			}
-			if(vm.dist_loss){
-				let dis = document.getElementById('dis_loss').getContext('2d')
-				vm.dis_loss_plot = new Chart(dis,vm.dis_config)
-			}
-		}, 300);
+		}	
+		let ctx = document.getElementById('model_loss').getContext('2d')
+		vm.loss_plot = new Chart(ctx,vm.config)
 
 		this.$axios.post(this.$api + '/train/get_param', [
 				'networks',
