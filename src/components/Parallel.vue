@@ -174,7 +174,7 @@ export default {
 		drawFilterStart(e, line, grp_axis){
 			let vm = this
 			if(grp_axis.axis.disabled){
-				return vm.drawFilterEnd()
+				return vm.drawFilterEnd(e,line,grp_axis)
 			}
 			let box = vm.initFilterBox(line.x, line.y, grp_axis, line)
 			let p = e.data.getLocalPosition(vm.wrapper)
@@ -205,8 +205,13 @@ export default {
 					} else {
 						box.y = box.start_y
 					}
-					box.height = Math.abs(box.start_y - p.y)
-					vm.filterLines()
+					if(box.height < Math.abs(box.start_y - p.y)){
+						box.height = Math.abs(box.start_y - p.y)
+						vm.filterLines()
+					}
+					else{
+						vm.drawFilterEnd(e,line,grp_axis)
+					}
 				}
 			}
 		},
