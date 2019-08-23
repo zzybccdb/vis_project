@@ -18,7 +18,7 @@ export default {
 			let vm = this;
 			vm.alpha_m = Math.min(1, Math.max(0.1, alpha))
 			vm.updateAlpha()
-		},   
+		},  
 		updateAlpha() {
 			let vm = this
 			vm.eventBus.data.forEach(d => {
@@ -26,6 +26,7 @@ export default {
 					let line = d.pcp
 					line.alpha = vm.alpha_m
 					line.alpha *= 1 - ((1-d.alpha_u) * vm.eventBus.root.errorAlpha / 100)
+					line.initial_alpha = line.alpha
 				}
 			})
 		},
@@ -172,6 +173,9 @@ export default {
 		},
 		drawFilterStart(e, line, grp_axis){
 			let vm = this
+			if(grp_axis.axis.disabled){
+				return vm.drawFilterEnd()
+			}
 			let box = vm.initFilterBox(line.x, line.y, grp_axis, line)
 			let p = e.data.getLocalPosition(vm.wrapper)
 			box.height = 0
@@ -202,7 +206,7 @@ export default {
 						box.y = box.start_y
 					}
 					box.height = Math.abs(box.start_y - p.y)
-					// vm.filterLines()
+					vm.filterLines()
 				}
 			}
 		},
@@ -212,6 +216,7 @@ export default {
 				let box = line.current_box 
 				if (box && line.box.length!= 0) {
 					if (box.height < 10) {
+						console.log('remove filter box')
 						grp_axis.removeChild(box)
 						if(line.box[line.box.length-1].height < 10)
 							line.box.splice(-1,1)
@@ -244,9 +249,6 @@ export default {
 			//  draw line
 			let line = vm.drawLine(indicator, grp_axis)
 			grp_axis.addChild(line)
-			line.on("mousedown", (e) => vm.drawFilterStart(e, line, grp_axis))
-			line.on("mousemove", (e) => vm.selectingRange(e, line, grp_axis))
-			line.on("mouseup", (e) => vm.drawFilterEnd(e, line, grp_axis))
 			//  draw ticks
 			let ctn_ticks = new vm.$PIXI.Container()
 			grp_axis.addChild(ctn_ticks)
@@ -254,7 +256,7 @@ export default {
 			grp_axis.child_dict = {
 				label, line, ctn_ticks
 			}
-			vm.state.axis.push({
+			grp_axis.axis = {
 				idx,
 				dim,
 				additional,
@@ -263,7 +265,21 @@ export default {
 				scale: null,
 				extent: null,
 				grp: grp_axis,
-			})
+			}
+			vm.state.axis.push(grp_axis.axis)
+			// vm.state.axis.push({
+			// 	idx,
+			// 	dim,
+			// 	additional,
+			// 	name: column,
+			// 	disabled: false,
+			// 	scale: null,
+			// 	extent: null,
+			// 	grp: grp_axis,
+			// })
+			line.on("mousedown", (e) => vm.drawFilterStart(e, line, grp_axis))
+			line.on("mousemove", (e) => vm.selectingRange(e, line, grp_axis))
+			line.on("mouseup", (e) => vm.drawFilterEnd(e, line, grp_axis))
         }, 
 		drawFilterBox(x, y, length){
 			let vm = this 
@@ -296,9 +312,9 @@ export default {
 				}
 				// vm.filterLines()
 			}			
-		},	 
+		},
+		// 将需要highlight的filter line 标注
 		filterBoxMoveOver(line, box){
-			console.log("end")
 			let vm = this
 			line.box.forEach(b => {
 				b.enabled = false
@@ -339,8 +355,14 @@ export default {
 			let vm = this
 			let PIXI = vm.$PIXI
 			let box = vm.drawFilterBox(x, y, line.box.length)
-			box.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 4 * vm.filterbox_width, vm.plot_height);
-			box.on("mousedown", () => box.moving = true )
+			// box.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 4 * vm.filterbox_width, vm.plot_height);
+			box.on("mousedown", () => {
+				let num_ctn_box = vm.eventBus.cal.ctn_box.length
+				// 在没有 ctn box 下禁止拖动的行为
+				if(num_ctn_box > 0){
+					box.moving = true 
+				}
+			})
 			box.on("mousemove", (e) => vm.filterBoxMove(e, box, line.y, container.x))
 			box.on("mouseup", () => box.moving = false)
 			box.on("mouseover", () => vm.filterBoxMoveOver(line, box))
@@ -458,23 +480,26 @@ export default {
 			let vm = this
 			let num_ctn_box = vm.eventBus.cal.ctn_box.length
 			vm.num_filter_box = 0
+			// 没有 filter box 存在
 			let no_box = vm.state.axis.every(a => {
 				return a.grp.child_dict.line.box.length === 0
 			})	
-			vm.state.axis[1].grp.child_dict.line.box.forEach((box,bi) => console.log(bi, ":", box.x, box.y))
-			if(!num_ctn_box)
+			// vm.state.axis[1].grp.child_dict.line.box.forEach((box,bi) => console.log(bi, ":", box.x, box.y))
+			if(!num_ctn_box){
 				vm.updateAlpha()
+			}
 			// 統計當前共有多少個 filter box
 			vm.state.axis.forEach(e=>{
 				vm.num_filter_box += e.grp.child_dict.line.box.length
+
 			})
 			// 遍歷所有資料
 			vm.eventBus.data.forEach(d => {
-				if ((d.cal && d.cal.selected) || (!num_ctn_box && vm.num_filter_box)) {
+				if ((d.cal && d.cal.selected) || (!num_ctn_box && vm.num_filter_box !== 0)) {
 					let line = d.pcp
 					let boolmap = vm.state.axis.map(a =>{
 						let length = a.grp.child_dict.line.box.length
-						if(length>0){
+						if(length>0 && a.disabled === false){
 							return a.grp.child_dict.line.box.map(box => {
 								if (a.disabled) {
 									return true
@@ -507,7 +532,7 @@ export default {
 					if(pass && !num_ctn_box && vm.num_filter_box){
 						if(!line){
 							d.cal.selected = true
-							d.cal.texture = vm.eventBus.cal.cellTextureSelected
+							d.cal.texture = vm.eventBus.cal.cellFilterTexture
 							d.cm.texture = vm.eventBus.cm.selectedTexture
 							d.cm.alpha = 1.0
 							if (d.cal && d.cal.selected) {
@@ -524,20 +549,20 @@ export default {
 					if (line) {
 						if (pass) {
 							line.tint = d.color
+							line.alpha = line.initial_alpha
 							if (no_box) {
 								d.cal.texture = vm.eventBus.cal.cellTextureSelected
 							} else {
 								d.cal.texture = vm.eventBus.cal.cellFilterTexture
 							}
 						} else {
-							line.alpha *= 0.1
+							line.alpha = 0.05
 							d.cal.texture = vm.eventBus.cal.cellTextureSelected
 						}
 					}
 				}
 			})
-
-			if(!num_ctn_box && vm.num_filter_box){
+			if(num_ctn_box===0 && vm.num_filter_box !== 0){
 				vm.updateData()
 			}
 		},
