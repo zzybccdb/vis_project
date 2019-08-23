@@ -6,9 +6,9 @@
             <canvas ref="color_line" width=45 height=300>
                 can not show canvas color line
             </canvas>
-            <v-btn v-if='!loading' fab dark small color="indigo">
+            <!-- <v-btn v-if='!loading' fab dark small color="indigo">
                 <v-icon @click='autoColResize()' dark>add</v-icon>
-            </v-btn>
+            </v-btn> -->
             <v-progress-circular
             indeterminate
             color="primary"
