@@ -273,25 +273,28 @@ export default {
 			latent_scatter.eventBus = EventBus
 			latent_scatter.mask_group = []
 			// 清除殘留圖像	
-			vm.loss_plot.clear()
+			
 			// 清空 scatter 
 			latent_scatter.removePoints()
 			let ctx = document.getElementById('model_loss').getContext('2d')
 			let promise = new Promise((resolve,reject) => {
 				if(vm.network === 'NN based MDS'){
+					vm.loss_plot.clear()
 					vm.config.options.title.text = 'Distance Loss'
 					vm.loss_plot = new Chart(ctx,vm.config)
 					resolve('chart loading over')
 				}
 				else if(vm.network === 'Autoencoder' || vm.network === 'VAE'){
+					vm.loss_plot.clear()
 					vm.config.options.title.text = 'Reconstruction Loss'
 					vm.loss_plot = new Chart(ctx, vm.config)
 					resolve('chart loading over')
 				}
-
+				else{
+					vm.startTrain()
+				}
 			}).then(resolve => {
 				console.log(resolve)
-				// vm.startTrain()
 			}).catch(error => {
 				console.error('new train plot error',error)
 			}).finally(() => {
