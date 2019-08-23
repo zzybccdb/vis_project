@@ -46,7 +46,7 @@
 							</v-text-field>
 						</v-layout>
 						<!-- 欄位選擇 -->
-						<v-combobox
+						<!-- <v-combobox
 						:error-messages="columns_errors"
 						v-model="columns"
 						:items="columns_all"
@@ -70,6 +70,15 @@
 								<strong>{{ data.item }}</strong>&nbsp;
 							</v-chip>
 							</template>
+						</v-combobox> -->
+						<v-combobox
+						:error-messages="columns_errors"
+						label="Parallel Coordinates Plot"
+						multiple
+						chips
+						ref="pcp_button"
+						readonly
+						>
 						</v-combobox>
 						<div ref='pcpChart' style='margin:0px;width:100%'>
 							<PCP ref='pcp' v-if="pcp"/>
@@ -77,7 +86,15 @@
 							<h4>No PCP Chart, please run Training!And try again</h4>
 						</div>
 						</div>
-
+						<v-combobox
+						:error-messages="columns_errors"
+						label="Covariance matrix & Scatter plots"
+						multiple
+						chips
+						ref="covariance_matrix_btn"
+						readonly
+						>
+						</v-combobox>
 						<v-btn :loading="requesting == 'newTrain'" color="primary" :disabled="disableNewTrainBtn" @click="onNewTrain">
 							<v-icon>add_box</v-icon>
 							New Training
@@ -104,18 +121,21 @@
 							{{adjust}}
 						</v-btn>
 					</v-form>
-					<v-layout row nowrap>
-						<div style="height:662px;width:520px">
-							<v-layout column>
-								<!-- training 結果預覽圖表部分 -->
-								<canvas style="height:150px;maxwidth:512px" id="model_loss"></canvas>
-							</v-layout>
-							<ColorScatter ref='latent_scatter'/>
-						</div>
-						<v-layout  style="margin-left:10px" column>
-							<div ref='histWrapper' style="width:540px;height:662px;overflow-y:scroll">	
-								<HISTOGRAM ref='histogram'/>
+					<v-layout column>
+						<Covariance style='max-height:450px' v-if='covanriance_plot' />
+						<v-layout style='padding:24px' row nowrap>
+							<div style="height:662px;width:520px">
+								<v-layout column>
+									<!-- training 結果預覽圖表部分 -->
+									<canvas style="height:150px;maxwidth:512px" id="model_loss"></canvas>
+								</v-layout>
+								<ColorScatter ref='latent_scatter'/>
 							</div>
+							<v-layout  style="margin-left:10px" column>
+								<div ref='histWrapper' style="width:540px;height:662px;overflow-y:scroll">	
+									<HISTOGRAM ref='histogram'/>
+								</div>
+							</v-layout>
 						</v-layout>
 					</v-layout>
 					</v-card-title>
@@ -132,6 +152,7 @@ import HISTOGRAM from '@/components/Histogram.vue'
 import ColorScatter from '@/components/ColorScatter.vue'
 import PCP from '@/components/Pcp_only.vue'
 import { Promise } from 'q';
+import Covariance from '@/views/Results.vue'
 // import { EventEmitter } from 'events';
 
 const EventBus = {}
@@ -140,7 +161,8 @@ export default {
 	components: {
 		HISTOGRAM,
 		ColorScatter,
-		PCP
+		PCP,
+		Covariance
 	},
 	data: () => ({
 		state: 'reset',
@@ -177,6 +199,7 @@ export default {
 		adjust: 'pan',
 		progress : true,
 		pcp_error_info: false,
+		covanriance_plot:false,
 	}),
 	computed: {
 		anyError() {
@@ -211,6 +234,11 @@ export default {
 		}
 	},
 	methods: {
+		// cavaraince 绘制
+		onCovariance(){
+			let vm = this
+			vm.covanriance_plot = !vm.covanriance_plot
+		},
 		// 绘制 PCP
 		onPCP(){
 			let vm = this
@@ -671,6 +699,7 @@ export default {
 		vm.eventBus = EventBus
 		// 將 v-combobox 的 click event 修改爲 pcp 繪製
 		vm.$refs.pcp_button.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].onclick = vm.onPCP
+		vm.$refs.covariance_matrix_btn.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].onclick = vm.onCovariance
 	},
 
 	beforeDestroy() {

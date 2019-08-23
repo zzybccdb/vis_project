@@ -62,7 +62,7 @@ export default {
 			{ title: 'Training', icon: 'build' , href: 'training'},
 			{ title: 'Upload Dataset', icon: 'cloud_upload' , href: 'upload'},
 			{ title: 'Data Sheet', icon:'table_chart', href: 'RawDataTable'},
-			{ title: 'Results', icon: 'attachment' , href: 'results'},
+			// { title: 'Results', icon: 'attachment' , href: 'results'},
 			{ title: 'Calender View', icon: 'pie_chart' , href: 'colormap'},
 			// { title: 'Streamgraph', icon: 'pie_chart' , href: 'Streamgraph'},
 			// { title: 'test', icon: 'pie_chart' , href: 'TestView'},

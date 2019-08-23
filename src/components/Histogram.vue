@@ -58,11 +58,7 @@ export default {
                 chartNum:3
             }
             vm.appWidth = vm.$refs.histogram.clientWidth
-            console.log(vm.appWidth)
-            // Math.ceil(number) 向上取整
-            // vm.appHeight = 0
             vm.appHeight = vm.layout.height * Math.ceil(vm.count/vm.layout.chartNum)+20
-            console.log(vm.appHeight)
             vm.root.$refs.histWrapper.style.height = vm.appHeight
             // 初始化绘图内容
             if(vm.app === undefined){

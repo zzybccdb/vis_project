@@ -12,15 +12,15 @@
     -->
     <v-container ref='home' grid-list-md style="margin:0; max-width:1920px;padding:10px;overflow:hidden" fluid fill-height>
         <v-layout column>
-            <v-flex style="margin:5px;">
+            <!-- <v-flex style="margin:5px;">
                 <boxplot ref='boxplot'></boxplot>
-            </v-flex>          
+            </v-flex>           -->
             <v-flex lg8 class="card" style='margin:5px;'> 
                 <v-layout row nowrap fill-height>
-                    <v-flex lg8 style='margin:5px;overflow:hidden'>
+                    <v-flex lg7 ref='heatmapflex' style='margin:5px;overflow:hidden'>
                         <heatmap ref='heatmap'></heatmap>
                     </v-flex>
-                    <v-flex lg4 style='margin:5px;overflow:scroll'>
+                    <v-flex lg5 style='margin:5px;overflow:scroll'>
                         <scatterplot ref='scatter'></scatterplot>
                     </v-flex>
                 </v-layout>
@@ -95,9 +95,10 @@ export default{
         },
         checkInit(){
             let heatmap = vm.$refs.heatmap
-            let box = vm.$refs.boxplot
+            // let box = vm.$refs.boxplot
             let value = setInterval(()=>{
-                if(!heatmap.load && !box.load){
+                // if(!heatmap.load && !box.load){
+                if(!heatmap.load){
                     console.log('加載完畢')
                     window.clearInterval(value)
                     heatmap.loading = false
@@ -133,13 +134,15 @@ export default{
         vm.EventBus = EventBus
         vm.EventBus.root = vm
         let heatmap = vm.$refs.heatmap
-        let boxplot = vm.$refs.boxplot
+        // let boxplot = vm.$refs.boxplot
         heatmap.EventBus = EventBus
-        boxplot.EventBus = EventBus
+        // boxplot.EventBus = EventBus
 
         EventBus.heatmap = heatmap
         vm.initial()
         vm.checkInit()
+
+        vm.$refs.heatmapflex.style.height = vm.$refs.scatter.$refs.layout.clientWidth
     },
     //离开时执行的内容
     beforeDestroy(){

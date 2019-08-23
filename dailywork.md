@@ -137,7 +137,12 @@
 - 修正了存在 mask_mode 无法切换的问题
 
 #### 2019/08/22
-- 將 pcp 功能整合到原本dimension表單的按鈕
-- 調整 Home pan/activate button 位置
-- 調整 loss graph 位置,擴大 hist 繪製區域
-- calendar view 調整, 只有 pcp filter 才使用 正圓形, 其它狀態都是圓形
+- 將 pcp 功能整合到原本dimension表單的按鈕(done)
+- 調整 Home pan/activate button 位置(done)
+- 調整 loss graph 位置,擴大 hist 繪製區域(done)
+- calendar view 調整, 只有 pcp filter 才使用 正圓形, 其它狀態都是正方形(done)
+
+#### 2019/08/23
+- 禁止只有 filter box 模式下进行拖动(done)
+- 修正 filter box 使用上的错误信息(done)
+- 将 result 中的 table 还有 scatter 放入 Homeview

@@ -21,11 +21,11 @@ export default new Router({
 		name: 'upload',
 		component: () => {return import('@/views/Upload.vue')}
 	},
-	{
-		path: '/results',
-		name: 'results',
-		component: () => {return import('@/views/Results.vue')}
-	},
+	// {
+	// 	path: '/results',
+	// 	name: 'results',
+	// 	component: () => {return import('@/views/Results.vue')}
+	// },
 	{
 		path: '/colormap',
 		name: 'colormap',
