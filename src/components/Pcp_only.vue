@@ -274,6 +274,7 @@ export default {
         // 開始繪製 filter box
         drawFilterStart(e){
             vm.filter_start = true
+            // filter start point
             vm.filter_sp = [e.data.global.x, e.data.global.y]
             let axis = e.currentTarget
             let box = new PIXI.Graphics()

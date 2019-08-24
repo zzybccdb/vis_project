@@ -577,30 +577,6 @@ export default {
                 vm.temp_pause = false
             }
         },
-        // // 旋轉矩陣公式
-        // // [ cos角度 -sin角度 ] [x] => [x']
-        // // [ sin角度 cos角度 ]  [y] => [y']
-        // rotate(rad){
-        //     // 旋轉矩陣公式
-        //     let cos = Math.cos(rad)
-        //     let sin = Math.sin(rad)
-        //     if(vm.zoom_dirty){
-        //         vm.ctn_pts.children.forEach(pt => {pt.refpos=pt.curpos})
-        //         vm.$d3.select('#colorScatter').call(vm.zoom.transform, d3.zoomIdentity)
-        //         vm.zoom_dirty = false
-        //     }
-        //     // 資料點旋轉
-        //     vm.ctn_pts.children.forEach(pt => {
-        //         let tx = pt.refpos[0] - 256, ty = pt.refpos[1] - 256
-        //         pt.x = tx * cos - ty * sin + 256
-        //         pt.y = tx * sin + ty * cos + 256
-        //         pt.curpos = [pt.x,pt.y]
-        //         if(pt.tint !== 0xffffff){
-        //             pt.tint = vm.getColor(pt.x,pt.y)
-        //         }
-        //     })
-        //     vm.rotate_dirty = true
-        // },
         // mask box
         maskBox(box,x1=0,y1=0,x2=0,y2=0){
             box.lineStyle(1,0x000000,0)
@@ -643,32 +619,54 @@ export default {
         },
         // 确认是否又被 filter box 选中'
         pcpFilter(columns,axis){
-            let mask_pts = vm.ctn_pts.children.filter(pt => {
-                if(!pt.center_mark){
-                    pt.tint = vm.getColor(pt.x,pt.y)
-                }
-                let data = pt.data
-                let box_count = 0
-                let bool =  columns.every((c,i) => {
-                    let filter_box = axis[c].filter_box.children
-                    if(filter_box.length !== 0){
-                        return filter_box.some(box => {
-                            box_count += 1
-                            let [max,min] = box.extent
-                            return max >= data[i+1] && min <= data[i+1]
-                        })
-                    }
-                    else{
-                        return true
-                    }
+            let mask_pts = undefined
+            if(vm.mask_group.length > 0){
+                mask_pts = []
+                vm.mask_group.forEach(pts => {
+                    let mask = pts.filter(pt => {
+                        return vm.filter_cb(pt,columns,axis)
+                    })
+                    window.mask = mask
+                    mask_pts = mask_pts.concat(mask)
                 })
-                return bool && box_count 
-            })
+                // 当没有filter box的时候执行
+                if(mask_pts.length === 0){
+                    vm.mask_group.forEach(pts => {
+                        mask_pts = mask_pts.concat(pts)
+                    })
+                }
+            }
+            else{
+                mask_pts = vm.ctn_pts.children.filter(pt => {
+                    return vm.filter_cb(pt,columns,axis)
+                })
+            }
             // 不允許其出現在最上方
             mask_pts.forEach((pt) => {
                 pt.tint = 0xffffff 
             })
             return [mask_pts,vm.getColor]
+        },
+        filter_cb(pt,columns,axis){
+            if(!pt.center_mark){
+                pt.tint = vm.getColor(pt.x,pt.y)
+            }
+            let data = pt.data
+            let box_count = 0
+            let bool =  columns.every((c,i) => {
+                let filter_box = axis[c].filter_box.children
+                if(filter_box.length !== 0){
+                    return filter_box.some(box => {
+                        box_count += 1
+                        let [max,min] = box.extent
+                        return max >= data[i+1] && min <= data[i+1]
+                    })
+                }
+                else{
+                    return true
+                }
+            })
+            return bool && box_count 
         },
         // 以 min，max 順序回傳
         minMax(num1,num2){

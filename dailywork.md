@@ -146,3 +146,9 @@
 - 禁止只有 filter box 模式下进行拖动(done)
 - 修正 filter box 使用上的错误信息(done)
 - 将 result 中的 table 还有 scatter 放入 Homeview
+
+#### 2019/08/24
+- 修改 Home 下 Promise, 防止卡死(done)
+- 调整 home css style,防止遮蔽问题(done)
+- 将 color scatter 中的左右键功能隔离,禁止交叉使用中
+- 修正 pcp only 中的filter box filter结果
