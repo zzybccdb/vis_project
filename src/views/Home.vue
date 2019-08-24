@@ -79,7 +79,9 @@
 							readonly
 							>
 							</v-combobox>
-							<Covariance style='max-height:450px' v-if='covanriance_plot' />
+							<v-flex style='width:100%;overflow:hidden;z-index:0' v-if='covanriance_plot'>
+								<Covariance />
+							</v-flex>
 						</v-layout>
 						<v-combobox
 						:error-messages="columns_errors"
@@ -96,47 +98,52 @@
 							<h4>No PCP Chart, please run Training!And try again</h4>
 						</div>
 						</div>
-
-						<v-btn :loading="requesting == 'newTrain'" color="primary" :disabled="disableNewTrainBtn" @click="onNewTrain">
-							<v-icon>add_box</v-icon>
-							New Training
-							<span slot="loader" class="arrow-loader">
-								<v-icon light>cached</v-icon>
-							</span>
-						</v-btn>
-						<v-btn :loading="requesting == 'continue'" :disabled="disableContinueBtn" @click="onContinue">
-							<v-icon>play_arrow</v-icon>
-							Continue
-							<span slot="loader" class="arrow-loader">
-								<v-icon light>cached</v-icon>
-							</span>
-						</v-btn>
-						<v-btn :loading="requesting == 'pause'" :disabled="disablePauseBtn" @click="onPause">
-							<v-icon>pause</v-icon>
-							Pause
-							<span slot="loader" class="arrow-loader">
-								<v-icon light>cached</v-icon>
-							</span>
-						</v-btn>
-						<v-btn ref='adjust' :disabled="disableNewTrainBtn || pcp" color="primary" @click="onMask">
-							<v-icon>swap_horiz</v-icon>
-							{{adjust}}
-						</v-btn>
 					</v-form>
 					<v-layout column>
 						<v-layout style='padding:24px' row nowrap>
-							<div style="height:662px;width:520px">
+							<v-flex style="height:700px;width:520px">
 								<v-layout column>
-									<!-- training 結果預覽圖表部分 -->
-									<canvas style="height:150px;maxwidth:512px" id="model_loss"></canvas>
+									<v-layout column>
+										<!-- training 結果預覽圖表部分  -->
+										<canvas ref= 'model_loss' id="model_loss" style="height:150px;maxwidth:512px" ></canvas>
+									</v-layout>
+									<v-flex>
+										<v-btn small :loading="requesting == 'newTrain'" color="primary" :disabled="disableNewTrainBtn" @click="onNewTrain">
+											<v-icon>add_box</v-icon>
+											New Training
+											<span slot="loader" class="arrow-loader">
+												<v-icon light>cached</v-icon>
+											</span>
+										</v-btn>
+										<v-btn small :loading="requesting == 'continue'" :disabled="disableContinueBtn" @click="onContinue">
+											<v-icon>play_arrow</v-icon>
+											Continue
+											<span slot="loader" class="arrow-loader">
+												<v-icon light>cached</v-icon>
+											</span>
+										</v-btn>
+										<v-btn small :loading="requesting == 'pause'" :disabled="disablePauseBtn" @click="onPause">
+											<v-icon>pause</v-icon>
+											Pause
+											<span slot="loader" class="arrow-loader">
+												<v-icon light>cached</v-icon>
+											</span>
+										</v-btn>
+										<v-btn small ref='adjust' :disabled="disableNewTrainBtn || pcp" color="primary" @click="onMask">
+											<v-icon>swap_horiz</v-icon>
+											{{adjust}}
+										</v-btn>
+									</v-flex>
 								</v-layout>
 								<ColorScatter ref='latent_scatter'/>
-							</div>
-							<v-layout  style="margin-left:10px" column>
-								<div ref='histWrapper' style="width:540px;height:662px;overflow-y:scroll">	
-									<HISTOGRAM ref='histogram'/>
-								</div>
-							</v-layout>
+							</v-flex>
+							<v-flex lg12>
+								<v-layout  style="margin-left:10px" column>
+									<div ref='histWrapper' style="height:700px;overflow-y:scroll">	
+										<HISTOGRAM ref='histogram'/>
+									</div>
+								</v-layout>
+							</v-flex>
 						</v-layout>
 					</v-layout>
 					</v-card-title>
@@ -154,7 +161,6 @@ import ColorScatter from '@/components/ColorScatter.vue'
 import PCP from '@/components/Pcp_only.vue'
 import { Promise } from 'q';
 import Covariance from '@/views/Results.vue'
-// import { EventEmitter } from 'events';
 
 const EventBus = {}
 let id = 0
@@ -293,7 +299,9 @@ export default {
 			latent_scatter.clearAllMask()
 		},
 		onNewTrain() {
+			console.log('on New Train')
 			let vm = this
+			let ctx = document.getElementById('model_loss').getContext('2d')
 			vm.requesting = 'newTrain'
 			vm.start = true
 			vm.pcp = false
@@ -305,32 +313,31 @@ export default {
 			
 			// 清空 scatter 
 			latent_scatter.removePoints()
-			let ctx = document.getElementById('model_loss').getContext('2d')
+			
+
 			let promise = new Promise((resolve,reject) => {
 				if(vm.network === 'NN based MDS'){
-					vm.loss_plot.clear()
+					vm.loss_plot.reset()
 					vm.config.options.title.text = 'Distance Loss'
-					vm.loss_plot = new Chart(ctx,vm.config)
-					resolve('chart loading over')
+					resolve('NN based MDS')
 				}
 				else if(vm.network === 'Autoencoder' || vm.network === 'VAE'){
-					vm.loss_plot.clear()
+					vm.loss_plot.reset()
 					vm.config.options.title.text = 'Reconstruction Loss'
-					vm.loss_plot = new Chart(ctx, vm.config)
-					resolve('chart loading over')
+					resolve('Autoencoder or VAE')
 				}
 				else{
-					vm.startTrain()
+					resolve('not a NN based model')
 				}
 			}).then(resolve => {
 				console.log(resolve)
+				vm.startTrain()
 			}).catch(error => {
 				console.error('new train plot error',error)
-			}).finally(() => {
-				vm.startTrain()
 			})
 		},
 		startTrain(){
+			console.log(' training start ')
 			let vm = this
 			this.$axios.post(this.$api + '/train/start', {
 				'network': vm.network,
@@ -630,7 +637,6 @@ export default {
 				title: {
 					display: true,
 					text: 'Distance Loss',
-					// text: 'Reconstruction Loss'
 				},
 				tooltips: {
 					mode: 'index',
@@ -698,11 +704,14 @@ export default {
 
 		EventBus.root = vm
 		vm.eventBus = EventBus
-		// 將 v-combobox 的 click event 修改爲 pcp 繪製
+		// 將 pcp 和 covariance 的 v-combobox 的 click event 修改
+		vm.$refs.pcp_button.$el.getElementsByClassName('v-messages')[0].remove()
 		vm.$refs.pcp_button.$el.getElementsByClassName('v-select__slot')[0].getElementsByTagName('input')[0].remove()
+		vm.$refs.pcp_button.$el.getElementsByClassName('v-select__slot')[0].getElementsByClassName('v-select__selections')[0].remove()
 		vm.$refs.pcp_button.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].onclick = vm.onPCP
 		vm.$refs.pcp_button.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].style.cursor = 'pointer'
 
+		vm.$refs.covariance_matrix_btn.$el.getElementsByClassName('v-messages')[0].remove()
 		vm.$refs.covariance_matrix_btn.$el.getElementsByClassName('v-select__slot')[0].getElementsByTagName('input')[0].remove()
 		vm.$refs.covariance_matrix_btn.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].onclick = vm.onCovariance
 		vm.$refs.covariance_matrix_btn.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].style.cursor = 'pointer'
@@ -715,7 +724,10 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style>
+.v-autocomplete.v-input, .v-autocomplete .v-menu__activator, .v-autocomplete .v-menu__activator * {
+    cursor: default;
+}
 /* The switch - the box around the slider */
 #model-form {
 	width: 100%;
