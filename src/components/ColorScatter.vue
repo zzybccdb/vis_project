@@ -348,6 +348,9 @@ export default {
                     pt.rightdown = vm.mask_pts_rightClick
                     return true
                 }
+                else if(pt.mask_group === undefined){
+                    pt.tint = vm.getColor(pt.x,pt.y)
+                }
                 return false
             })
             // 避免在上面 filter 中修改到了 vm.ctn_pts.children 的順序,所以在這裏再執行一次
@@ -410,8 +413,11 @@ export default {
         },
         // 右鍵旋轉操作,以及選取框開始
         rightdown(e){
+            let pcp_lines = vm.eventBus.pcp.ctn_lines.children
+            let mask_group = vm.mask_group
+            console.log(mask_group.length)
             // 選擇框模式
-            if(vm.mask_mode && vm.pcp_mode){
+            if(vm.mask_mode && vm.pcp_mode && mask_group.length === 0){
                 // 控制是否 mask_box 绘制模式
                 vm.mask_box_draw = true
                 vm.mask_box.startx = e.data.global.x
