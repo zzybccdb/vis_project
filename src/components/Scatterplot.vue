@@ -1,5 +1,6 @@
 <template>
-    <v-layout ref='layout'>
+    <!-- <v-layout style='width:440px;height:440px;overflow:auto' ref='layout'> -->
+    <v-layout style='overflow:auto' ref='layout'>
         <canvas ref='canvas'></canvas>
     </v-layout>
 </template>
@@ -25,8 +26,11 @@ export default {
                     datasets: [{
                         data: [{
                             x: 0,
-                            y: 0
-                        },]
+                            y: 0,
+                           
+                        },],
+                        backgroundColor: 'rgb(152,185,216)',
+                        borderColor: 'rgba(0,0,0,0.3)',
                     }]
                 },
                 options: {
@@ -65,15 +69,14 @@ export default {
         update(data=[{x:1,y:1}]){
             vm.scatterChart.data.datasets[0].data = data
             vm.scatterChart.update()
-            console.log("ok")
         }
     },
     mounted(){  
         vm = this
         canvas = vm.$refs.canvas
         let layout = vm.$refs.layout
-        canvas.width = parseFloat(layout.clientWidth)
-        canvas.height = parseFloat(layout.clientWidth)
+        canvas.width = layout.clientWidth
+        canvas.height = layout.clientWidth
         vm.ScatterPlotUInit()
     }
 }

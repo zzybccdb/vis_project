@@ -17,10 +17,11 @@
             </v-flex>           -->
             <v-flex lg8 class="card" style='margin:5px;'> 
                 <v-layout row nowrap fill-height>
-                    <v-flex lg7 ref='heatmapflex' style='margin:5px;overflow:hidden'>
+                    <v-flex lg9 ref='heatmapflex' style='margin:5px;overflow:hidden;'>
                         <heatmap ref='heatmap'></heatmap>
                     </v-flex>
-                    <v-flex lg5 style='margin:5px;overflow:scroll'>
+                    <!-- <v-flex style='margin:5px;overflow:scroll;height:440px;width:440px;overflow:auto'> -->
+                    <v-flex lg3 style='margin:5px;overflow:scroll;overflow:hidden'>
                         <scatterplot ref='scatter'></scatterplot>
                     </v-flex>
                 </v-layout>
@@ -142,7 +143,6 @@ export default{
         vm.initial()
         vm.checkInit()
 
-        vm.$refs.heatmapflex.style.height = vm.$refs.scatter.$refs.layout.clientWidth
     },
     //离开时执行的内容
     beforeDestroy(){
