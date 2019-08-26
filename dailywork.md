@@ -152,3 +152,6 @@
 - 调整 home css style,防止遮蔽问题(done)
 - 将 color scatter 中的左右键功能隔离,禁止交叉使用中
 - 修正 pcp only 中的filter box filter结果
+
+#### 2019/08/26
+- 在 training 頁面載入時加載資料, 切換dataset 時更換資料

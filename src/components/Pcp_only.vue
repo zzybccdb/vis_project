@@ -73,6 +73,7 @@ export default {
             vm.columns = columns
             let length = vm.columns.length
             let margin = vm.app.layout.margin
+            let latent_scatter = vm.eventBus.latent_scatter
             // 重新計算圖表長寬，軸線間距最小爲120px
             let slot = (vm.app.layout.width - margin.left - margin.right)/(length-1)
             vm.dim_slot = (slot<vm.min_axis_gap)?vm.min_axis_gap:slot
@@ -82,8 +83,9 @@ export default {
             vm.app.renderer.resize(width,height)
             // 去除资料中原始包含的日期和latent信息
             vm.data = data.map(d => {
-               return d.slice(1,-2)
-             })
+            //    return d.slice(1,-2)
+                return latent_scatter.filterSelectedDimData(d)
+            })
             vm.extent = extent
             vm.d3ScaleSetting(extent)
             vm.drawAxis()
@@ -221,8 +223,9 @@ export default {
         },
         // 繪製選中資料點
         drawMaskDataLine(mask_pts, color_cb=undefined){
+            let latent_scatter = vm.eventBus.latent_scatter
             mask_pts.forEach(pt => {
-                let data = pt.data.slice(1,-2) 
+                let data = latent_scatter.filterSelectedDimData(pt.data)
                 let line = new PIXI.Graphics()
                 line.lineStyle(1, 0xffffff, 1)
 

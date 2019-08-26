@@ -15,6 +15,9 @@ let moment = undefined
 const date_format = 'YYYY-MM-DD HH:mm:ss'
 
 export default {
+    computed(){
+        vm.column_index = undefined
+    },
     methods:{
         // temporal pause
         tempPause(){
@@ -261,14 +264,14 @@ export default {
             vm.app.stage.addChild(vm.wrapper)
         },
         // 加入数据点
-        addPoints(data){
+        addPoints(latent){
             vm.dataWrapper = {}
-            vm.ctn_pts.count = data.length
-            data.forEach((d) => {
+            vm.ctn_pts.count = latent.length
+            latent.forEach((d) => {
                 let date_index = moment(d[0]).utc().format(date_format)
                 vm .dataWrapper[date_index] = {}
                 let sp = new PIXI.Sprite(vm.dotTexture)
-                vm.setPointLocation(sp,d.slice(-2)[0],d.slice(-2)[1])
+                vm.setPointLocation(sp,0,0)
                 sp.alpha = 0.3
                 sp.data = d
                 sp.center_mark = false
@@ -683,7 +686,7 @@ export default {
                 let mean = [0,0]
                 let size = mask_pts.length
                 mask_pts.forEach(pt => {
-                    mask_data.push(pt.data.slice(1,-2))
+                    mask_data.push(vm.filterSelectedDimData(pt.data))
                     mean[0] += pt.x
                     mean[1] += pt.y
                 })
@@ -694,6 +697,15 @@ export default {
             })
             return [cdata,cxy]
         },
+        // 過濾選中維度資料
+        filterSelectedDimData(data){
+            let indexs = vm.column_index
+            let filter_data = []
+            indexs.forEach(i => {
+                filter_data.push(data[i])
+            })
+            return filter_data
+        }
     },
     mounted(){
         vm = this

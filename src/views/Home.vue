@@ -202,7 +202,7 @@ export default {
 		model_loss:true,
 		histogram:false,
 		pcp: false,
-		// histogram_loading:false,
+		iteration:0,
 		adjust: 'pan',
 		progress : true,
 		pcp_error_info: false,
@@ -309,8 +309,7 @@ export default {
 			EventBus.latent_scatter = latent_scatter
 			latent_scatter.eventBus = EventBus
 			latent_scatter.mask_group = []
-			// 清除殘留圖像	
-			
+
 			// 清空 scatter 
 			latent_scatter.removePoints()
 			
@@ -330,7 +329,7 @@ export default {
 					resolve('not a NN based model')
 				}
 			}).then(resolve => {
-				console.log(resolve)
+				//console.log(resolve)
 				vm.startTrain()
 			}).catch(error => {
 				console.error('new train plot error',error)
@@ -349,7 +348,8 @@ export default {
 				'input_window':Number(vm.input_window),
 				'output_window':Number(vm.output_window),
 			}).then(response => {
-				console.log('startTrain')
+				let latent_scatter = vm.$refs.latent_scatter
+				latent_scatter.column_index = response.data.column_index
 				vm.state = response.data.state
 			}).catch(error => {
 				console.log('something went wrong! Home startTrain', error)
@@ -369,15 +369,18 @@ export default {
 			vm.pcp = false
 			latent_scatter.pcp_mode = false
 			latent_scatter.mask_mode = true
-			// latent_scatter.mask_mode = false
-			// latent_scatter.resetColor()
+
+			EventBus.latent_scatter = latent_scatter
+			latent_scatter.eventBus = EventBus
+
 
 			await latent_scatter.onContinue()
 			vm.requesting = 'continue'
 			
 			vm.$axios.post(vm.$api + '/train/continue').then(response => {
-				console.log('on Continue')
 				vm.state = response.data.state
+				let latent_scatter = vm.$refs.latent_scatter
+				latent_scatter.column_index = response.data.column_index
 			}).catch(error => {
 				console.error('something went wrong! Home onContimue', error)
 			}).finally(() => {
@@ -391,7 +394,6 @@ export default {
 			latent_scatter.mask_mode = false
 			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'	
 			this.$axios.post(this.$api + '/train/pause').then(response => {
-				console.log('on Pause')
 				vm.state = response.data.state
 				id += 1
 				vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':id}).then(response => {
@@ -419,7 +421,7 @@ export default {
 				vm.config.data.datasets[0].data.push(dis_loss);
 			}
 
-			if (vm.config.data.labels > 100) {
+			if (vm.config.data.labels.length > 40) {
 				vm.config.data.labels.shift();
 				vm.config.data.datasets[0].data.shift();
 			}
@@ -433,10 +435,22 @@ export default {
 					vm.state = response.data.state
 					let model = response.data.model
 					let progress_response = response
+					let latent_scatter = vm.$refs.latent_scatter
+					if(latent_scatter.latent===false){
+						latent_scatter.addPoints(window.sample_raw_data)
+					}
+					if(model === 'NN based MDS'){
+						if(progress_response.data.rec_loss && progress_response.data.dis_loss){
+							vm.addLoss(undefined,progress_response.data.dis_loss,progress_response.data.step)
+						}
+					}
+					else{
+						if(progress_response.data.rec_loss){
+							vm.addLoss(progress_response.data.rec_loss,undefined,progress_response.data.step)
+						}						
+					}
 					// 加载 latent 资料点， 资料结构 =》 {日期，dimension1，dimensin2，```，latentx，latenty}
-					
-					vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':0}).then(response => {
-						let latent_scatter = vm.$refs.latent_scatter
+					vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':vm.iteration}).then(response => {
 						let data = response.data.rawdata
 						let columns = response.data.columns
 
@@ -446,26 +460,13 @@ export default {
 						if(latent_scatter.latent){
 							latent_scatter.pointsTransition(data)
 						}
-						else{
-							latent_scatter.addPoints(data)
-						}
-
-						if(model === 'NN based MDS'){
-							if(progress_response.data.rec_loss && progress_response.data.dis_loss){
-								vm.addLoss(undefined,progress_response.data.dis_loss,progress_response.data.step)
-							}
-							console.log('NN based MDS')
-						}
-						else{
-							if(progress_response.data.rec_loss){
-								vm.addLoss(progress_response.data.rec_loss,undefined,progress_response.data.step)
-							}						
-						}
+						vm.progress = true
 					}).catch(error => {
 						console.error('Home Get progress went wrong!',error)
-					}).finally(() => {
-						vm.progress = true
 					})
+					// .finally(() => {
+					// 	vm.progress = true
+					// })
 				}).catch(error => {
 					console.error('Something went wrong!',error)
 				})
@@ -511,22 +512,30 @@ export default {
 		onDatasetChange() {
 			let vm = this	
 			let histogram = vm.$refs.histogram
+			if(histogram.wrapper !== undefined){
+				histogram.wrapper.alpha = 0
+			}
 			vm.start = true
 			this.$axios.post(this.$api + '/train/change_dataset', {
 				'name': vm.dataset
 			}).then(response => {
 				if(response.data.success){
+					histogram.clear()
 					vm.state = response.data.state
 					vm.switch_dataset = true
 					vm.columns_all = response.data.columns_all
 					vm.columns = response.data.columns
 					vm.dataset_errors = []
+					vm.sample_raw_data = response.data.sample_raw_data
+					window.sample_raw_data = vm.sample_raw_data		
 					// 設定 pcp 爲 false
 					vm.pcp = false
-					histogram.clear()
 					histogram.loadData()
 					// // 清空 scatter 
 					// vm.$refs.latent_scatter.removePoints()
+				}
+				if(histogram.wrapper !== undefined){
+					histogram.wrapper.alpha = 1
 				}
 			}).catch(error => {
 				vm.dataset_errors = [error]
@@ -666,7 +675,7 @@ export default {
 		}	
 		let ctx = document.getElementById('model_loss').getContext('2d')
 		vm.loss_plot = new Chart(ctx,vm.config)
-
+		let sampled = (window.sample_raw_data === undefined)?false:true
 		this.$axios.post(this.$api + '/train/get_param', [
 				'networks',
 				'network',
@@ -693,6 +702,14 @@ export default {
 			vm.loss_weight = response.data.loss_weight
 			vm.input_window = response.data.input_window
 			vm.output_window = response.data.output_window
+
+			if(sampled === false){
+				vm.sample_raw_data = response.data.sample_raw_data
+				window.sample_raw_data = vm.sample_raw_data
+			}else{
+				vm.sample_raw_data = window.sample_raw_data
+			}
+		 	// console.log(window.sample_raw_data)
 			let histogram = vm.$refs.histogram
 			EventBus.histogram = histogram
 			histogram.eventBus = EventBus
@@ -719,6 +736,8 @@ export default {
 
 	beforeDestroy() {
 		clearInterval(this.timer)
+		window.sample_raw_data = vm.sample_raw_data
+		window.mask_group = vm.$refs.latent_scatter.mask_group
 	}
 }
 </script>
