@@ -161,3 +161,4 @@
 - 在 pcp only 下, color scatter 右鍵圈選有結果呈現時,僅僅過濾繪製出來的內容.
 - 修改 pcp 繪製 filter box 的按鍵方式
 - 加入判斷,如果 latent scatter 存在 pcp mask pts,filter box 就從 pcp mask pts 中過濾資料
+- 禁止在 pcp_only 的狀況下移動 mask_pts

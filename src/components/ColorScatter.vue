@@ -386,7 +386,7 @@ export default {
         },
         // 选中点群的拖拽开始
         mask_pts_click(e){
-            if(vm.mask_mode && !vm.pcp_mode){
+            if(vm.mask_mode){
                 vm.mask_pt_clicked = true
                 vm.group_move = [e.data.global.x, e.data.global.y]
                 vm.current_mask_pts = e.currentTarget.mask_group
@@ -499,14 +499,14 @@ export default {
             // if(vm.mask_mode && vm.group_move && !vm.pcp_mode){  
             if(vm.mask_mode && vm.group_move){
                 let mask_pts = undefined
-                if (vm.mask_pt_clicked){
+                if (vm.mask_pt_clicked ){
                     mask_pts = vm.current_mask_pts
                 } 
                 else{
                     // 注意 slice 回傳的是一個 array
                     mask_pts = vm.mask_group.slice(-1)[0]
                 }
-                if(mask_pts !== undefined){
+                if(mask_pts !== undefined && !vm.pcp_mode){
                     vm.maskPointsMove(e,mask_pts)
                 }
             }    
