@@ -45,32 +45,6 @@
 							@change="onLossWeightChange">
 							</v-text-field>
 						</v-layout>
-						<!-- 欄位選擇 -->
-						<!-- <v-combobox
-						:error-messages="columns_errors"
-						v-model="columns"
-						:items="columns_all"
-						label="Dimension"
-						multiple
-						chips
-						@change="updateParam(onColumnsChange)"
-						:disabled="disableForm"
-						ref="pcp_button"
-						readonly
-						>
-							<template slot="selection" slot-scope="data">
-							<v-chip
-								:selected="data.selected"
-								close
-								small
-								text-color="white"
-								:color="disableForm ? 'grey' : 'green'"
-								@input="remove(data.item)"
-							>
-								<strong>{{ data.item }}</strong>&nbsp;
-							</v-chip>
-							</template>
-						</v-combobox> -->
 						<v-layout column>
 							<v-combobox
 							:error-messages="columns_errors"
@@ -301,7 +275,6 @@ export default {
 		onNewTrain() {
 			console.log('on New Train')
 			let vm = this
-			let ctx = document.getElementById('model_loss').getContext('2d')
 			vm.requesting = 'newTrain'
 			vm.start = true
 			vm.pcp = false
@@ -314,7 +287,7 @@ export default {
 			latent_scatter.removePoints()
 			
 
-			let promise = new Promise((resolve,reject) => {
+			new Promise((resolve) => {
 				if(vm.network === 'NN based MDS'){
 					vm.loss_plot.reset()
 					vm.config.options.title.text = 'Distance Loss'
@@ -328,8 +301,7 @@ export default {
 				else{
 					resolve('not a NN based model')
 				}
-			}).then(resolve => {
-				//console.log(resolve)
+			}).then(() => {
 				vm.startTrain()
 			}).catch(error => {
 				console.error('new train plot error',error)
@@ -449,7 +421,7 @@ export default {
 							vm.addLoss(progress_response.data.rec_loss,undefined,progress_response.data.step)
 						}						
 					}
-					// 加载 latent 资料点， 资料结构 =》 {日期，dimension1，dimensin2，```，latentx，latenty}
+					// 加载 latent 资料点， 资料结构 =》 {date,latentx，latenty}
 					vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':vm.iteration}).then(response => {
 						let data = response.data.rawdata
 						let columns = response.data.columns
@@ -464,9 +436,7 @@ export default {
 					}).catch(error => {
 						console.error('Home Get progress went wrong!',error)
 					})
-					// .finally(() => {
-					// 	vm.progress = true
-					// })
+
 				}).catch(error => {
 					console.error('Something went wrong!',error)
 				})
@@ -709,7 +679,35 @@ export default {
 			}else{
 				vm.sample_raw_data = window.sample_raw_data
 			}
-		 	// console.log(window.sample_raw_data)
+
+			if(window.latent){
+				let latent_scatter = vm.$refs.latent_scatter
+				latent_scatter.column_index = window.column_index
+				latent_scatter.pcp_mode = false
+				latent_scatter.mask_mode = true
+
+				EventBus.latent_scatter = latent_scatter
+				latent_scatter.eventBus = EventBus
+				if(latent_scatter.latent===false){
+					latent_scatter.addPoints(window.sample_raw_data)
+				}
+				// 加载 latent 资料点， 资料结构 =》 {date,latentx，latenty}
+				vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':vm.iteration}).then(response => {
+					let data = response.data.rawdata
+					let columns = response.data.columns
+
+					latent_scatter.data = data
+					latent_scatter.columns = columns
+					// 載入上一輪latent 位置
+					latent_scatter.pointsTransition(data)
+					// 載入上一輪設定的控制點
+					latent_scatter.setPreMask_group(window.mask_group)
+				}).catch(error => {
+					console.error('Home Get progress went wrong!',error)
+				})
+
+			}
+
 			let histogram = vm.$refs.histogram
 			EventBus.histogram = histogram
 			histogram.eventBus = EventBus
@@ -735,9 +733,13 @@ export default {
 	},
 
 	beforeDestroy() {
+		let vm = this
 		clearInterval(this.timer)
+		let latent_scatter = vm.$refs.latent_scatter
 		window.sample_raw_data = vm.sample_raw_data
-		window.mask_group = vm.$refs.latent_scatter.mask_group
+		window.mask_group = latent_scatter.mask_group
+		window.latent = latent_scatter.latent
+		window.column_index = latent_scatter.column_index
 	}
 }
 </script>

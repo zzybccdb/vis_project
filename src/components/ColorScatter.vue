@@ -364,6 +364,26 @@ export default {
             vm.mask_group_drawPCP()
             vm.mask_pts = undefined
         },
+        // 將上一輪有保留的 mask_group 標記
+        setPreMask_group(mask_group){
+            mask_group.forEach(mask_pts => {
+                let group = []
+                mask_pts.forEach((item,i) => {
+                    let date = moment(item.data[0]).utc().format(date_format)
+                    let pt = vm.dataWrapper[date].point
+                    group.push(pt)
+                    pt.tint = 0xffffff
+                    pt.mask_group = group
+                    pt.center_mark = true
+                    pt.interactive = true
+                    pt.buttonmode = true
+                    pt.mousedown = vm.mask_pts_click
+                    pt.rightdown = vm.mask_pts_rightClick 
+                    vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
+                })
+                vm.mask_group.push(group)
+            })
+        },
         // 选中点群的拖拽开始
         mask_pts_click(e){
             if(vm.mask_mode && !vm.pcp_mode){
@@ -416,9 +436,10 @@ export default {
         },
         // 右鍵旋轉操作,以及選取框開始
         rightdown(e){
-            let pcp_lines = vm.eventBus.pcp.ctn_lines.children
+            // if(vm.eventBus.pcp.ctn_lines !== undefined){
+            //     let pcp_lines = vm.eventBus.pcp.ctn_lines.children
+            // }
             let mask_group = vm.mask_group
-            console.log(mask_group.length)
             // 選擇框模式
             if(vm.mask_mode && vm.pcp_mode && mask_group.length === 0){
                 // 控制是否 mask_box 绘制模式
@@ -623,11 +644,12 @@ export default {
         // 确认是否又被 filter box 选中'
         pcpFilter(columns,axis){
             let mask_pts = undefined
+            let column_index = vm.column_index
             if(vm.mask_group.length > 0){
                 mask_pts = []
                 vm.mask_group.forEach(pts => {
                     let mask = pts.filter(pt => {
-                        return vm.filter_cb(pt,columns,axis)
+                        return vm.filter_cb(pt,columns,axis,column_index)
                     })
                     window.mask = mask
                     mask_pts = mask_pts.concat(mask)
@@ -641,7 +663,7 @@ export default {
             }
             else{
                 mask_pts = vm.ctn_pts.children.filter(pt => {
-                    return vm.filter_cb(pt,columns,axis)
+                    return vm.filter_cb(pt,columns,axis,column_index)
                 })
             }
             // 不允許其出現在最上方
@@ -650,7 +672,7 @@ export default {
             })
             return [mask_pts,vm.getColor]
         },
-        filter_cb(pt,columns,axis){
+        filter_cb(pt,columns,axis,column_index){
             if(!pt.center_mark){
                 pt.tint = vm.getColor(pt.x,pt.y)
             }
@@ -662,7 +684,7 @@ export default {
                     return filter_box.some(box => {
                         box_count += 1
                         let [max,min] = box.extent
-                        return max >= data[i+1] && min <= data[i+1]
+                        return max >= data[column_index[i]] && min <= data[column_index[i]]
                     })
                 }
                 else{
@@ -681,6 +703,7 @@ export default {
         confirmCenterPoints(){
             let cdata = []
             let cxy = []
+            console.log(vm.mask_group)
             vm.mask_group.forEach((mask_pts) => {
                 let mask_data = []
                 let mean = [0,0]
