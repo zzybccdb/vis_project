@@ -147,11 +147,17 @@ export default {
             axisLine.interactive = true
             axisLine.buttonmode = true
             
-            axisLine.mousedown = vm.drawFilterStart
+            // axisLine.mousedown = vm.drawFilterStart
+            // axisLine.mousemove = vm.filterResize
+            // axisLine.mouseup = vm.drawFilterEnd
+            // axisLine.mouseout = vm.drawMouseOut
+            // axisLine.rightdown = vm.removeFilterBox
+
+            axisLine.rightdown = vm.drawFilterStart
             axisLine.mousemove = vm.filterResize
-            axisLine.mouseup = vm.drawFilterEnd
+            axisLine.rightup = vm.drawFilterEnd
             axisLine.mouseout = vm.drawMouseOut
-            axisLine.rightdown = vm.removeFilterBox
+            axisLine.mousedown = vm.removeFilterBox
 
             axisLine.hitArea = new PIXI.Rectangle(axisLine.x-10, axisLine.y,20,190)
             axisLine.y = axis.label.y + axis.label.height + 5

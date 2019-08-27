@@ -207,7 +207,7 @@ export default {
 					}
 					if(box.height < Math.abs(box.start_y - p.y)){
 						box.height = Math.abs(box.start_y - p.y)
-						vm.filterLines()
+						// vm.filterLines()
 					}
 					else{
 						vm.drawFilterEnd(e,line,grp_axis)
@@ -221,7 +221,6 @@ export default {
 				let box = line.current_box 
 				if (box && line.box.length!= 0) {
 					if (box.height < 10) {
-						console.log('remove filter box')
 						grp_axis.removeChild(box)
 						if(line.box[line.box.length-1].height < 10)
 							line.box.splice(-1,1)
@@ -272,19 +271,10 @@ export default {
 				grp: grp_axis,
 			}
 			vm.state.axis.push(grp_axis.axis)
-			// vm.state.axis.push({
-			// 	idx,
-			// 	dim,
-			// 	additional,
-			// 	name: column,
-			// 	disabled: false,
-			// 	scale: null,
-			// 	extent: null,
-			// 	grp: grp_axis,
-			// })
-			line.on("mousedown", (e) => vm.drawFilterStart(e, line, grp_axis))
+
+			line.on("rightdown", (e) => vm.drawFilterStart(e, line, grp_axis))
 			line.on("mousemove", (e) => vm.selectingRange(e, line, grp_axis))
-			line.on("mouseup", (e) => vm.drawFilterEnd(e, line, grp_axis))
+			line.on("rightup", (e) => vm.drawFilterEnd(e, line, grp_axis))
         }, 
 		drawFilterBox(x, y, length){
 			let vm = this 
@@ -372,7 +362,8 @@ export default {
 			box.on("mouseup", () => box.moving = false)
 			box.on("mouseover", () => vm.filterBoxMoveOver(line, box))
 			box.on("mouseout", () => vm.filterBoxOut(line))
-			box.on("rightdown", () => vm.removeFilterBox(line, box, container))
+			// box.on("rightdown", () => vm.removeFilterBox(line, box, container))
+			box.on("mousedown", () => vm.removeFilterBox(line, box, container))
 			box.enabled = true
 			return box
 		},	 
@@ -489,7 +480,6 @@ export default {
 			let no_box = vm.state.axis.every(a => {
 				return a.grp.child_dict.line.box.length === 0
 			})	
-			// vm.state.axis[1].grp.child_dict.line.box.forEach((box,bi) => console.log(bi, ":", box.x, box.y))
 			if(!num_ctn_box){
 				vm.updateAlpha()
 			}
@@ -539,17 +529,16 @@ export default {
 							d.cal.selected = true
 							d.cal.texture = vm.eventBus.cal.cellFilterTexture
 							d.cm.texture = vm.eventBus.cm.selectedTexture
-							d.cm.alpha = 1.0
+							d.cm.alpha = 0.3
 							if (d.cal && d.cal.selected) {
 								let newline = new vm.$PIXI.Graphics()
 								vm.ctn_lines.addChild(newline)
 								d.pcp = newline
 								newline.tint = d.color
-								// vm.adjustLines()
+								vm.adjustLines()
 							}
 						}
 					}
-					////////////////////////////////////////
 					////////////////////////////////////////
 					if (line) {
 						if (pass) {
@@ -567,9 +556,9 @@ export default {
 					}
 				}
 			})
-			if(num_ctn_box===0 && vm.num_filter_box !== 0){
-				vm.updateData()
-			}
+			// if(num_ctn_box===0 && vm.num_filter_box !== 0){
+			// 	vm.updateData()
+			// }
 		},
 		adjustLines() {
 			let vm = this

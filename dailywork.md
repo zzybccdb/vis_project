@@ -157,4 +157,6 @@
 - 在 training 頁面載入時加載資料, 切換dataset 時更換資料
 
 #### 2019/08/27
-- 修復 PCP only 無法 filter 的問題
+- 修復 PCP only 無法 filter 的問題(done)
+- 在 pcp only 下, color scatter 右鍵圈選有結果呈現時,僅僅過濾繪製出來的內容.
+- 修改 pcp 繪製 filter box 的按鍵方式
