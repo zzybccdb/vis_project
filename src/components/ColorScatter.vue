@@ -645,8 +645,9 @@ export default {
         pcpFilter(columns,axis){
             let mask_pts = undefined
             let column_index = vm.column_index
-            if(vm.mask_group.length > 0){
-                mask_pts = []
+            mask_pts = []
+            // 當存在 latent scatter 中存在點選中的 mask_group
+            if( vm.mask_group.length > 0 ){    
                 vm.mask_group.forEach(pts => {
                     let mask = pts.filter(pt => {
                         return vm.filter_cb(pt,columns,axis,column_index)
@@ -660,6 +661,12 @@ export default {
                         mask_pts = mask_pts.concat(pts)
                     })
                 }
+            }
+            // 當存在 latent scatter pcp mask pts 時
+            else if( vm.pcp_mask_pts.length > 0 ){
+                mask_pts = vm.pcp_mask_pts.filter(pt => {
+                    return vm.filter_cb(pt,columns,axis,column_index)
+                })
             }
             else{
                 mask_pts = vm.ctn_pts.children.filter(pt => {

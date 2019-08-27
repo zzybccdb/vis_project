@@ -160,3 +160,4 @@
 - 修復 PCP only 無法 filter 的問題(done)
 - 在 pcp only 下, color scatter 右鍵圈選有結果呈現時,僅僅過濾繪製出來的內容.
 - 修改 pcp 繪製 filter box 的按鍵方式
+- 加入判斷,如果 latent scatter 存在 pcp mask pts,filter box 就從 pcp mask pts 中過濾資料

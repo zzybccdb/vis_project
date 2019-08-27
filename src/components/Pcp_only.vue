@@ -146,12 +146,6 @@ export default {
             axisLine.lineTo(0,vm.plot_height)
             axisLine.interactive = true
             axisLine.buttonmode = true
-            
-            // axisLine.mousedown = vm.drawFilterStart
-            // axisLine.mousemove = vm.filterResize
-            // axisLine.mouseup = vm.drawFilterEnd
-            // axisLine.mouseout = vm.drawMouseOut
-            // axisLine.rightdown = vm.removeFilterBox
 
             axisLine.rightdown = vm.drawFilterStart
             axisLine.mousemove = vm.filterResize
@@ -266,11 +260,13 @@ export default {
                     return vm.scale[label].scale(y)
                 })
                 return max >= py && min <= py
-            })[0]  
-            axisLine.filter_box.removeChild(box)
-            vm.removeLines()
-            let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
-            vm.drawMaskDataLine(mask_pts,cb)
+            })[0]
+            if(box !== undefined){
+                axisLine.filter_box.removeChild(box)
+                vm.removeLines()
+                let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
+                vm.drawMaskDataLine(mask_pts,cb)
+            }
         },
         // 基本的 filter box 元件繪製
         initFilterBox(axis,box,x1,y1,width,height){
@@ -299,9 +295,9 @@ export default {
                 let y2 = e.data.global.y
                 let axis = e.axis
                 let current_box = axis.filter_box.children.slice(-1)[0]
-                if(y2-y1 < 0){
+                if( 0 > (y2-y1) ){
                     vm.initFilterBox(axis,current_box,axis.x-10,y2,20,y1-y2)
-                    // 這種繪製的方式，在開啓交互模式時會錯誤
+                    // 直接負數值繪製時，在開啓交互模式時會錯誤
                 }
                 else{
                     vm.initFilterBox(axis,current_box,axis.x-10,y1,20,y2-y1)
