@@ -166,7 +166,7 @@ export default {
 			line.moveTo(0, 0)
 			line.lineTo(0, vm.plot_height)
 			line.interactive = true
-			line.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 1, 0, 2 * vm.filterbox_width, vm.plot_height);
+			line.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 3 * vm.filterbox_width, vm.plot_height);
 			line.y = indicator.y + vm.indicator_radius + 5
 			line.box = []	
 			return line		
