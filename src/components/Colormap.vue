@@ -31,8 +31,10 @@ export default {
 			// console.log(vm.eventBus.data[0].cm)
 			vm.eventBus.data.forEach(d => {
 				if(d.cal.selected && d.cal){
-					d.cm.texture = vm.selectedTexture
+					// d.cm.texture = vm.selectedTexture
+					d.cm.tint = 0xffffff
 					d.cm.alpha = 1.0	
+					vm.ctn_points.setChildIndex(d.cm,vm.ctn_points.children.length-1)
 				}	
 			});
 		},
@@ -41,7 +43,8 @@ export default {
 			let vm = this
 			vm.eventBus.data.forEach(d => {
 				if(!d.cal.selected){
-					d.cm.texture = vm.dotTexture
+					// d.cm.texture = vm.dotTexture
+					d.cm.tint = d.cal.tint
 					d.cm.alpha = 0.3	
 				}
 			})
@@ -352,22 +355,7 @@ export default {
 		switchZoom() {
 			let vm = this;
 
-			//////////////////////
-			//auto rotation
-			/////////////////////
-			// vm.app.stage.mousedown = function(e){
-			// 	vm.rotating = true
-			// 	vm.ang1 = Math.atan2(e.data.global.y - 128, e.data.global.x - 128)
-			// }
-
-			// autoRotate = ()=>{
-			// 	if(vm.rotating){
-			// 		vm.rotation = Math.atan2(e.data.global.y - 128, e.data.global.x - 128) - vm.ang1 + vm.rotation_acc
-			// 		vm.rotate(vm.rotation)
-			// 	}else{
-			// 		return
-			// 	}
-			// }
+			vm.initZoom()
 
 			vm.app.stage.rightdown = function(e) {
 				vm.rotating = true
@@ -389,6 +377,8 @@ export default {
 				vm.rotating = false
 				vm.rotation_acc = vm.rotation
 			}
+
+			vm.app.stage.mouseup = function(){}
 		},
 
 		init() {
@@ -421,13 +411,13 @@ export default {
 
 			let g = new vm.$PIXI.Graphics
 			g.lineStyle(1, 0x000000)
-			g.beginFill(0xFF0000)
+			g.beginFill(0xFFFFFF,1)
 			g.drawCircle(0, 0, 3, 3)
 			g.endFill()
 			vm.selectedTexture = g.generateCanvasTexture()
 
 			let mt = new vm.$PIXI.Graphics
-			mt.lineStyle(1, 0x0)
+			mt.lineStyle(1, 0x000000)
 			mt.beginFill(0xFFFFFF)
 			mt.drawCircle(0, 0, 3, 3)
 			mt.endFill()
@@ -456,8 +446,10 @@ export default {
 			let ctn_box = new vm.$PIXI.Container()
 			ctn_box.name = 'ctn_box'
 			vm.app.stage.addChild(ctn_box)
+			vm.$d3.select('#colormap').on('.zoom', null);
 			// 繪製 selection box
-			let rightdown = function(e) {
+			// let rightdown = function(e) {
+			let mousedown = function(e) {	
 				let p = e.data.getLocalPosition(vm.app.stage)
 				let box = new vm.$PIXI.Graphics()
 				box.x = p.x
@@ -500,34 +492,36 @@ export default {
 				}
 			}
 
-			let rightup = function() {
-				let box = ctn_box.children[ctn_box.children.length-1]
-				let rect = [box.toplefg.x, box.toplefg.y,box.bottomright.x,box.bottomright.y]
-				vm.eventBus.data.forEach( d =>{
-					if( d.cm ){
-						let p = d.cm
-						if (!d.mask) {
-							if(d.cal && vm.collision([p.x,p.y], rect)){
-								d.cal.texture = vm.eventBus.cal.cellTextureSelected
-								d.cal.selected = true
-							}  else {
-								// d.cal.texture = d.cal.oldTexture
-								// d.cal.selected = false
+			let mouseup = function(e) {
+				if(ctn_box.children.length > 0){
+					let box = ctn_box.children[ctn_box.children.length-1]
+					let rect = [box.toplefg.x, box.toplefg.y,box.bottomright.x,box.bottomright.y]
+					vm.eventBus.data.forEach( d =>{
+						if( d.cm ){
+							let p = d.cm
+							if (!d.mask) {
+								if(d.cal && vm.collision([p.x,p.y], rect)){
+									d.cal.texture = vm.eventBus.cal.cellTextureSelected
+									d.cal.selected = true
+								}  else {
+									// d.cal.texture = d.cal.oldTexture
+									// d.cal.selected = false
+								}
 							}
 						}
-					}
-				})
-				ctn_box.removeChildAt(ctn_box.children.length-1)
-				ctn_box.selecting = false
-				vm.eventBus.cal.adjustAxisOrder()
-				vm.eventBus.pcp.clearData()
-				vm.eventBus.pcp.updateData()
-				vm.highLightSelectedPoint()
+					})
+					ctn_box.removeChildAt(ctn_box.children.length-1)
+					ctn_box.selecting = false
+					vm.eventBus.cal.adjustAxisOrder()
+					vm.eventBus.pcp.clearData()
+					vm.eventBus.pcp.updateData()
+					vm.highLightSelectedPoint()
+				}
 			}
-
-			vm.app.stage.rightdown = rightdown
+	
+			vm.app.stage.mousedown = mousedown
 			vm.app.stage.mousemove = mousemove
-			vm.app.stage.rightup = rightup
+			vm.app.stage.mouseup = mouseup
 		},
 
 		clearSelect() {
@@ -538,7 +532,8 @@ export default {
 					d.cal.selected = false
 					d.cal.singSelected = false
 					d.cal.neibor = false
-					d.cm.texture = vm.dotTexture
+					// d.cm.texture = vm.dotTexture
+					d.cm.tint = d.cal.tint
 					d.cm.alpha = 0.3	
 				}
 			})

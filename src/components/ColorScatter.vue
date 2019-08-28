@@ -440,13 +440,13 @@ export default {
             //     let pcp_lines = vm.eventBus.pcp.ctn_lines.children
             // }
             let mask_group = vm.mask_group
-            // 選擇框模式
-            if(vm.mask_mode && vm.pcp_mode && mask_group.length === 0){
-                // 控制是否 mask_box 绘制模式
-                vm.mask_box_draw = true
-                vm.mask_box.startx = e.data.global.x
-                vm.mask_box.starty = e.data.global.y
-            }
+            // // 選擇框模式
+            // if(vm.mask_mode && vm.pcp_mode && mask_group.length === 0){
+            //     // 控制是否 mask_box 绘制模式
+            //     vm.mask_box_draw = true
+            //     vm.mask_box.startx = e.data.global.x
+            //     vm.mask_box.starty = e.data.global.y
+            // }
         },
         // 清除 mask_pts
         clearPCPMaskPts(){
@@ -486,15 +486,15 @@ export default {
             if(!vm.mask_mode && vm.group_move){
                 vm.allPointsMove(e)
             }
-            // 執行 PCP mask 選擇框
-            if(vm.mask_box_draw && vm.pcp_mode){
-                if(vm.pcp_mask_pts){
-                    vm.clearPCPMaskPts()
-                    let pcp = vm.eventBus.pcp
-                    pcp.removeLines()
-                }
-                vm.maskBoxRisize(e)
-            }
+            // // 執行 PCP mask 選擇框
+            // if(vm.mask_box_draw && vm.pcp_mode){
+            //     if(vm.pcp_mask_pts){
+            //         vm.clearPCPMaskPts()
+            //         let pcp = vm.eventBus.pcp
+            //         pcp.removeLines()
+            //     }
+            //     vm.maskBoxRisize(e)
+            // }
             // 直接移动 mask 标注数据点
             // if(vm.mask_mode && vm.group_move && !vm.pcp_mode){  
             if(vm.mask_mode && vm.group_move){
@@ -646,8 +646,14 @@ export default {
             let mask_pts = undefined
             let column_index = vm.column_index
             mask_pts = []
+            let k = vm.mask_group.length
             // 當存在 latent scatter 中存在點選中的 mask_group
-            if( vm.mask_group.length > 0 ){    
+            if( vm.mask_group.length === 0 ){    
+                mask_pts = vm.ctn_pts.children.filter(pt => {
+                    return vm.filter_cb(pt,columns,axis,column_index)
+                })
+            }
+            else if(vm.mask_group.length > 0){
                 vm.mask_group.forEach(pts => {
                     let mask = pts.filter(pt => {
                         return vm.filter_cb(pt,columns,axis,column_index)
@@ -661,17 +667,6 @@ export default {
                         mask_pts = mask_pts.concat(pts)
                     })
                 }
-            }
-            // 當存在 latent scatter pcp mask pts 時
-            else if( vm.pcp_mask_pts.length > 0 ){
-                mask_pts = vm.pcp_mask_pts.filter(pt => {
-                    return vm.filter_cb(pt,columns,axis,column_index)
-                })
-            }
-            else{
-                mask_pts = vm.ctn_pts.children.filter(pt => {
-                    return vm.filter_cb(pt,columns,axis,column_index)
-                })
             }
             // 不允許其出現在最上方
             mask_pts.forEach((pt) => {

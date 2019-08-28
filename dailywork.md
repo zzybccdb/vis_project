@@ -162,3 +162,10 @@
 - 修改 pcp 繪製 filter box 的按鍵方式
 - 加入判斷,如果 latent scatter 存在 pcp mask pts,filter box 就從 pcp mask pts 中過濾資料
 - 禁止在 pcp_only 的狀況下移動 mask_pts
+
+#### 2019/08/28
+- 禁止 Latent scatter 右鍵 draw mask box
+- 修改 pcp chart 中绘制的方式,全部修改为左键绘制
+- 同时将 calendar view 中的 mask box 修改为左键绘制
+- calendar view 中的 mask pts tint 改为白色
+- calendar view 中 mask box 左键绘制

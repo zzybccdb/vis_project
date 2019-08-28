@@ -272,9 +272,9 @@ export default {
 			}
 			vm.state.axis.push(grp_axis.axis)
 
-			line.on("rightdown", (e) => vm.drawFilterStart(e, line, grp_axis))
+			line.on("mousedown", (e) => vm.drawFilterStart(e, line, grp_axis))
 			line.on("mousemove", (e) => vm.selectingRange(e, line, grp_axis))
-			line.on("rightup", (e) => vm.drawFilterEnd(e, line, grp_axis))
+			line.on("mousedup", (e) => vm.drawFilterEnd(e, line, grp_axis))
         }, 
 		drawFilterBox(x, y, length){
 			let vm = this 
@@ -362,8 +362,8 @@ export default {
 			box.on("mouseup", () => box.moving = false)
 			box.on("mouseover", () => vm.filterBoxMoveOver(line, box))
 			box.on("mouseout", () => vm.filterBoxOut(line))
-			// box.on("rightdown", () => vm.removeFilterBox(line, box, container))
-			box.on("mousedown", () => vm.removeFilterBox(line, box, container))
+			box.on("rightdown", () => vm.removeFilterBox(line, box, container))
+			
 			box.enabled = true
 			return box
 		},	 

@@ -147,24 +147,17 @@ export default {
             axisLine.interactive = true
             axisLine.buttonmode = true
 
-            axisLine.rightdown = vm.drawFilterStart
+            axisLine.mousedown = vm.drawFilterStart
             axisLine.mousemove = vm.filterResize
-            axisLine.rightup = vm.drawFilterEnd
+            axisLine.mouseup = vm.drawFilterEnd
             axisLine.mouseout = vm.drawMouseOut
-            axisLine.mousedown = vm.removeFilterBox
+            axisLine.rightdown = vm.removeFilterBox
 
             axisLine.hitArea = new PIXI.Rectangle(axisLine.x-10, axisLine.y,20,190)
             axisLine.y = axis.label.y + axis.label.height + 5
             axisLine.label = c
             let filter_box = new PIXI.Container()
             axisLine.filter_box = filter_box
-            // 繪製 hitArea
-            // hitArea.lineStyle(1,0x000000,1)
-            // hitArea.beginFill(0xffffff)
-            // hitArea.drawRect(axisLine.x-10, axisLine.y,20,190)
-            // hitArea.endFill()
-            // ctn_axisLine.addChild(hitArea)
-
             // 儲存當前的 axisLine
             vm.axis[c].axisLine = axisLine
             vm.axis[c].filter_box = filter_box  

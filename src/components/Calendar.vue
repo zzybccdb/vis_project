@@ -450,8 +450,8 @@ export default {
                 // sp 指向當前這個 cell
                 sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
                 sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
-                sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
-                sp.rightdown = () => {vm.spRightDown(sp)}
+                sp.rightdown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
+                // sp.rightdown = () => {vm.spRightDown(sp)}
                 // 建立 {date：sp} 的 object
                 vm.mapping[date.format(date_format)] = sp
 
@@ -476,9 +476,9 @@ export default {
                 // 將 sp 加入畫布容器中
                 ctn_cells.addChild(sp)
             }   
-			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
+			main_ctn.mousedown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-            main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
+            main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
             main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}
 			return ctn_year
         },
@@ -548,8 +548,8 @@ export default {
                 // cell 鼠標操作
                 sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
                 sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
-                sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
-                sp.rightdown = () => {vm.spRightDown(sp)}                
+                sp.rightdown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
+                // sp.rightdown = () => {vm.spRightDown(sp)}                
 				vm.mapping[date.format(date_format)] = sp
 
 				let dayOfMonth = date.date()
@@ -568,9 +568,9 @@ export default {
                 date.add(2, 'hour')
                 ctn_cells.addChild(sp)
             }
-			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
+			main_ctn.mousedown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-            main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
+            main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
             main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}          
             return ctn_month
         },
@@ -623,8 +623,8 @@ export default {
                 // cell 鼠標操作
                 sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
                 sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
-                sp.mousedown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
-                sp.rightdown = () => {vm.spRightDown(sp)}                 
+                sp.rightdown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
+                // sp.rightdown = () => {vm.spRightDown(sp)}                 
 				vm.mapping[date.format(date_format)] = sp
 
 				let hourOfDay = date.hour()
@@ -640,9 +640,9 @@ export default {
 				date.add(5, 'minute')
 				ctn_cells.addChild(sp)
             }
-			main_ctn.rightdown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
+			main_ctn.mousedown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-			main_ctn.rightup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
+			main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
             main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}
             return ctn_day
         },
@@ -763,7 +763,7 @@ export default {
         SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn){
             // e.data.buttons 判定鼠標左右鍵
             // 0 表示沒有按下鼠標，1 鼠標左鍵， 2 鼠標右鍵
-            if (e.data.buttons != 2) {
+            if (e.data.buttons != 1) {
                 if (ctn_box.selecting) {
                     vm.SelectionBoxEnd(e,ctn_box,ctn_cells)
                 }
