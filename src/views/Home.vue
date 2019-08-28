@@ -746,6 +746,9 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
+body{
+	user-select: none;
+}
 .v-autocomplete.v-input, .v-autocomplete .v-menu__activator, .v-autocomplete .v-menu__activator * {
     cursor: default;
 }

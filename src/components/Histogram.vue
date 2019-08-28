@@ -140,15 +140,17 @@ export default {
                 if(!temp.error){
                     let axis_ctn = vm.drawAxis(label,temp.ctn.name,orgx,orgy,graphWidth,graphHeight)
                     let hist_ctn = vm.drawHist(label,graphHeight+vm.layout.margin.t)
-                    let board = vm.drawMaskBoard(label,0,0,graphWidth,graphHeight+vm.layout.margin.b)
+                    let board = vm.drawMaskBoard(label,0,0,graphWidth,graphHeight+vm.layout.margin.b,temp.ctn)
                     if(vm.columns.indexOf(label) !== -1){
                         // console.log(label)
                         board.children[0].disable = false
                         board.children[0].alpha = 0
                     }
                     else{
+                        console.log('what fuck')
                         board.children[0].display = true
-                        board.children[0].alpha = 0.3
+                        board.children[0].alpha = 0.0
+                        temp.ctn.alpha = 0.1
                     }
                     temp.ctn.addChild(axis_ctn)
                     temp.ctn.addChild(hist_ctn)
@@ -159,7 +161,7 @@ export default {
                     text.x = vm.appWidth/(vm.layout.chartNum*2)-text.width/2
                     text.y = vm.layout.height/2-text.height/2
                     temp.ctn.addChild(text)
-                    let board = vm.drawMaskBoard(label,0,0,graphWidth,graphHeight+vm.layout.margin.b)
+                    let board = vm.drawMaskBoard(label,0,0,graphWidth,graphHeight+vm.layout.margin.b,temp.ctn)
 
                     temp.ctn.addChild(board)
                     vm.ctn.addChild(temp.ctn)
@@ -169,9 +171,10 @@ export default {
             });
         },
         // 使用者鼠標點擊選擇是否需要這個   dimension
-        chartMourseDown(board){ 
+        chartMourseDown(board,ctn){ 
             board.disable = !board.disable
-            board.alpha = board.disable?0.3:0;
+            // board.alpha = board.disable?0:0;
+            ctn.alpha = board.disable?0.1:1;
         },
         // 绘制轴线
         drawAxis(label,name,orgx,orgy,graphWidth,graphHeight){
@@ -270,7 +273,7 @@ export default {
             return ticks_ctn
         },
         // 繪製 mask 板
-        drawMaskBoard(label,x,y,width,height){
+        drawMaskBoard(label,x,y,width,height,ctn){
             let ctn_mask_board = new PIXI.Container()
             ctn_mask_board.label = label
             ctn_mask_board.name = 'mask board'
@@ -286,11 +289,11 @@ export default {
             board.buttonMode = true 
             vm.board[label] = board
             board.mousedown = () => {
-                console.log('mousedown')
                 vm.root.columns  = vm.columns_all.filter((item => {
                     return (item!==label && vm.board[item].disable===false) || (item===label && board.disable===true)
                 }))
-                vm.chartMourseDown(board)
+                vm.chartMourseDown(board,ctn)
+
             }
             return ctn_mask_board
         },  
