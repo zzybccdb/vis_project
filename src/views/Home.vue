@@ -53,25 +53,25 @@
 							readonly
 							>
 							</v-combobox>
-							<v-flex style='width:100%;overflow:hidden;z-index:0' v-if='covanriance_plot'>
+							<v-flex style='width:100%;overflow:hidden;' v-if='covanriance_plot'>
 								<Covariance />
 							</v-flex>
 						</v-layout>
-						<v-combobox
-						:error-messages="columns_errors"
-						label="Parallel Coordinates Plot"
-						multiple
-						chips
-						ref="pcp_button"
-						readonly
-						>
-						</v-combobox>
-						<div ref='pcpChart' style='margin:0px;width:100%'>
-							<PCP ref='pcp' v-if="pcp"/>
-						<div id='error_info' style='height:100px;width:100px' v-if='pcp_error_info'>
-							<h4>No PCP Chart, please run Training!And try again</h4>
-						</div>
-						</div>
+						<v-layout column>
+							<v-combobox
+							:error-messages="columns_errors"
+							label="Parallel Coordinates Plot"
+							ref="pcp_button"
+							readonly
+							>
+							</v-combobox>
+							<div ref='pcpChart' style='margin:0px;width:100%'>
+								<PCP ref='pcp' v-if="pcp"/>
+							<div id='error_info' style='height:100px;width:100px' v-if='pcp_error_info'>
+								<h4>No PCP Chart, please run Training!And try again</h4>
+							</div>
+							</div>
+						</v-layout>
 					</v-form>
 					<v-layout column>
 						<v-layout style='padding:24px' row nowrap>
@@ -722,7 +722,6 @@ export default {
 		// 將 pcp 和 covariance 的 v-combobox 的 click event 修改
 		vm.$refs.pcp_button.$el.getElementsByClassName('v-messages')[0].remove()
 		vm.$refs.pcp_button.$el.getElementsByClassName('v-select__slot')[0].getElementsByTagName('input')[0].remove()
-		vm.$refs.pcp_button.$el.getElementsByClassName('v-select__slot')[0].getElementsByClassName('v-select__selections')[0].remove()
 		vm.$refs.pcp_button.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].onclick = vm.onPCP
 		vm.$refs.pcp_button.$el.getElementsByClassName('v-input__icon v-input__icon--append')[0].getElementsByTagName('i')[0].style.cursor = 'pointer'
 
