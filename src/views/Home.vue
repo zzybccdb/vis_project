@@ -201,7 +201,7 @@ export default {
 			return this.requesting !== 'none' || this.state === 'training' || this.anyError
 		},
 		disableContinueBtn() {
-			return (this.requesting !== 'none' || this.state === 'training' || this.state === 'reset' || this.anyError) 
+			return !(this.network === 'NN based MDS' || this.network === 'Autoencoder' || this.network === 'VAE') || (this.requesting !== 'none' || this.state === 'training' || this.state === 'reset' || this.anyError) 
 		},
 		disablePauseBtn() {
 			return this.requesting !== 'none' || this.state === 'ready' || this.state === 'reset'
