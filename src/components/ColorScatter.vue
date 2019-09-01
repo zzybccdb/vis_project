@@ -360,7 +360,7 @@ export default {
             vm.mask_pts.forEach((pt,i) => {
                 vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1-i)
             })
-            vm.mask_group.push(vm.mask_pts)
+            vm.mask_group.push(group)
             vm.mask_group_drawPCP()
             vm.mask_pts = undefined
         },
@@ -394,7 +394,6 @@ export default {
         },
         // 删除当前选中点群
         mask_pts_rightClick(e){
-            // if(vm.mask_mode && !vm.pcp_mode){
             if(vm.mask_mode){
                 let mask_pts = e.currentTarget.mask_group
                 let index = vm.mask_group.indexOf(mask_pts)
@@ -705,7 +704,6 @@ export default {
         confirmCenterPoints(){
             let cdata = []
             let cxy = []
-            console.log(vm.mask_group)
             vm.mask_group.forEach((mask_pts) => {
                 let mask_data = []
                 let mean = [0,0]

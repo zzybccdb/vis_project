@@ -169,3 +169,6 @@
 - 同时将 calendar view 中的 mask box 修改为左键绘制
 - calendar view 中的 mask pts tint 改为白色
 - calendar view 中 mask box 左键绘制
+
+#### 2019/09/01 
+- 修正在Home view latent scatter 上选择控制点,绘制pcp,取消没有对应的情况
