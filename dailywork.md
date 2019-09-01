@@ -172,3 +172,4 @@
 
 #### 2019/09/01 
 - 修正在Home view latent scatter 上选择控制点,绘制pcp,取消没有对应的情况
+- 修正Datatable view底部页面数据错误的问题

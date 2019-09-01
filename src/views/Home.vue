@@ -129,7 +129,7 @@
 
 <script>
 import Chart from 'chart.js'
-import { setTimeout } from 'timers';
+// import { setTimeout } from 'timers';
 import HISTOGRAM from '@/components/Histogram.vue'
 import ColorScatter from '@/components/ColorScatter.vue'
 import PCP from '@/components/Pcp_only.vue'

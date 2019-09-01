@@ -181,7 +181,7 @@ export default {
             let scale = vm.scale[column].scale
             let ticks = vm.scale[column].ticks
             let axisTicks = new PIXI.Container()
-            let format1 = d3.format('.4s')
+            // let format1 = d3.format('.4s')
             let format2 = d3.format('.2f')
             ticks.forEach(tick => {
                 let text = format2(tick)
@@ -283,7 +283,7 @@ export default {
         // 改變 filter box 長度
         filterResize(e){
             if(vm.filter_start){
-                let axis_y = - e.currentTarget.y
+                // let axis_y = - e.currentTarget.y
                 let y1 = vm.filter_sp[1]
                 let y2 = e.data.global.y
                 let axis = e.axis

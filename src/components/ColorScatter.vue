@@ -157,7 +157,7 @@ export default {
             vm.app.stage.buttonmode = true
             vm.app.stage.mousedown = vm.mousedown
             vm.app.stage.mouseup = vm.mouseup
-            vm.app.stage.rightdown = vm.rightdown
+            // vm.app.stage.rightdown = vm.rightdown
             vm.app.stage.mousemove = vm.mosuemove
             vm.app.stage.rightup = vm.rightup
             // 将 PIXI application 加入 Dom Tree
@@ -434,19 +434,19 @@ export default {
             vm.mask_group = []
         },
         // 右鍵旋轉操作,以及選取框開始
-        rightdown(e){
-            // if(vm.eventBus.pcp.ctn_lines !== undefined){
-            //     let pcp_lines = vm.eventBus.pcp.ctn_lines.children
-            // }
-            let mask_group = vm.mask_group
-            // // 選擇框模式
-            // if(vm.mask_mode && vm.pcp_mode && mask_group.length === 0){
-            //     // 控制是否 mask_box 绘制模式
-            //     vm.mask_box_draw = true
-            //     vm.mask_box.startx = e.data.global.x
-            //     vm.mask_box.starty = e.data.global.y
-            // }
-        },
+        // rightdown(e){
+        //     // if(vm.eventBus.pcp.ctn_lines !== undefined){
+        //     //     let pcp_lines = vm.eventBus.pcp.ctn_lines.children
+        //     // }
+        //     let mask_group = vm.mask_group
+        //     // // 選擇框模式
+        //     // if(vm.mask_mode && vm.pcp_mode && mask_group.length === 0){
+        //     //     // 控制是否 mask_box 绘制模式
+        //     //     vm.mask_box_draw = true
+        //     //     vm.mask_box.startx = e.data.global.x
+        //     //     vm.mask_box.starty = e.data.global.y
+        //     // }
+        // },
         // 清除 mask_pts
         clearPCPMaskPts(){
             vm.pcp_mask_pts.forEach(pt => {
@@ -645,7 +645,6 @@ export default {
             let mask_pts = undefined
             let column_index = vm.column_index
             mask_pts = []
-            let k = vm.mask_group.length
             // 當存在 latent scatter 中存在點選中的 mask_group
             if( vm.mask_group.length === 0 ){    
                 mask_pts = vm.ctn_pts.children.filter(pt => {
