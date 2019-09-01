@@ -166,6 +166,7 @@ export default {
 			line.moveTo(0, 0)
 			line.lineTo(0, vm.plot_height)
 			line.interactive = true
+			line.buttonMode = true
 			line.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 3 * vm.filterbox_width, vm.plot_height);
 			line.y = indicator.y + vm.indicator_radius + 5
 			line.box = []	
@@ -182,16 +183,15 @@ export default {
 			box.selecting = true
 			box.start_y = p.y
 			box.alpha = 1
-			// box.present = true
 			line.box.push(box)
 			line.current_box = box
 			grp_axis.addChild(box)
 		},
 		selectingRange(e, line, grp_axis){
 			let vm = this
+			let p = e.data.getLocalPosition(vm.wrapper)
+			let box = line.current_box
 			if(line != undefined && line.current_box != undefined){
-				let box = line.current_box
-				let p = e.data.getLocalPosition(vm.wrapper)
 				if (!e.data.buttons) {
 					if (box.selecting) {
 						vm.drawFilterEnd(e,line,grp_axis)
@@ -205,18 +205,23 @@ export default {
 					} else {
 						box.y = box.start_y
 					}
-					if(box.height < Math.abs(box.start_y - p.y)){
+					// box.height = Math.abs(box.start_y - p.y)
+					// console.log(box.height, box.start_y, p.y,Math.abs(box.start_y - p.y))
+					if(box.height <= Math.abs(box.start_y - p.y)){
 						box.height = Math.abs(box.start_y - p.y)
-						// vm.filterLines()
 					}
 					else{
-						vm.drawFilterEnd(e,line,grp_axis)
+						console.log('drawEnd')
+						vm.drawFilterEnd(e,line,grp_axis,'rangeend')
 					}
 				}
 			}
 		},
-		drawFilterEnd(e, line, grp_axis){
+		drawFilterEnd(e, line, grp_axis,content=undefined){
 			let vm = this
+			if(content){
+				console.log(content)
+			}
 			if(line != undefined && line.current_box != undefined){
 				let box = line.current_box 
 				if (box && line.box.length!= 0) {
@@ -243,9 +248,9 @@ export default {
             let label = vm.drawLabel(column)
             grp_axis.addChild(label)
 			grp_axis.dragging = false
-            label.on("rightdown", (e) => vm.axisStartDrag(e,grp_axis))
+            label.on("mousedown", (e) => vm.axisStartDrag(e,grp_axis))
             label.on("mousemove", (e) => vm.axisDragging(e,grp_axis))
-            label.on("rightup", () => vm.axisStopDrag(grp_axis) )
+            label.on("mouseup", () => vm.axisStopDrag(grp_axis) )
 			// draw indicator
 			let indicator = vm.drawIndicator(additional, label)
             indicator.on("mousedown", () => vm.hiddenLabels(column))
@@ -271,7 +276,7 @@ export default {
 				grp: grp_axis,
 			}
 			vm.state.axis.push(grp_axis.axis)
-
+		
 			line.on("mousedown", (e) => vm.drawFilterStart(e, line, grp_axis))
 			line.on("mousemove", (e) => vm.selectingRange(e, line, grp_axis))
 			line.on("mousedup", (e) => vm.drawFilterEnd(e, line, grp_axis))
@@ -348,7 +353,6 @@ export default {
 		},
 		initFilterBox(x, y, container, line){
 			let vm = this
-			let PIXI = vm.$PIXI
 			let box = vm.drawFilterBox(x, y, line.box.length)
 			// box.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 4 * vm.filterbox_width, vm.plot_height);
 			box.on("mousedown", () => {
