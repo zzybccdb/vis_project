@@ -328,7 +328,7 @@ export default{
             let page_data = vm.data.slice(end-vm.per_page_rows,end)
             vm.$refs.table.changeData(vm.dataSetting(page_data,date_index))
             // 底部信息
-            vm.bottomInfo([end-vm.per_page_rows-1, end], total)
+            vm.bottomInfo([end-vm.per_page_rows+1, end], total)
         },
         //标注特定的item
         highLightDate(index){
