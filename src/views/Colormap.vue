@@ -299,8 +299,10 @@ export default {
 
 		changeSortMode() {
 			let vm = this
-			if(vm.sortMode){	
-				vm.eventBus.cal.sortAxis(vm.eventBus.cal.ctn_cells)
+			if(vm.sortMode){
+				if(vm.eventBus.cal.ctn_box.length !== 0){
+					vm.eventBus.cal.sortAxis(vm.eventBus.cal.ctn_cells)
+				}
 			}
 		},
 

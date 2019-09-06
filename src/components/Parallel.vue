@@ -36,44 +36,48 @@ export default {
 			vm.eventBus.data.forEach(d => {
 				if (d.cal.selected && d.cal.msover) {
 					let line = d.pcp
-					line.alpha = 0
-					let thick_line = vm.thick_line
-					thick_line.clear()
-					thick_line.lineStyle(5, 0xFFFFFF - line.tint)
-					let first = true
-					vm.state.axis.forEach(a => {
-						if (a.disabled) {
-							return
-						}
-						let x = a.grp.x
-						let y = a.scale(d.raw[a.dim])
-						if (first) {
-							first = false
-							thick_line.moveTo(x, y)
-						} else {
-							thick_line.lineTo(x, y)
-						}
-					})
-
-					thick_line.lineStyle(3, line.tint)
-					first = true
-					vm.state.axis.forEach(a => {
-						if (a.disabled) {
-							return
-						}
-						let x = a.grp.x
-						let y = a.scale(d.raw[a.dim])
-						if (first) {
-							first = false
-							thick_line.moveTo(x, y)
-						} else {
-							thick_line.lineTo(x, y)
-						}
-					})
+					if(line !== undefined){
+						line.alpha = 0
+						let thick_line = vm.thick_line
+						thick_line.clear()
+						thick_line.lineStyle(5, 0xFFFFFF - line.tint)
+						let first = true
+						vm.state.axis.forEach(a => {
+							if (a.disabled) {
+								return
+							}
+							let x = a.grp.x
+							let y = a.scale(d.raw[a.dim])
+							if (first) {
+								first = false
+								thick_line.moveTo(x, y)
+							} else {
+								thick_line.lineTo(x, y)
+							}
+						})
+	
+						thick_line.lineStyle(3, line.tint)
+						first = true
+						vm.state.axis.forEach(a => {
+							if (a.disabled) {
+								return
+							}
+							let x = a.grp.x
+							let y = a.scale(d.raw[a.dim])
+							if (first) {
+								first = false
+								thick_line.moveTo(x, y)
+							} else {
+								thick_line.lineTo(x, y)
+							}
+						})
+					}
 				}
 				else if(d.cal.selected){
 					let line = d.pcp
-					line.alpha *= 0.5
+					if(line !== undefined){
+						line.alpha *= 0.5
+					}
 				}
 
 			})

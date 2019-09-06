@@ -812,15 +812,18 @@ export default {
             }
             vm.updateSelection(ctn_cells, vm.ctn_box)
             vm.setBox(ctn_cells, ctn_box)
-            vm.adjustAxisOrder()
-            vm.eventBus.pcp.clearData()
-            vm.eventBus.pcp.updateData()
-
-            if(!vm.highLightBlock){
-                vm.eventBus.pcp.highLight();
-            }
+            
             if(vm.eventBus.root.sortMode){
+                vm.eventBus.pcp.clearData()
                 vm.sortAxis(ctn_cells)
+            }
+            else{
+                vm.eventBus.pcp.clearData()
+                vm.eventBus.pcp.updateData()
+                vm.adjustAxisOrder()
+                if(!vm.highLightBlock){
+                    vm.eventBus.pcp.highLight();
+                }
             }
             vm.eventBus.cm.highLightSelectedPoint()
             ctn_box.selecting = false
@@ -844,6 +847,7 @@ export default {
                 vm.eventBus.pcp.adjustTicks()
                 vm.eventBus.pcp.adjustLines()
                 vm.eventBus.pcp.filterLines()
+                vm.eventBus.pcp.updateData()
             })
             .catch(error => {
                 window.error = error
@@ -855,12 +859,14 @@ export default {
             let vm = this
             vm.selected_raw_data = []
             vm.selceted_latent = []
-			ctn_cells.children.forEach(c => {
-                if(c.selected){
-                    vm.selected_raw_data.push(c.data.raw.slice(4))
-                    vm.selceted_latent.push(c.data.raw.slice(0,2))
-                }
-            })
+            if(ctn_cells !== undefined){
+                ctn_cells.children.forEach(c => {
+                    if(c.selected){
+                        vm.selected_raw_data.push(c.data.raw.slice(4))
+                        vm.selceted_latent.push(c.data.raw.slice(0,2))
+                    }
+                })
+            }
         },
         // ****** 右鍵選擇框操作
         // 繪製 tooltip 上的內容
