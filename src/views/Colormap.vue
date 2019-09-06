@@ -10,162 +10,163 @@
 			</v-flex>
 			<v-flex xs12 class="pink-box" pa-1 ref="ruler">
 				<v-layout row fill-height>
-					<v-flex ref="leftpanel" style="width: 350px;" pa-1>
-						<v-card class="left-panel depressed-border" height="100%" style="min-width: 270px;">
-						<v-layout column>
-							<v-flex class="pt-0 px-1 ">
-							<v-layout row class="pt-0 px-1" style="margin: 2px;">
-								<v-flex d-flex>
-									<v-menu
-										ref="startDateMenu"
-										:close-on-content-click="false"
-										v-model="startDateMenu"
-										:nudge-right="40"
-										:return-value.sync="startDate"
-										lazy
-										transition="scale-transition"
-										offset-y
-										full-width
-										min-width="290px"
+					<v-flex ref="leftpanel" style="width:350px">
+						<v-card class="left-panel depressed-border" height="100%" style="min-width: 280px;">
+							<v-layout column justify-content:center>
+								<v-flex class="pt-0 px-1 ">
+								<v-layout row class="pt-0 px-1" style="margin: 2px;">
+									<v-flex d-flex>
+										<v-menu
+											ref="startDateMenu"
+											:close-on-content-click="false"
+											v-model="startDateMenu"
+											:nudge-right="40"
+											:return-value.sync="startDate"
+											lazy
+											transition="scale-transition"
+											offset-y
+											full-width
+											min-width="290px"
 
-										>
-										<v-text-field
-										slot="activator"
-										v-model="startDate"
-										label="Start Date"
-										prepend-icon="event"
-										readonly
-										></v-text-field>
-										<v-date-picker v-model="startDate"
-										@input="onStartDatePicked"
-										:min="minDate"
-										:max="maxDate"></v-date-picker>
-
-									</v-menu>
-								</v-flex>
-								<v-flex d-flex>
-									<v-menu
-										ref="endDateMenu"
-										:close-on-content-click="false"
-										v-model="endDateMenu"
-										:nudge-right="40"
-										:return-value.sync="endDate"
-										lazy
-										transition="scale-transition"
-										offset-y
-										full-width
-										min-width="290px"
-										>
-										<v-text-field
-										slot="activator"
-										v-model="endDate"
-										label="End Date"
-										prepend-icon="event"
-										readonly
-										></v-text-field>
-										<v-date-picker v-model="endDate" @input="onEndDatePicked"
-										:min="minDate"
-										:max="maxDate"></v-date-picker>
-									</v-menu>
-								</v-flex>
-
-							</v-layout>
-							</v-flex>
-							<v-flex>
-								<v-card flat style="min-width: 256px;max-width: 256px; margin: 0 auto;">
-									<colormap ref="cm" @loaded="onColormapLoaded"></colormap>
-									<v-card-actions class="py-0" style="max-height: 40px;">
-										<!-- <span>alpha_manual</span> -->
-										<!-- <v-spacer></v-spacer> -->
-										<v-slider
-											v-model="lineAlpha"
-											thumb-label
-											value="30"
-										></v-slider>
-										<v-spacer></v-spacer>
-										<v-btn flat @click="$refs.cm.resetZoom()">
-											<v-icon>refresh</v-icon>reset
-										</v-btn>
-									</v-card-actions>
-									<v-card-actions class="py-0" style="max-height: 40px;">
-										<!-- <span>alpha_error</span> -->
-										<!-- <v-spacer></v-spacer> -->
-										<v-slider
-											v-model="errorAlpha"
-											thumb-label
-											value="0"
-										></v-slider>
-									</v-card-actions>
-									<v-card-actions class="py-0" style="max-height: 50px;">
-										<v-switch :label="`Mode: ${zoomMode?'Zoom':'Select'}`" v-model="zoomMode" @change="changeMode()"></v-switch>
-										<v-btn depressed color="error" @click="$refs.cm.clearSelect()">
-											clear
-										</v-btn>
-									</v-card-actions>
-								</v-card>
-							</v-flex>
-							<v-flex>
-								<v-list>
-									<v-list-group prepend-icon="local_activity">
-										<v-list-tile slot="activator">
-											<v-list-tile-content>
-											<v-list-tile-title>Normalization</v-list-tile-title>
-											</v-list-tile-content>
-										</v-list-tile>
-										<v-card flat style="min-width: 256px;max-width: 256px; margin: 10px auto;">
-											<v-form>
-												<v-select
-												v-model="normalizedin"
-												:items="normalizedin_options"
-												@change="onNormalizedInChange()"
-												label="Normalized In"
-												class="my-3 mx-2"
-												></v-select>
-												
-												<v-select
-												v-model="normalizedby"
-												:items="normalizedby_options"
-												@change="onNormalizedByChange()"
-												label="Normalized By"
-												class="my-3 mx-2"
-												></v-select>
-											</v-form>
-										</v-card>
-									</v-list-group>
-									<v-list-group prepend-icon="local_activity">
-										<v-list-tile slot="activator">
-											<v-list-tile-content>
-											<v-list-tile-title>Dimensions</v-list-tile-title>
-											</v-list-tile-content>
-										</v-list-tile>
-										<v-card flat style="min-width: 256px;max-width: 256px; margin: 10px auto;">
-											<v-combobox
-											:error-messages="columns_errors"
-											v-model="columns"
-											:items="columns_all"
-											label="Columns"
-											multiple
-											chips
-											@change="updateSelectedColumn()"
 											>
-												<template slot="selection" slot-scope="data">
-												<v-chip
-													:selected="data.selected"
-													close
-													small
-													text-color="white"
-													color='blue'
-													@input="remove(data.item)"
+											<v-text-field
+											slot="activator"
+											v-model="startDate"
+											label="Start Date"
+											prepend-icon="event"
+											readonly
+											></v-text-field>
+											<v-date-picker v-model="startDate"
+											@input="onStartDatePicked"
+											:min="minDate"
+											:max="maxDate"></v-date-picker>
+
+										</v-menu>
+									</v-flex>
+									<v-flex d-flex>
+										<v-menu
+											ref="endDateMenu"
+											:close-on-content-click="false"
+											v-model="endDateMenu"
+											:nudge-right="40"
+											:return-value.sync="endDate"
+											lazy
+											transition="scale-transition"
+											offset-y
+											full-width
+											min-width="290px"
+											>
+											<v-text-field
+											slot="activator"
+											v-model="endDate"
+											label="End Date"
+											prepend-icon="event"
+											readonly
+											></v-text-field>
+											<v-date-picker v-model="endDate" @input="onEndDatePicked"
+											:min="minDate"
+											:max="maxDate"></v-date-picker>
+										</v-menu>
+									</v-flex>
+								</v-layout>
+								</v-flex>
+								<v-flex>
+									<colormap ref="cm" @loaded="onColormapLoaded"></colormap>
+								</v-flex>
+								<v-flex class="pt-0 px-1">
+									<v-card flat style="min-width: 280px;max-width: 280px; margin:0px">
+										<v-card-actions class="py-0" style="max-height: 40px;">
+
+											<v-slider
+												v-model="lineAlpha"
+												thumb-label
+												value="30"
+											></v-slider>
+											<v-spacer></v-spacer>
+											<v-btn flat @click="$refs.cm.resetZoom()">
+												<v-icon>refresh</v-icon>reset
+											</v-btn>
+										</v-card-actions>
+										<v-card-actions class="py-0" style="max-height: 40px;">
+											<v-slider
+												v-model="errorAlpha"
+												thumb-label
+												value="0"
+											></v-slider>
+										</v-card-actions>
+										<v-card-actions class="py-0" style="min-width:280px; max-height: 50px; margin:0px; padding: 0px">
+											<v-switch :label="zoomMode?'Zoom':'Select'" v-model="zoomMode" @change="changeZoomMode()"></v-switch>
+											<v-switch :label="sortMode?'Sort':'Orign'" v-model="sortMode" @change="changeSortMode()"></v-switch>
+											<div class="my-2">
+												<v-btn max-width="20" small depressed color="error" @click="$refs.cm.clearSelect()">
+													clear
+												</v-btn>
+											</div>
+										</v-card-actions>
+									</v-card>
+								</v-flex>
+								<v-flex>
+									<v-list>
+										<v-list-group prepend-icon="local_activity">
+											<v-list-tile slot="activator">
+												<v-list-tile-content>
+												<v-list-tile-title>Normalization</v-list-tile-title>
+												</v-list-tile-content>
+											</v-list-tile>
+											<v-card flat style="min-width: 256px;max-width: 256px; margin: 10px auto;">
+												<v-form>
+													<v-select
+													v-model="normalizedin"
+													:items="normalizedin_options"
+													@change="onNormalizedInChange()"
+													label="Normalized In"
+													class="my-3 mx-2"
+													></v-select>
+													
+													<v-select
+													v-model="normalizedby"
+													:items="normalizedby_options"
+													@change="onNormalizedByChange()"
+													label="Normalized By"
+													class="my-3 mx-2"
+													></v-select>
+												</v-form>
+											</v-card>
+										</v-list-group>
+										<v-list-group prepend-icon="local_activity">
+											<v-list-tile slot="activator">
+												<v-list-tile-content>
+												<v-list-tile-title>Dimensions</v-list-tile-title>
+												</v-list-tile-content>
+											</v-list-tile>
+											<v-card flat style="min-width: 256px;max-width: 256px; margin: 10px auto;">
+												<v-combobox
+												:error-messages="columns_errors"
+												v-model="columns"
+												:items="columns_all"
+												label="Columns"
+												multiple
+												chips
+												@change="updateSelectedColumn()"
 												>
-													<strong>{{ isTrainCol(data.item) }}</strong>&nbsp;
-												</v-chip>
-												</template>
-											</v-combobox>
-										</v-card>
-									</v-list-group>
-								</v-list>
-							</v-flex>
-						</v-layout>
+													<template slot="selection" slot-scope="data">
+													<v-chip
+														:selected="data.selected"
+														close
+														small
+														text-color="white"
+														color='blue'
+														@input="remove(data.item)"
+													>
+														<strong>{{ isTrainCol(data.item) }}</strong>&nbsp;
+													</v-chip>
+													</template>
+												</v-combobox>
+											</v-card>
+										</v-list-group>
+									</v-list>
+								</v-flex>
+							</v-layout>
 						</v-card>
 					</v-flex>
 					<v-flex xs12 class="pink-box">
@@ -188,6 +189,7 @@ import Colormap from '@/components/Colormap.vue'
 import Calendar from '@/components/Calendar.vue'
 import Parallel from '@/components/Parallel.vue'
 import Slider from '@/components/Slider.vue'
+import { setTimeout } from 'timers';
 
 export default {
 	components: {
@@ -198,8 +200,11 @@ export default {
 	},
 	data: () => ({
 		calendar_mode: 0,
-
+		
+		// 切换 color map scatter 的 zoom mode 和 mask mode
 		zoomMode: true,
+		// 是否需要依据选中的资料点将 PCP 进行排序
+		sortMode: false,
 
 		startDate: null,
 		startDateMenu: false,
@@ -283,7 +288,7 @@ export default {
 			vm.eventBus.pcp.adjustLines()
 		},
 
-		changeMode() {
+		changeZoomMode() {
 			var vm = this
 			if (vm.zoomMode) {
 				vm.$refs.cm.switchZoom()
@@ -291,8 +296,16 @@ export default {
 				vm.$refs.cm.maskSelect()
 			}
 		},
+
+		changeSortMode() {
+			let vm = this
+			if(vm.sortMode){	
+				vm.eventBus.cal.sortAxis(vm.eventBus.cal.ctn_cells)
+			}
+		},
+
 		updateSelectedColumn() {
-			var vm = this
+			let vm = this
 			if (vm.firstLoad) {
 				return
 			}
@@ -304,17 +317,9 @@ export default {
 			vm.eventBus.pcp.adjustAxisPosition()
 			vm.eventBus.pcp.adjustTicks()
 			vm.eventBus.pcp.adjustLines()
-			// let sd = vm.$moment.utc(vm.startDate)
-			// let ed = vm.$moment.utc(vm.endDate)
-			// if (sd > ed) {
-			// 	return
-			// }
-			// sd = sd.format('YYYY-MM-DD') + " 00:00:00"
-			// ed = ed.format('YYYY-MM-DD') + " 00:00:00"
-			// vm.loadData(vm.eventBus.zoomHistory[vm.eventBus.zoomHistory.length-1].interval, sd, ed)
 		},
 		remove (item) {
-			console.log('remove', item)
+			console.log('remove', item)	
 			this.columns.splice(this.columns.indexOf(item), 1)
 			this.columns = [...this.columns]
 		},
@@ -333,7 +338,6 @@ export default {
 		},
 		selectMask(){
 			let vm = this
-			console.log("mask mode")
 			vm.eventBus.cm.maskSelect()
 		},
 		// changeCalendarMode() {
@@ -439,7 +443,6 @@ export default {
 		// loadData(interval, startDate, endDate) {
 		loadData(interval, date_range) {
 			let vm = this
-			console.log(date_range)
 			vm.eventBus.zoomHistory.push({
 				calLevel: vm.eventBus.calLevel,
 				interval,
@@ -479,7 +482,6 @@ export default {
 			// param.other_dims = vm.columns
 			// vm.$axios.post(vm.$api + '/model/latent', param)
 			// console.log("Load data")
-			console.log(param)
 			vm.$axios.post(vm.$api + '/inference/latent', param)
 			.then(vm.onDataLoaded)
 			.catch(error => {
@@ -581,7 +583,10 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style>
+.v-input__slot {
+	margin: 5px;
+}
 .expandToolbar {
 	left: 80px !important;
 }

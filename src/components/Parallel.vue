@@ -438,7 +438,7 @@ export default {
 			})
 		},
 		adjustAxisPosition() {
-			var vm = this
+			let vm = this
 			vm.state.axis.forEach(a => {
 				a.grp.alpha = 0
 			})
@@ -458,8 +458,41 @@ export default {
 			let available_width = vm.plot_width - (leftPad + rightPad)
 			let axis_gap = available_width / (axis.length - 1)
 
-			axis.forEach((a, ai) => {
+			axis.forEach((a,ai) => {
 				a.grp.alpha = 1
+				
+				if (!a.grp.dragging) {
+					a.grp.x = leftPad + ai * axis_gap
+				}
+				a.idx = ai
+			})
+		},
+		// 将资料进行 Axis vs latent 相似度排序
+		sortAxis(columns){
+			let vm = this
+			vm.state.axis.forEach(a => {
+				a.grp.alpha = 0
+			})
+			let axis = vm.state.axis.filter(a => {return a.disabled === false})
+		
+			let min_width = vm.min_axis_gap * (axis.length - 1) + vm.wrapper.x * 2
+			if (vm.app.renderer.width < min_width) {
+				vm.app.renderer.resize(min_width, vm.app.renderer.height)
+			}
+			vm.plot_width = vm.app.renderer.width  - vm.wrapper.x * 2
+			let firstAxis = axis[0]
+            let lastAxis = axis[axis.length - 1]
+            
+			let leftPad = firstAxis.grp.child_dict.label.width / 2
+			let rightPad = lastAxis.grp.child_dict.label.width / 2
+
+			let available_width = vm.plot_width - (leftPad + rightPad)
+			let axis_gap = available_width / (axis.length - 1)
+
+			axis.forEach((a) => {
+				let ai = columns.indexOf(a.name)
+				a.grp.alpha = 1
+				
 				if (!a.grp.dragging) {
 					a.grp.x = leftPad + ai * axis_gap
 				}
@@ -547,7 +580,7 @@ export default {
 					if (line) {
 						if (pass) {
 							line.tint = d.color
-							line.alpha = line.initial_alpha
+							line.alpha = vm.alpha_m * 0.5
 							if (no_box) {
 								d.cal.texture = vm.eventBus.cal.cellTextureSelected
 							} else {
@@ -560,13 +593,11 @@ export default {
 					}
 				}
 			})
-			// if(num_ctn_box===0 && vm.num_filter_box !== 0){
-			// 	vm.updateData()
-			// }
 		},
 		adjustLines() {
 			let vm = this
 			vm.eventBus.pcp.state.axis.sort((x, y) => x.grp.x - y.grp.x)
+			// console.log(vm.state.axis)
 			vm.eventBus.data.forEach(d => {
 				if (d.cal && d.cal.selected && d.pcp) {
 					let line = d.pcp
@@ -581,6 +612,7 @@ export default {
 						}
 						let x = a.grp.x
 						let y = a.scale(d.raw[a.dim])
+						// console.log(d.raw)
 						if (first) {
 							first = false
 							line.moveTo(x, y)
@@ -667,7 +699,7 @@ export default {
             vm.state.axis = []
 			vm.state.columns.forEach((c, ci) => {
 				vm.addAxis(c, ci, ci + start_idx)
-            })    
+			})	
 			vm.loaded = true    
 		},
 	},

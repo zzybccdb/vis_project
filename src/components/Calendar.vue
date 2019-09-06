@@ -21,7 +21,12 @@ export default {
 			message:"aaaa",
 			color:"white"
 		}
-	},
+    },
+    created(){
+        let vm = this
+        vm.selected_raw_data = []
+        vm.selceted_latent = []
+    },
 	methods: {
         // 修改 calender view cell 的透明度.
 		updateAlpha() {
@@ -52,7 +57,7 @@ export default {
 			vm.eventBus.root.loadData(param.interval, param.date_range)
 		},
         // 更新右鍵選框
-		updateSelection(ctn_cells, ctn_box) {
+		updateSelection(ctn_cells, ctn_box, end=false) {
             // 修正當前 box 的 index, 防止重疊選中後, cell 無法關聯到正確的 box 
             ctn_box.forEach((box,i) => {
                 box.index = i
@@ -70,21 +75,18 @@ export default {
                     else{
                         return false
                     }
-					// return box.class === c.class?vm.collision(c, box):false
                 })
                 
 				if( c.data != undefined ){
-					// if ((pass && !c.data.mask && c.tint != 0xCCCCCC) || (c.singSelected || c.neibor)) {
                     if ((pass && !c.data.mask && c.tint != 0xCCCCCC)){
 						c.texture = vm.cellTextureSelected
-						c.selected = true
+                        c.selected = true
 					} else {
 						c.texture = vm.cellTexture
 						c.selected = false
 					}
 				}
-
-			})
+            })
 		},
         // 判定 cell 是否歸屬有被 selection box 選中
 		setBox(ctn_cells, ctn_box){
@@ -478,7 +480,7 @@ export default {
             }   
 			main_ctn.mousedown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-            main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
+            main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(ctn_box,ctn_cells)} 
             main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}
 			return ctn_year
         },
@@ -570,7 +572,7 @@ export default {
             }
 			main_ctn.mousedown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-            main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
+            main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(ctn_box,ctn_cells)} 
             main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}          
             return ctn_month
         },
@@ -642,7 +644,7 @@ export default {
             }
 			main_ctn.mousedown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-			main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(e,ctn_box,ctn_cells)} 
+			main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(ctn_box,ctn_cells)} 
             main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}
             return ctn_day
         },
@@ -765,7 +767,7 @@ export default {
             // 0 表示沒有按下鼠標，1 鼠標左鍵， 2 鼠標右鍵
             if (e.data.buttons != 1) {
                 if (ctn_box.selecting) {
-                    vm.SelectionBoxEnd(e,ctn_box,ctn_cells)
+                    vm.SelectionBoxEnd(ctn_box,ctn_cells)
                 }
                 return
             }
@@ -798,7 +800,9 @@ export default {
                 vm.updateSelection(ctn_cells, vm.ctn_box)
             }            
         },
-        SelectionBoxEnd(e,ctn_box,ctn_cells){
+        SelectionBoxEnd(ctn_box,ctn_cells){
+            let vm = this 
+            vm.ctn_cells = ctn_cells
             let index = ctn_box.children.length-1
             let box = ctn_box.children[index]
             // 當繪製的選擇框太小就清除它
@@ -811,11 +815,52 @@ export default {
             vm.adjustAxisOrder()
             vm.eventBus.pcp.clearData()
             vm.eventBus.pcp.updateData()
+
             if(!vm.highLightBlock){
                 vm.eventBus.pcp.highLight();
             }
+            if(vm.eventBus.root.sortMode){
+                vm.sortAxis(ctn_cells)
+            }
             vm.eventBus.cm.highLightSelectedPoint()
             ctn_box.selecting = false
+        },
+        sortAxis(ctn_cells){
+            let vm = this
+            vm.selectedCellData(ctn_cells)
+            vm.$axios.post(vm.$api + '/inference/get_sort_axis', {
+                'rawdata':vm.selected_raw_data,
+                'latent':vm.selceted_latent,
+                'columns':vm.eventBus.columns.slice(4)
+            })
+            .then((response) => {
+                let sort_columns = response.data.sort
+                
+                sort_columns = sort_columns.filter(c => {
+                    return vm.eventBus.root.columns.indexOf(c) !== -1
+                })
+
+                vm.eventBus.pcp.sortAxis(sort_columns)
+                vm.eventBus.pcp.adjustTicks()
+                vm.eventBus.pcp.adjustLines()
+                vm.eventBus.pcp.filterLines()
+            })
+            .catch(error => {
+                window.error = error
+                console.log(error)
+            })
+        },
+        // 储存被mask cell的data
+        selectedCellData(ctn_cells){
+            let vm = this
+            vm.selected_raw_data = []
+            vm.selceted_latent = []
+			ctn_cells.children.forEach(c => {
+                if(c.selected){
+                    vm.selected_raw_data.push(c.data.raw.slice(4))
+                    vm.selceted_latent.push(c.data.raw.slice(0,2))
+                }
+            })
         },
         // ****** 右鍵選擇框操作
         // 繪製 tooltip 上的內容

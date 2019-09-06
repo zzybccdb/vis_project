@@ -147,7 +147,6 @@ export default {
                         board.children[0].alpha = 0
                     }
                     else{
-                        console.log('what fuck')
                         board.children[0].display = true
                         board.children[0].alpha = 0.0
                         temp.ctn.alpha = 0.1
