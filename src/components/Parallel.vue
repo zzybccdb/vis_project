@@ -97,7 +97,7 @@ export default {
 			if (vm.loaded) {
 				vm.adjustAxisPosition()
 				vm.adjustLines()
-				vm.filterLines()
+				// vm.filterLines()
 			}
         }, 
         drawLabel(column){
@@ -215,7 +215,6 @@ export default {
 						box.height = Math.abs(box.start_y - p.y)
 					}
 					else{
-						console.log('drawEnd')
 						vm.drawFilterEnd(e,line,grp_axis,'rangeend')
 					}
 				}
@@ -342,6 +341,7 @@ export default {
 			line.box.forEach(b => {
 				b.enabled = true
 			})
+			vm.updateAlpha()
 			vm.filterLines()
 			// 如果當前既沒有 filter box 也沒有 ctn box，清空當前內容
 			if(num_ctn_box===0 && vm.num_filter_box===0){
@@ -513,17 +513,22 @@ export default {
 			})
 			return res.join(',')
 		},
+		// 篩選出需要繪製的線條
 		filterLines() {
 			let vm = this
+			// 統計當前 calendar view mask box 的數量
 			let num_ctn_box = vm.eventBus.cal.ctn_box.length
 			vm.num_filter_box = 0
 			// 没有 filter box 存在
 			let no_box = vm.state.axis.every(a => {
 				return a.grp.child_dict.line.box.length === 0
 			})	
-			if(!num_ctn_box){
-				vm.updateAlpha()
-			}
+
+			// 忘記作用了,先註解
+			// if(!num_ctn_box){
+			// 	vm.updateAlpha()
+			// }
+
 			// 統計當前共有多少個 filter box
 			vm.state.axis.forEach(e=>{
 				vm.num_filter_box += e.grp.child_dict.line.box.length
@@ -576,7 +581,7 @@ export default {
 								vm.ctn_lines.addChild(newline)
 								d.pcp = newline
 								newline.tint = d.color
-								vm.adjustLines()
+								vm.drawSingleLine(d)
 							}
 						}
 					}
@@ -598,10 +603,82 @@ export default {
 				}
 			})
 		},
+		newfilterLines(){
+			let vm = this
+			// 統計 calendar view mask box 數量
+			let cal_mask_box = vm.eventBus.cal.ctn_box.length
+			// 統計 pcp filter box 數量
+			let pcp_filter_box = 0
+			vm.state.axis.forEach(e => {
+				pcp_filter_box += e.grp.child_dict.line.box.length
+			})
+			// // 忘記作用了,先註解
+			// if(!cal_mask_box){
+			// 	vm.updateAlpha()
+			// }
+			// 當存在 cal_mask_box 以及 pcp_filter_box 的時候
+			if(!cal_mask_box && !pcp_filter_box){
+				vm.eventBus.data.forEach(d => {
+					if (d.cal && d.cal.selected){
+						let line = d.pcp
+						let pass = vm.state.axis.some(a => {
+							let axis = a.grp.child_dict.line
+							let filter_box_count = axis.box.length
+							// 如果 axis 沒有 filter box 或者 axis 是 disable
+							if(0 === filter_box_count || a.disabled){
+								return false
+							}
+							else{
+								return axis.box.some(box => {
+									let rawdata = a.scale(d.raw[a.dim])
+									let upper = box.y
+									let lower = box.y + box.height
+									if((y >= upper && y <= lower && box.enabled)||box.cancel_selection){
+										return true
+									}else{
+										return false
+									}
+								})
+							}
+						})
+						if(pass && !cal_mask_box && pcp_filter_box){
+							if(!line){
+								d.cal.selected = true
+								d.cal.texture = vm.eventBus.cal.cellFilterTexture
+								d.cm.texture = vm.eventBus.cm.selectedTexture
+								d.cm.alpha = 0.3
+								if (d.cal) {
+									let newline = new vm.$PIXI.Graphics()
+									vm.ctn_lines.addChild(newline)
+									d.pcp = newline
+									newline.tint = d.color
+									vm.adjustLines()
+								}
+							}
+						}
+						////////////////////////////////////////
+						if (line) {
+							if (pass) {
+								line.tint = d.color
+								line.alpha = vm.alpha_m * 0.5
+								if (no_box) {
+									d.cal.texture = vm.eventBus.cal.cellTextureSelected
+								} else {
+									d.cal.texture = vm.eventBus.cal.cellFilterTexture
+								}
+							} else {
+								line.alpha = 0.05
+								d.cal.texture = vm.eventBus.cal.cellTextureSelected
+							}
+						}						
+					}
+				})
+			}
+			
+		},
 		adjustLines() {
 			let vm = this
 			vm.eventBus.pcp.state.axis.sort((x, y) => x.grp.x - y.grp.x)
-			// console.log(vm.state.axis)
 			vm.eventBus.data.forEach(d => {
 				if (d.cal && d.cal.selected && d.pcp) {
 					let line = d.pcp
@@ -616,7 +693,6 @@ export default {
 						}
 						let x = a.grp.x
 						let y = a.scale(d.raw[a.dim])
-						// console.log(d.raw)
 						if (first) {
 							first = false
 							line.moveTo(x, y)
@@ -627,6 +703,31 @@ export default {
 				}
 			})
 			vm.updateAlpha()
+		},
+		drawSingleLine(data){
+			let vm = this
+			let line = data.pcp
+			vm.state.axis.sort((x,y) => x.grp.x - y.grp.x)
+			line.clear()
+			line.lineStyle(2,0xFFFFFF)
+			line.tint = data.color
+			let first = true
+			vm.state.axis.forEach(a => {
+				if (a.disabled) {
+					return
+				}
+				let x = a.grp.x
+				let y = a.scale(data.raw[a.dim])
+				if (first) {
+					first = false
+					line.moveTo(x, y)
+				} else {
+					line.lineTo(x, y)
+				}
+			})
+			line.alpha = vm.alpha_m
+			line.alpha *= 1 - ((1-data.alpha_u) * vm.eventBus.root.errorAlpha / 100)
+			line.initial_alpha = line.alpha
 		},
 		replaceData(data, colors) {
 			var vm = this
