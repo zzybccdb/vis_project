@@ -706,7 +706,7 @@ export default {
         },
         // 鼠標左鍵點擊
         spMouseDown(sp,ctn_box,ctn_cells){
-            if( sp.selected ){		
+            if( sp.selected && sp.box ){		
                 ctn_cells.children.forEach( c => {
                     c.singSelected = false	
                     c.texture = vm.cellTexture
@@ -722,6 +722,9 @@ export default {
                 vm.eventBus.pcp.clearData()
                 vm.eventBus.pcp.updateData()
                 vm.eventBus.cm.clearHighlight()
+                if(vm.ctn_box.length === 0){
+                    vm.eventBus.pcp.removeAllFilterBox()
+                }
             }            
         },
         // 鼠標右鍵點擊 cell 觸發
@@ -749,18 +752,28 @@ export default {
         // ****** 右鍵選擇框操作
         // 右鍵選擇框設定
         SelectionBoxStart(e,ctn_box,main_ctn){
-            let p = e.data.getLocalPosition(main_ctn)
-            let box = new PIXI.Graphics()
-            // 將 box 也綁定到當前的 main ctn 下
-            box.class = main_ctn.name
-            box.x = p.x  
-            box.y = p.y
-            box.index = vm.ctn_box.length
-            box.start_p = p
-            box.clear()
-            ctn_box.addChild(box)
-            vm.ctn_box.push(box)
-            ctn_box.selecting = true
+            // 如果此時 pcp 上存有 filter box, 沒有 mask box, 禁止繪製
+            let cal_mask_boxes = vm.ctn_box.length
+            let pcp_filter_boxes = vm.eventBus.pcp.state.axis.every(a => {
+                return a.grp.child_dict.line.box.length === 0
+            })
+            if(cal_mask_boxes !== 0 || pcp_filter_boxes){
+                let p = e.data.getLocalPosition(main_ctn)
+                let box = new PIXI.Graphics()
+                // 將 box 也綁定到當前的 main ctn 下
+                box.class = main_ctn.name
+                box.x = p.x  
+                box.y = p.y
+                box.index = vm.ctn_box.length
+                box.start_p = p
+                box.clear()
+                ctn_box.addChild(box)
+                vm.ctn_box.push(box)
+                ctn_box.selecting = true
+            }
+            else{
+                ctn_box.selecting = false
+            }
         },
         SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn){
             // e.data.buttons 判定鼠標左右鍵
@@ -801,32 +814,34 @@ export default {
             }            
         },
         SelectionBoxEnd(ctn_box,ctn_cells){
-            let vm = this 
-            vm.ctn_cells = ctn_cells
-            let index = ctn_box.children.length-1
-            let box = ctn_box.children[index]
-            // 當繪製的選擇框太小就清除它
-            if (box && box.height * box.width < (vm.cellSize * vm.cellSize) / 8) {
-                ctn_box.removeChild(box)
-                vm.ctn_box.splice(box.index,1)
-            }
-            vm.updateSelection(ctn_cells, vm.ctn_box)
-            vm.setBox(ctn_cells, ctn_box)
-            
-            if(vm.eventBus.root.sortMode){
-                vm.eventBus.pcp.clearData()
-                vm.sortAxis(ctn_cells)
-            }
-            else{
-                vm.eventBus.pcp.clearData()
-                vm.eventBus.pcp.updateData()
-                vm.adjustAxisOrder()
-                if(!vm.highLightBlock){
-                    vm.eventBus.pcp.highLight();
+            if (ctn_box.selecting) {
+                let vm = this 
+                vm.ctn_cells = ctn_cells
+                let index = ctn_box.children.length-1
+                let box = ctn_box.children[index]
+                // 當繪製的選擇框太小就清除它
+                if (box && box.height * box.width < (vm.cellSize * vm.cellSize) / 8) {
+                    ctn_box.removeChild(box)
+                    vm.ctn_box.splice(box.index,1)
                 }
+                vm.updateSelection(ctn_cells, vm.ctn_box)
+                vm.setBox(ctn_cells, ctn_box)
+                
+                if(vm.eventBus.root.sortMode){
+                    vm.eventBus.pcp.clearData()
+                    vm.sortAxis(ctn_cells)
+                }
+                else{
+                    vm.eventBus.pcp.clearData()
+                    vm.eventBus.pcp.updateData()
+                    vm.adjustAxisOrder()
+                    if(!vm.highLightBlock){
+                        vm.eventBus.pcp.highLight();
+                    }
+                }
+                vm.eventBus.cm.highLightSelectedPoint()
+                ctn_box.selecting = false
             }
-            vm.eventBus.cm.highLightSelectedPoint()
-            ctn_box.selecting = false
         },
         sortAxis(ctn_cells){
             let vm = this

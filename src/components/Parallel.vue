@@ -335,7 +335,7 @@ export default {
 		// 移除當前的 filter box
 		removeFilterBox(line, box, container){
 			let vm = this
-			let cal_mask_box = vm.eventBus.cal.ctn_box.length
+			let cal_mask_boxes = vm.eventBus.cal.ctn_box.length
 			line.box.splice(line.box.findIndex((a)=>{return a.index === box.index}),1)
 			container.removeChild(box)
 			line.box.forEach(b => {
@@ -344,7 +344,7 @@ export default {
 			vm.updateAlpha()
 			vm.filterLines()
 			// 如果當前既沒有 filter box 也沒有 ctn box，清空當前內容
-			if(cal_mask_box===0 && vm.num_filter_box===0){
+			if(cal_mask_boxes===0 && vm.num_filter_box===0){
 				vm.eventBus.data.forEach(d => {
 					d.cal.selected = false
 					d.pcp = undefined
@@ -355,14 +355,32 @@ export default {
 				vm.clearData()
 			}
 		},
+		// 移除當前所有的 filter box
+		removeAllFilterBox(){
+			let vm = this 
+			vm.eventBus.pcp.state.axis.forEach(a => {
+				let boxes = a.grp.child_dict.line.box
+				boxes.forEach( b => {
+					a.grp.removeChild(b)
+				})
+				a.grp.child_dict.line.box = []				
+			})
+			vm.eventBus.data.forEach(d => {
+				d.cal.selected = false
+				d.pcp = undefined
+				d.cm.texture = vm.eventBus.cm.dotTexture
+				d.cm.alpha = 0.3
+				d.cal.texture = vm.eventBus.cal.cellTexture
+			})
+		},
 		initFilterBox(x, y, container, line){
 			let vm = this
 			let box = vm.drawFilterBox(x, y, line.box.length)
 			// box.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 4 * vm.filterbox_width, vm.plot_height);
 			box.on("mousedown", () => {
-				let cal_mask_box = vm.eventBus.cal.ctn_box.length
+				let cal_mask_boxes = vm.eventBus.cal.ctn_box.length
 				// 在没有 ctn box 下禁止拖动的行为
-				if(cal_mask_box > 0){
+				if(cal_mask_boxes > 0){
 					box.moving = true 
 				}
 			})
@@ -517,14 +535,14 @@ export default {
 		filterLines() {
 			let vm = this
 			// 統計當前 calendar view mask box 的數量
-			let cal_mask_box = vm.eventBus.cal.ctn_box.length
+			let cal_mask_boxes = vm.eventBus.cal.ctn_box.length
 			vm.num_filter_box = 0
 			// 没有 filter box 存在
 			let no_box = vm.state.axis.every(a => {
 				return a.grp.child_dict.line.box.length === 0
 			})	
 			// 忘記作用了,先註解
-			// if(!cal_mask_box){
+			// if(!cal_mask_boxes){
 			// 	vm.updateAlpha()
 			// }
 			// 統計當前共有多少個 filter box
@@ -534,7 +552,7 @@ export default {
 			})
 			// 遍歷所有資料
 			vm.eventBus.data.forEach(d => {
-				if ((d.cal && d.cal.selected) || (!cal_mask_box && vm.num_filter_box !== 0)) {
+				if ((d.cal && d.cal.selected) || (!cal_mask_boxes && vm.num_filter_box !== 0)) {
 					let line = d.pcp
 					let boolmap = vm.state.axis.map(a =>{
 						let length = a.grp.child_dict.line.box.length
@@ -568,7 +586,7 @@ export default {
 					// 判断条件是当前没有 filter box，也没有 calender view 的 ctn_box
 					// 这个情况下就绘制
 					////////////////////////////////////////
-					if(pass && !cal_mask_box && vm.num_filter_box){
+					if(pass && !cal_mask_boxes && vm.num_filter_box){
 						if(!line){
 							d.cal.selected = true
 							d.cal.texture = vm.eventBus.cal.cellFilterTexture
@@ -580,6 +598,7 @@ export default {
 								d.pcp = newline
 								newline.tint = d.color
 								vm.drawSingleLine(d)
+								// console.log(d)
 							}
 						}
 					}
@@ -600,79 +619,6 @@ export default {
 					}
 				}
 			})
-		},
-		newfilterLines(){
-			let vm = this
-			// 統計 calendar view mask box 數量
-			let cal_mask_box = vm.eventBus.cal.ctn_box.length
-			// 統計 pcp filter box 數量
-			let pcp_filter_box = 0
-			vm.state.axis.forEach(e => {
-				pcp_filter_box += e.grp.child_dict.line.box.length
-			})
-			// // 忘記作用了,先註解
-			// if(!cal_mask_box){
-			// 	vm.updateAlpha()
-			// }
-			// 當存在 cal_mask_box 以及 pcp_filter_box 的時候
-			if(!cal_mask_box && !pcp_filter_box){
-				vm.eventBus.data.forEach(d => {
-					if (d.cal && d.cal.selected){
-						let line = d.pcp
-						let pass = vm.state.axis.some(a => {
-							let axis = a.grp.child_dict.line
-							let filter_box_count = axis.box.length
-							// 如果 axis 沒有 filter box 或者 axis 是 disable
-							if(0 === filter_box_count || a.disabled){
-								return false
-							}
-							else{
-								return axis.box.some(box => {
-									let rawdata = a.scale(d.raw[a.dim])
-									let upper = box.y
-									let lower = box.y + box.height
-									if((y >= upper && y <= lower && box.enabled)||box.cancel_selection){
-										return true
-									}else{
-										return false
-									}
-								})
-							}
-						})
-						if(pass && !cal_mask_box && pcp_filter_box){
-							if(!line){
-								d.cal.selected = true
-								d.cal.texture = vm.eventBus.cal.cellFilterTexture
-								d.cm.texture = vm.eventBus.cm.selectedTexture
-								d.cm.alpha = 0.3
-								if (d.cal) {
-									let newline = new vm.$PIXI.Graphics()
-									vm.ctn_lines.addChild(newline)
-									d.pcp = newline
-									newline.tint = d.color
-									vm.adjustLines()
-								}
-							}
-						}
-						////////////////////////////////////////
-						if (line) {
-							if (pass) {
-								line.tint = d.color
-								line.alpha = vm.alpha_m * 0.5
-								if (no_box) {
-									d.cal.texture = vm.eventBus.cal.cellTextureSelected
-								} else {
-									d.cal.texture = vm.eventBus.cal.cellFilterTexture
-								}
-							} else {
-								line.alpha = 0.05
-								d.cal.texture = vm.eventBus.cal.cellTextureSelected
-							}
-						}						
-					}
-				})
-			}
-			
 		},
 		adjustLines() {
 			let vm = this
