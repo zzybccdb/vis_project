@@ -323,19 +323,19 @@ export default {
 				b.enabled = false
 			})
 			box.enabled = true
-			vm.filterLines()
+			// vm.filterLines()
 		},
 		filterBoxOut(line){
 			let vm = this
 			line.box.forEach(b => {
 				b.enabled = true
 			})
-			vm.filterLines()
+			// vm.filterLines()
 		},
 		// 移除當前的 filter box
 		removeFilterBox(line, box, container){
 			let vm = this
-			let num_ctn_box = vm.eventBus.cal.ctn_box.length
+			let cal_mask_box = vm.eventBus.cal.ctn_box.length
 			line.box.splice(line.box.findIndex((a)=>{return a.index === box.index}),1)
 			container.removeChild(box)
 			line.box.forEach(b => {
@@ -344,7 +344,7 @@ export default {
 			vm.updateAlpha()
 			vm.filterLines()
 			// 如果當前既沒有 filter box 也沒有 ctn box，清空當前內容
-			if(num_ctn_box===0 && vm.num_filter_box===0){
+			if(cal_mask_box===0 && vm.num_filter_box===0){
 				vm.eventBus.data.forEach(d => {
 					d.cal.selected = false
 					d.pcp = undefined
@@ -360,9 +360,9 @@ export default {
 			let box = vm.drawFilterBox(x, y, line.box.length)
 			// box.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 4 * vm.filterbox_width, vm.plot_height);
 			box.on("mousedown", () => {
-				let num_ctn_box = vm.eventBus.cal.ctn_box.length
+				let cal_mask_box = vm.eventBus.cal.ctn_box.length
 				// 在没有 ctn box 下禁止拖动的行为
-				if(num_ctn_box > 0){
+				if(cal_mask_box > 0){
 					box.moving = true 
 				}
 			})
@@ -517,18 +517,16 @@ export default {
 		filterLines() {
 			let vm = this
 			// 統計當前 calendar view mask box 的數量
-			let num_ctn_box = vm.eventBus.cal.ctn_box.length
+			let cal_mask_box = vm.eventBus.cal.ctn_box.length
 			vm.num_filter_box = 0
 			// 没有 filter box 存在
 			let no_box = vm.state.axis.every(a => {
 				return a.grp.child_dict.line.box.length === 0
 			})	
-
 			// 忘記作用了,先註解
-			// if(!num_ctn_box){
+			// if(!cal_mask_box){
 			// 	vm.updateAlpha()
 			// }
-
 			// 統計當前共有多少個 filter box
 			vm.state.axis.forEach(e=>{
 				vm.num_filter_box += e.grp.child_dict.line.box.length
@@ -536,7 +534,7 @@ export default {
 			})
 			// 遍歷所有資料
 			vm.eventBus.data.forEach(d => {
-				if ((d.cal && d.cal.selected) || (!num_ctn_box && vm.num_filter_box !== 0)) {
+				if ((d.cal && d.cal.selected) || (!cal_mask_box && vm.num_filter_box !== 0)) {
 					let line = d.pcp
 					let boolmap = vm.state.axis.map(a =>{
 						let length = a.grp.child_dict.line.box.length
@@ -570,7 +568,7 @@ export default {
 					// 判断条件是当前没有 filter box，也没有 calender view 的 ctn_box
 					// 这个情况下就绘制
 					////////////////////////////////////////
-					if(pass && !num_ctn_box && vm.num_filter_box){
+					if(pass && !cal_mask_box && vm.num_filter_box){
 						if(!line){
 							d.cal.selected = true
 							d.cal.texture = vm.eventBus.cal.cellFilterTexture
