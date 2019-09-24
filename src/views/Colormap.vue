@@ -398,7 +398,6 @@ export default {
 			vm.eventBus.mask = response.data.mask
 			vm.eventBus.columns = response.data.columns
 			vm.eventBus.std = response.data.std
-			// console.log(response.data)
 			let date_idx = response.data.columns.indexOf('date')
 
 			let error_idx = response.data.columns.indexOf('error')

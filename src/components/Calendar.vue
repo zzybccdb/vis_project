@@ -1,5 +1,4 @@
 <template>
-
 <div class="cal-wrapper" ref="home">
 	<v-alert ref="alert" :value="alert" :color="color" outline>
 	{{message}}
@@ -704,7 +703,7 @@ export default {
                 }
             }
         },
-        // 鼠標左鍵點擊
+        // 鼠標左鍵點擊(已經修改爲右鍵)
         spMouseDown(sp,ctn_box,ctn_cells){
             if( sp.selected && sp.box ){		
                 ctn_cells.children.forEach( c => {
@@ -754,11 +753,14 @@ export default {
         SelectionBoxStart(e,ctn_box,main_ctn){
             // 如果此時 pcp 上存有 filter box, 沒有 mask box, 禁止繪製
             let cal_mask_boxes = vm.ctn_box.length
+            // 當前鼠標的位置
+            let p = e.data.getLocalPosition(main_ctn)
+            let cell_inside = vm.checkCellInMaskBox(ctn_box,p)
+            console.log(cell_inside)
             let pcp_filter_boxes = vm.eventBus.pcp.state.axis.every(a => {
                 return a.grp.child_dict.line.box.length === 0
             })
             if(cal_mask_boxes !== 0 || pcp_filter_boxes){
-                let p = e.data.getLocalPosition(main_ctn)
                 let box = new PIXI.Graphics()
                 // 將 box 也綁定到當前的 main ctn 下
                 box.class = main_ctn.name
@@ -843,6 +845,18 @@ export default {
                 ctn_box.selecting = false
             }
         },
+        // // 檢查是否子已經在mask box內部
+        // checkCellInMaskBox(ctn_box,position){
+        //     console.log(position)
+        //     return ctn_box.children.some(box => {
+        //         if(position.x >= box.x && position.x <= box.x+box.width && position.y >= box.y && position.y <= box.y+box.height){
+        //             return true
+        //         }
+        //         else{
+        //             return false
+        //         }
+        //     })
+        // },
         sortAxis(ctn_cells){
             let vm = this
             vm.selectedCellData(ctn_cells)
