@@ -82,7 +82,8 @@ export default {
                         c.selected = true
 					} else {
 						c.texture = vm.cellTexture
-						c.selected = false
+                        c.selected = false
+                        c.box = undefined
 					}
 				}
             })
@@ -705,7 +706,7 @@ export default {
         },
         // 鼠標左鍵點擊(已經修改爲右鍵)
         spMouseDown(sp,ctn_box,ctn_cells){
-            if( sp.selected && sp.box ){		
+            if( sp.selected && sp.box ){	
                 ctn_cells.children.forEach( c => {
                     c.singSelected = false	
                     c.texture = vm.cellTexture
@@ -713,7 +714,7 @@ export default {
                     // 檢測當前 cell 是否爲空，如果是空白就跳過
                     if(c.tint === 0xCCCCCC)
                         c.data.pcp = undefined
-                })		
+                })				
                 ctn_box.removeChild(sp.box)
                 vm.ctn_box.splice(sp.box.index,1)
                 sp.box = null
@@ -755,8 +756,6 @@ export default {
             let cal_mask_boxes = vm.ctn_box.length
             // 當前鼠標的位置
             let p = e.data.getLocalPosition(main_ctn)
-            let cell_inside = vm.checkCellInMaskBox(ctn_box,p)
-            console.log(cell_inside)
             let pcp_filter_boxes = vm.eventBus.pcp.state.axis.every(a => {
                 return a.grp.child_dict.line.box.length === 0
             })
