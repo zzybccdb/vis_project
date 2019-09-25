@@ -613,7 +613,7 @@ export default {
 								d.cal.texture = vm.eventBus.cal.cellFilterTexture
 							}
 						} else {
-							line.alpha = 0.05
+							line.alpha = 0
 							d.cal.texture = vm.eventBus.cal.cellTextureSelected
 						}
 					}
