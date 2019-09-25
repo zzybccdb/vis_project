@@ -176,3 +176,7 @@
 
 #### 2019/09/23
 - 修正 calendar view pcp filter box 繪製卡頓問題
+
+#### 2019/09/25
+- 禁止在 calendar view 上 mask box 区块内继续绘制
+- 消除了先 mask box 后，清除再 filter box 标注，依旧可以在 calendar view 上 clear bug
