@@ -180,3 +180,4 @@
 #### 2019/09/25
 - 禁止在 calendar view 上 mask box 区块内继续绘制
 - 消除了先 mask box 后，清除再 filter box 标注，依旧可以在 calendar view 上 clear bug
+- 修正 Home view 下 pcp ticks 遮蔽的问题

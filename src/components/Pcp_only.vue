@@ -74,13 +74,6 @@ export default {
             let length = vm.columns.length
             let margin = vm.app.layout.margin
             let latent_scatter = vm.eventBus.latent_scatter
-            // 重新計算圖表長寬，軸線間距最小爲120px
-            let slot = (vm.app.layout.width - margin.left - margin.right)/(length-1)
-            vm.dim_slot = (slot<vm.min_axis_gap)?vm.min_axis_gap:slot
-            let width = margin.left + margin.right + (vm.columns.length-1) * vm.dim_slot
-            let height = vm.app.layout.height
-            vm.app.layout.width = width
-            vm.app.renderer.resize(width,height)
             // 去除资料中原始包含的日期和latent信息
             vm.data = data.map(d => {
             //    return d.slice(1,-2)
@@ -89,6 +82,14 @@ export default {
             vm.extent = extent
             vm.d3ScaleSetting(extent)
             vm.drawAxis()
+            // 重新計算圖表長寬，軸線間距最小爲120px
+            let slot = (vm.app.layout.width - margin.left - margin.right)/(length-1)
+            vm.dim_slot = (slot<vm.min_axis_gap)?vm.min_axis_gap:slot
+            // let width = margin.left + margin.right + (vm.columns.length-1) * vm.dim_slot
+            let width = vm.axis[vm.columns[vm.columns.length-1]].ctn.x + margin.right
+            let height = vm.app.layout.height
+            vm.app.layout.width = width
+            vm.app.renderer.resize(width,height)
             // vm.drawAllDataLine()
         },
         // 處理維度的 scale 
@@ -123,8 +124,10 @@ export default {
                 // ticks 繪製
                 let axisTicks = vm.drawAxisTicks(c,axis)
 
-                axis.x = i * vm.dim_slot + margin.left
+                let max_ticks_length = axisTicks.children[axisTicks.children.length-2].width
                 
+                axis.x = i * vm.dim_slot + margin.left+max_ticks_length
+
                 // vm.axis[c] = axis
                 vm.axis[c].ctn = axis
                 axis.addChild(label)

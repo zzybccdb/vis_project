@@ -757,7 +757,7 @@ export default {
             // 當前鼠標的位置
             let p = e.data.getLocalPosition(main_ctn)
             // 判断是否存在 pcp filter box
-            let pcp_filter_boxes = vm.eventBus.pcp.state.axis.every(a => {
+            let pcp_filter_boxes = vm.eventBus.pcp.state.axis.some(a => {
                 return a.grp.child_dict.line.box.length !== 0
             })
             let cell_masked = vm.checkCellMasked(ctn_box,p)
