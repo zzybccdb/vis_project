@@ -96,7 +96,7 @@
 										</v-card-actions>
 										<v-card-actions class="py-0" style="min-width:280px; max-height: 50px; margin:0px; padding: 0px">
 											<v-switch :label="zoomMode?'Zoom':'Select'" v-model="zoomMode" @change="changeZoomMode()"></v-switch>
-											<v-switch :label="sortMode?'Sort':'Orign'" v-model="sortMode" @change="changeSortMode()"></v-switch>
+											<!-- <v-switch :label="sortMode?'Sort':'Orign'" v-model="sortMode" @change="changeSortMode()"></v-switch> -->
 											<div class="my-2">
 												<v-btn max-width="20" small depressed color="error" @click="$refs.cm.clearSelect()">
 													clear

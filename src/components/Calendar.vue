@@ -833,7 +833,7 @@ export default {
                 vm.updateSelection(ctn_cells, vm.ctn_box)
                 vm.setBox(ctn_cells, ctn_box)
                 
-                if(vm.eventBus.root.sortMode){
+                if(vm.eventBus.pcp.switch_button.mode){
                     vm.eventBus.pcp.clearData()
                     vm.sortAxis(ctn_cells)
                 }

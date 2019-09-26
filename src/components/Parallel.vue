@@ -735,8 +735,63 @@ export default {
             vm.wrapper.addChild(vm.thick)
             
 			vm.thick_line = new vm.$PIXI.Graphics()
-            vm.thick.addChild(vm.thick_line)
-        },
+			vm.thick.addChild(vm.thick_line)
+			
+			// sort switch button
+			vm.switch_button = new vm.$PIXI.Container()
+			vm.switch_button.name = 'swith button'
+			vm.wrapper.addChild(vm.switch_button)
+
+			let [roundedRect,circle,Label] = vm.drawSwitchButton('SORT')
+			vm.switch_button.addChild(roundedRect)
+			vm.switch_button.addChild(circle)
+			vm.switch_button.addChild(Label)
+			vm.switch_button.x = -35
+			vm.switch_button.y = 15
+			vm.switch_button.mode = circle.bool
+			console.log(vm.$refs.home.clientHeight,vm.wrapper.height)
+		},
+		// 繪製 switch button
+		drawSwitchButton(text){
+			let vm = this
+			let PIXI = vm.$PIXI
+			let roundedRect = new PIXI.Graphics()
+			let circle = new PIXI.Graphics()
+			// 文本信息
+			let Label = new PIXI.Text(text
+			, {fontFamily : vm.dim_font, fontSize: 16, fill : 0x000000, align : 'center'})
+			Label.x = 40
+			Label.y = -2
+			// 圆角矩形
+			roundedRect.lineStyle(1, 0xc9c9c9, 1);
+			roundedRect.beginFill(0xFFFFFF, 1);
+			roundedRect.drawRoundedRect(0, 0, 35, 12, 7);
+			roundedRect.endFill();
+			roundedRect.tint = 0xc9c9c9
+			// 圆形
+			circle.lineStyle(1, 0xc9c9c9, 1);
+			circle.beginFill(0xffffff, 1);
+			circle.drawCircle(0, 0, 10);
+			circle.x = 9
+			circle.y = 6
+			circle.endFill();
+			circle.interactive = true
+			circle.buttonMode = true
+			circle.bool = false
+			circle.mousedown = () =>{
+				circle.bool = !circle.bool
+				circle.bool?roundedRect.tint = 0xb6cefe:roundedRect.tint = 0xc9c9c9
+				circle.bool?circle.tint = 0x86adff:circle.tint = 0xffffff
+				circle.bool?circle.x = 26:circle.x = 9
+				if(circle.bool){
+					if(vm.eventBus.cal.ctn_box.length !== 0){
+						vm.eventBus.cal.sortAxis(vm.eventBus.cal.ctn_cells)
+					}
+				}
+				vm.switch_button.mode = circle.bool
+			}
+			return [roundedRect,circle,Label]
+		},
         init(){
 			let vm = this
 			vm.state = {}
@@ -745,7 +800,8 @@ export default {
 			let start_idx = vm.eventBus.date_idx + 1
 			vm.state.columns = vm.eventBus.columns.slice(start_idx)
 			vm.eventBus.cal.trainedColunms = vm.eventBus.cal.getTrainedColumns()
-            vm.state.axis = []
+			vm.state.axis = []
+			
 			vm.state.columns.forEach((c, ci) => {
 				vm.addAxis(c, ci, ci + start_idx)
 			})	
