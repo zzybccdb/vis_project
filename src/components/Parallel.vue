@@ -313,7 +313,7 @@ export default {
 				else{
 					box.moving = false
 				}
-				// vm.filterLines()
+				vm.filterLines()
 			}			
 		},
 		// 将需要highlight的filter line 标注
@@ -378,11 +378,7 @@ export default {
 			let box = vm.drawFilterBox(x, y, line.box.length)
 			// box.hitArea = new PIXI.Rectangle(-vm.filterbox_width * 2, 0, 4 * vm.filterbox_width, vm.plot_height);
 			box.on("mousedown", () => {
-				let cal_mask_boxes = vm.eventBus.cal.ctn_box.length
-				// 在没有 ctn box 下禁止拖动的行为
-				if(cal_mask_boxes > 0){
-					box.moving = true 
-				}
+				box.moving = true
 			})
 			box.on("mousemove", (e) => vm.filterBoxMove(e, box, line.y, container.x))
 			box.on("mouseup", () => box.moving = false)

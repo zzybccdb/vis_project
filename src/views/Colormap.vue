@@ -204,7 +204,7 @@ export default {
 		// 切换 color map scatter 的 zoom mode 和 mask mode
 		zoomMode: true,
 		// 是否需要依据选中的资料点将 PCP 进行排序
-		sortMode: false,
+		// sortMode: false,
 
 		startDate: null,
 		startDateMenu: false,
@@ -297,14 +297,14 @@ export default {
 			}
 		},
 
-		changeSortMode() {
-			let vm = this
-			if(vm.sortMode){
-				if(vm.eventBus.cal.ctn_box.length !== 0){
-					vm.eventBus.cal.sortAxis(vm.eventBus.cal.ctn_cells)
-				}
-			}
-		},
+		// changeSortMode() {
+		// 	let vm = this
+		// 	if(vm.sortMode){
+		// 		if(vm.eventBus.cal.ctn_box.length !== 0){
+		// 			vm.eventBus.cal.sortAxis(vm.eventBus.cal.ctn_cells)
+		// 		}
+		// 	}
+		// },
 
 		updateSelectedColumn() {
 			let vm = this

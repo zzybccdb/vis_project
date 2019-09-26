@@ -181,3 +181,5 @@
 - 禁止在 calendar view 上 mask box 区块内继续绘制
 - 消除了先 mask box 后，清除再 filter box 标注，依旧可以在 calendar view 上 clear bug
 - 修正 Home view 下 pcp ticks 遮蔽的问题
+- 将 switch button 添加到 calendar view pcp 图中
+- 允许仅仅只在 pcp filter 状态下的拖动
