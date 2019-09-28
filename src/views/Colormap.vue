@@ -313,11 +313,17 @@ export default {
 			}
 			if (vm.eventBus.pcp.state) {
 				vm.eventBus.pcp.state.axis.forEach(a => {
-					a.disabled = !vm.columns.includes(a.name)
+					if(a.name !== 'date'){
+						a.disabled = !vm.columns.includes(a.name) 
+					}
+					else{
+							a.disabled = false
+					}
+					// a.disabled = !vm.columns.includes(a.name) 
 				});
 			}
-			vm.eventBus.pcp.adjustAxisPosition()
 			vm.eventBus.pcp.adjustTicks()
+			vm.eventBus.pcp.adjustAxisPosition()
 			vm.eventBus.pcp.adjustLines()
 		},
 		remove (item) {

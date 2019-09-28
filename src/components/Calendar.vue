@@ -25,6 +25,7 @@ export default {
         let vm = this
         vm.selected_raw_data = []
         vm.selceted_latent = []
+        // vm.selected_date = []   
     },
 	methods: {
         // 修改 calender view cell 的透明度.
@@ -480,7 +481,7 @@ export default {
             }   
 			main_ctn.mousedown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-            main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(ctn_box,ctn_cells)} 
+            main_ctn.mouseup = () => {vm.SelectionBoxEnd(ctn_box,ctn_cells)} 
             main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}
 			return ctn_year
         },
@@ -572,7 +573,7 @@ export default {
             }
 			main_ctn.mousedown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-            main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(ctn_box,ctn_cells)} 
+            main_ctn.mouseup = () => {vm.SelectionBoxEnd(ctn_box,ctn_cells)} 
             main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}          
             return ctn_month
         },
@@ -644,7 +645,7 @@ export default {
             }
 			main_ctn.mousedown = (e) => {vm.SelectionBoxStart(e,ctn_box,main_ctn)}
             main_ctn.mousemove = (e) => {vm.SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn)}
-			main_ctn.mouseup = (e) => {vm.SelectionBoxEnd(ctn_box,ctn_cells)} 
+			main_ctn.mouseup = () => {vm.SelectionBoxEnd(ctn_box,ctn_cells)} 
             main_ctn.mouseout = () => {vm.eventBus.pcp.resetAlpha()}
             return ctn_day
         },
@@ -761,7 +762,6 @@ export default {
                 return a.grp.child_dict.line.box.length !== 0
             })
             let cell_masked = vm.checkCellMasked(ctn_box,p)
-            console.log(cell_masked)
             // 满足条件此時 pcp 上存有 filter box, 沒有 mask box, 禁止繪製
             // 检查当前点是否已经被 mask box 圈选，选中禁止绘制
             if((cal_mask_boxes !== 0 || !pcp_filter_boxes) && !cell_masked){
@@ -832,10 +832,14 @@ export default {
                 }
                 vm.updateSelection(ctn_cells, vm.ctn_box)
                 vm.setBox(ctn_cells, ctn_box)
-                
+
+                vm.selectedCellData()
+                vm.eventBus.cm.highLightSelectedPoint()
+                ctn_box.selecting = false   
+
                 if(vm.eventBus.pcp.switch_button.mode){
                     vm.eventBus.pcp.clearData()
-                    vm.sortAxis(ctn_cells)
+                    vm.sortAxis()
                 }
                 else{
                     vm.eventBus.pcp.clearData()
@@ -845,8 +849,6 @@ export default {
                         vm.eventBus.pcp.highLight();
                     }
                 }
-                vm.eventBus.cm.highLightSelectedPoint()
-                ctn_box.selecting = false
             }
         },
         // 檢查是否子已經在mask box內部
@@ -860,9 +862,8 @@ export default {
                 }
             })
         },
-        sortAxis(ctn_cells){
+        sortAxis(){
             let vm = this
-            vm.selectedCellData(ctn_cells)
             vm.$axios.post(vm.$api + '/inference/get_sort_axis', {
                 'rawdata':vm.selected_raw_data,
                 'latent':vm.selceted_latent,
@@ -887,18 +888,17 @@ export default {
             })
         },
         // 储存被mask cell的data
-        selectedCellData(ctn_cells){
+        selectedCellData(){
             let vm = this
+            // 清空当前储存的 raw data， latent
             vm.selected_raw_data = []
             vm.selceted_latent = []
-            if(ctn_cells !== undefined){
-                ctn_cells.children.forEach(c => {
-                    if(c.selected){
-                        vm.selected_raw_data.push(c.data.raw.slice(4))
-                        vm.selceted_latent.push(c.data.raw.slice(0,2))
-                    }
-                })
-            }
+            vm.eventBus.data.forEach(d => {
+                if(d.cal.selected){
+                    vm.selected_raw_data.push(d.cal.data.raw.slice(4))
+                    vm.selceted_latent.push(d.cal.data.raw.slice(0,2))         
+                }
+            })
         },
         // ****** 右鍵選擇框操作
         // 繪製 tooltip 上的內容

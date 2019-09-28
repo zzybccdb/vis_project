@@ -1,11 +1,15 @@
 <template>
-<div class="pcp-wrapper" ref="home">
+<div id="pcp-wrapper" class="pcp-wrapper" ref="home">
 </div>
 
 </template>
 
 <script>
-
+let format = {
+	'year':'YYYY-MM',
+	'month':'YY-MM-DD',
+	'day': 'MM-DD HH:mm'
+}
 export default {
 	components: {},
 	data() {
@@ -47,7 +51,7 @@ export default {
 								return
 							}
 							let x = a.grp.x
-							let y = a.scale(d.raw[a.dim])
+							let y = (a.name === 'date')?a.scale(vm.$moment(d.raw[a.dim])):a.scale(d.raw[a.dim])
 							if (first) {
 								first = false
 								thick_line.moveTo(x, y)
@@ -63,7 +67,7 @@ export default {
 								return
 							}
 							let x = a.grp.x
-							let y = a.scale(d.raw[a.dim])
+							let y = (a.name === 'date')?a.scale(vm.$moment(d.raw[a.dim])):a.scale(d.raw[a.dim])
 							if (first) {
 								first = false
 								thick_line.moveTo(x, y)
@@ -97,7 +101,7 @@ export default {
 			if (vm.loaded) {
 				vm.adjustAxisPosition()
 				vm.adjustLines()
-				// vm.filterLines()
+				vm.filterLines()
 			}
         }, 
         drawLabel(column){
@@ -108,9 +112,10 @@ export default {
 			label.x = -vm.indicator_radius * 2
 			label.rotation = - Math.PI / 6
             label.y = 50
-            
-			label.interactive = true
-            label.buttonMode = true
+            if(column !== 'date'){
+				label.interactive = true
+				label.buttonMode = true
+			}
             
             return label
         },
@@ -137,7 +142,7 @@ export default {
             vm.adjustAxisPosition()
             vm.adjustLines()
 		},
-        drawIndicator(additional, label){
+        drawIndicator(additional, label, column){
             let vm = this
             let PIXI = vm.$PIXI
             let indicator = new PIXI.Graphics()
@@ -153,8 +158,10 @@ export default {
 			}
 			indicator.endFill()
 			indicator.y = label.y + label.height + 8
-			indicator.interactive = true
-            indicator.buttonMode = true
+			if(column !== 'date'){
+				indicator.interactive = true
+				indicator.buttonMode = true
+			}
             return indicator
         },
         hiddenLabels(column){
@@ -241,23 +248,25 @@ export default {
 				vm.filterLines()
 			}
 		},
+		// 添加轴线
 		addAxis(column, idx, dim) {
             let vm = this
 			let additional = !vm.eventBus.root.columns_train.includes(column)
 			let grp_axis = new vm.$PIXI.Container()
 			vm.ctn_axis.addChild(grp_axis)
-			
 			// draw label
-            let label = vm.drawLabel(column)
-            grp_axis.addChild(label)
+			let label = vm.drawLabel(column)
+			grp_axis.addChild(label)
 			grp_axis.dragging = false
-            label.on("mousedown", (e) => vm.axisStartDrag(e,grp_axis))
-            label.on("mousemove", (e) => vm.axisDragging(e,grp_axis))
-            label.on("mouseup", () => vm.axisStopDrag(grp_axis) )
-			// draw indicator
-			let indicator = vm.drawIndicator(additional, label)
-            indicator.on("mousedown", () => vm.hiddenLabels(column))
-			grp_axis.addChild(indicator)
+			let indicator = vm.drawIndicator(additional, label, column)
+			if(column !== 'date'){
+				grp_axis.addChild(indicator)
+				label.on("mousedown", (e) => vm.axisStartDrag(e,grp_axis))
+				label.on("mousemove", (e) => vm.axisDragging(e,grp_axis))
+				label.on("mouseup", () => vm.axisStopDrag(grp_axis))
+				// 指示符操作
+				indicator.on("mousedown", () => vm.hiddenLabels(column))
+			}
 			//  draw line
 			let line = vm.drawLine(indicator, grp_axis)
 			grp_axis.addChild(line)
@@ -279,10 +288,10 @@ export default {
 				grp: grp_axis,
 			}
 			vm.state.axis.push(grp_axis.axis)
-		
-			line.on("mousedown", (e) => vm.drawFilterStart(e, line, grp_axis))
+ 			line.on("mousedown", (e) => vm.drawFilterStart(e, line, grp_axis))
 			line.on("mousemove", (e) => vm.selectingRange(e, line, grp_axis))
 			line.on("mousedup", (e) => vm.drawFilterEnd(e, line, grp_axis))
+
         }, 
 		drawFilterBox(x, y, length){
 			let vm = this 
@@ -323,14 +332,14 @@ export default {
 				b.enabled = false
 			})
 			box.enabled = true
-			// vm.filterLines()
+			vm.filterLines()
 		},
 		filterBoxOut(line){
 			let vm = this
 			line.box.forEach(b => {
 				b.enabled = true
 			})
-			// vm.filterLines()
+			vm.filterLines()
 		},
 		// 移除當前的 filter box
 		removeFilterBox(line, box, container){
@@ -348,7 +357,7 @@ export default {
 				vm.eventBus.data.forEach(d => {
 					d.cal.selected = false
 					d.pcp = undefined
-					d.cm.texture = vm.eventBus.cm.dotTexture
+					d.cm.tint = d.cal.tint
 					d.cm.alpha = 0.3
 					d.cal.texture = vm.eventBus.cal.cellTexture
 				})
@@ -395,46 +404,82 @@ export default {
 			vm.adjustTicks()
 			vm.adjustLines()
 		},
-		adjustTicks() {
-			var vm = this
+		// 设定 ticks
+		adjustTicks(date=false) {
+			let vm = this
 			let data = null
+			let date_range = undefined
+			let full_extent = []
+			// 当前资料范围是否需要以当前 view 下所有资料点
 			if (vm.normalizedin === 'selected region') {
 				data = vm.eventBus.data.filter(d => {return d.cal && d.cal.selected})
 			} else {
 				data = vm.eventBus.data.filter(d => {return d.cal})
 			}
-			let full_extent = []
+			//////////////////////////////////
+			// 检查是否需要 date 信息
+			//////////////////////////////////
+			if(date){
+				date_range = vm.eventBus.data.filter(d => {return d.cal && d.cal.selected})
+			}
+			//////////////////////////////////
 			vm.state.axis.forEach(a => {
-				let dim_data = data.map(d => {
-					return parseFloat(d.raw[a.dim])
-				})
-
-				a.extent = vm.$d3.extent(dim_data)
-				if (!a.disabled) {
-					full_extent = full_extent.concat(a.extent)
+				let dim_data = undefined
+				// 判定不为时间栏位的话
+				if(a.dim !== 3){					
+					dim_data = data.map(d => {
+						return parseFloat(d.raw[a.dim])
+					})
+					a.extent = vm.$d3.extent(dim_data)
+					if (!a.disabled) {
+						full_extent = full_extent.concat(a.extent)
+					}
+				}
+				else{
+					// 如果存在 mask box,日期资料范围是选中的资料范围
+					if(date && date_range){
+						dim_data = date_range.map(d => {
+							return d.datetime
+						})	
+					}
+					else{
+						dim_data = data.map(d => {
+							return d.datetime
+						})
+					}
+					a.extent = vm.$d3.extent(dim_data)
 				}
 			})
 			if (vm.normalizedby === 'all dimension') {
 				vm.state.axis.forEach(a => {
-					a.extent = vm.$d3.extent(full_extent)
+					if(a.dim !== 3){
+						a.extent = vm.$d3.extent(full_extent)
+					}
 				})
 			}
 			vm.state.axis.forEach(a => {
 				let axis_y_start = vm.state.axis[0].grp.child_dict.line.y
-				a.scale = vm.$d3.scaleLinear()
-					.domain(a.extent).range([axis_y_start + vm.plot_height, axis_y_start])
-				// 自己定義間距,計算 ticks 數值 
-				let range = a.extent[1] - a.extent[0]
-				let gap = range / 4
-				let ticks = [parseFloat(a.extent[0].toFixed(4))]
-				for(let i = 1; i < 4; i++){
-					ticks.push(parseFloat((ticks[0]+i*gap).toFixed(4)))
+				let ticks = undefined
+				// 加入时间 scale 判断
+				if(a.dim !== 3){
+					a.scale = vm.$d3.scaleLinear()
+						.domain(a.extent).range([axis_y_start + vm.plot_height, axis_y_start])
+					// 自己定義間距,計算 ticks 數值 
+					let range = a.extent[1] - a.extent[0]
+					let gap = range / 4
+					ticks = [parseFloat(a.extent[0].toFixed(4))]
+					for(let i = 1; i < 4; i++){
+						ticks.push(parseFloat((ticks[0]+i*gap).toFixed(4)))
+					}
+					ticks.push(parseFloat(a.extent[1].toFixed(4)))
+					// 確保 ticks 唯一性
+					ticks = new Set(ticks)
 				}
-				ticks.push(parseFloat(a.extent[1].toFixed(4)))
-				// 確保 ticks 唯一性
-				ticks = new Set(ticks)
-				// 使用 d3 取得其 ticks 數值
-				// let ticks = a.scale.ticks(5)
+				else{
+					a.scale = vm.$d3.scaleTime().range([axis_y_start + vm.plot_height, axis_y_start]).domain(a.extent)
+					// 使用 d3 取得其 ticks 數值
+					ticks = a.scale.ticks(5)
+				}
 				a.grp.child_dict.ctn_ticks.removeChildren()
 				for (let t of ticks) {
 					let tick = new vm.$PIXI.Graphics()
@@ -442,6 +487,9 @@ export default {
 					tick.moveTo(0, 0)
 					tick.lineTo(vm.tick_length, 0)
 					tick.y = a.scale(t)
+					if(a.name === 'date'){
+						t = vm.$moment(t).format(format[vm.eventBus.calLevel])
+					}
 					tick.x = - vm.tick_length
 
 					let tick_label = new vm.$PIXI.Text(String(t)
@@ -455,6 +503,7 @@ export default {
 				}
 			})
 		},
+		// 设定轴线的位置
 		adjustAxisPosition() {
 			let vm = this
 			vm.state.axis.forEach(a => {
@@ -470,22 +519,22 @@ export default {
 			let firstAxis = axis[0]
             let lastAxis = axis[axis.length - 1]
             
-			let leftPad = firstAxis.grp.child_dict.label.width / 2
+			let ctn_ticks = firstAxis.grp.child_dict.ctn_ticks.children
+			let leftPad =  ctn_ticks[ctn_ticks.length-1].width
 			let rightPad = lastAxis.grp.child_dict.label.width / 2
 
 			let available_width = vm.plot_width - (leftPad + rightPad)
 			let axis_gap = available_width / (axis.length - 1)
-
 			axis.forEach((a,ai) => {
+				let ctn_ticks = a.grp.child_dict.ctn_ticks.children
 				a.grp.alpha = 1
-				
 				if (!a.grp.dragging) {
 					a.grp.x = leftPad + ai * axis_gap
 				}
 				a.idx = ai
 			})
 		},
-		// 将资料进行 Axis vs latent 相似度排序
+		// 将资料进行 Axis vs latentdim似度排序
 		sortAxis(columns){
 			let vm = this
 			vm.state.axis.forEach(a => {
@@ -501,14 +550,16 @@ export default {
 			let firstAxis = axis[0]
             let lastAxis = axis[axis.length - 1]
             
-			let leftPad = firstAxis.grp.child_dict.label.width / 2
+			// let leftPad = firstAxis.grp.child_dict.label.width / 2
+			let ctn_ticks = firstAxis.grp.child_dict.ctn_ticks.children
+			let leftPad =  ctn_ticks[ctn_ticks.length-1].width
 			let rightPad = lastAxis.grp.child_dict.label.width / 2
 
 			let available_width = vm.plot_width - (leftPad + rightPad)
 			let axis_gap = available_width / (axis.length - 1)
 
 			axis.forEach((a) => {
-				let ai = columns.indexOf(a.name)
+				let ai = (a.name === 'date')?0:columns.indexOf(a.name) + 1
 				a.grp.alpha = 1
 				
 				if (!a.grp.dragging) {
@@ -557,7 +608,7 @@ export default {
 								if (a.disabled) {
 									return true
 								}
-								let y = a.scale(d.raw[a.dim])
+								let y = (a.name === 'date')?a.scale(vm.$moment(d.raw[a.dim])):a.scale(d.raw[a.dim])
 								let upper = box.y
 								let lower = box.y + box.height
 								if ((y >= upper && y <= lower && box.enabled) || box.cancel_selection) {
@@ -586,17 +637,21 @@ export default {
 						if(!line){
 							d.cal.selected = true
 							d.cal.texture = vm.eventBus.cal.cellFilterTexture
-							d.cm.texture = vm.eventBus.cm.selectedTexture
-							d.cm.alpha = 0.3
 							if (d.cal && d.cal.selected) {
 								let newline = new vm.$PIXI.Graphics()
 								vm.ctn_lines.addChild(newline)
 								d.pcp = newline
 								newline.tint = d.color
 								vm.drawSingleLine(d)
-								// console.log(d)
 							}
 						}
+						else{
+							line.alpha = vm.alpha_m
+							line.alpha *= 1 - ((1-d.alpha_u) * vm.eventBus.root.errorAlpha / 100)
+						}
+						d.cm.tint = 0xffffff
+						d.cm.alpha = 1.0	
+						vm.eventBus.cm.ctn_points.setChildIndex(d.cm,vm.eventBus.cm.ctn_points.children.length-1)
 					}
 					////////////////////////////////////////
 					if (line) {
@@ -609,8 +664,18 @@ export default {
 								d.cal.texture = vm.eventBus.cal.cellFilterTexture
 							}
 						} else {
-							line.alpha = 0
-							d.cal.texture = vm.eventBus.cal.cellTextureSelected
+							// 沒有 cal mask box 時候
+							if(!cal_mask_boxes){
+								line.alpha = 0
+								d.cal.selected = false
+								d.cal.texture = vm.eventBus.cal.cellTexture
+								d.cm.tint = d.cal.tint
+								d.cm.alpha = 0.3
+							}
+							else{
+								line.alpha = 0
+								d.cal.texture = vm.eventBus.cal.cellTextureSelected
+							}
 						}
 					}
 				}
@@ -632,7 +697,7 @@ export default {
 							return
 						}
 						let x = a.grp.x
-						let y = a.scale(d.raw[a.dim])
+						let y = (a.name === 'date')?a.scale(vm.$moment(d.raw[a.dim])):a.scale(d.raw[a.dim])
 						if (first) {
 							first = false
 							line.moveTo(x, y)
@@ -657,7 +722,7 @@ export default {
 					return
 				}
 				let x = a.grp.x
-				let y = a.scale(data.raw[a.dim])
+				let y = (a.name === 'date')?a.scale(vm.$moment(data.raw[a.dim])):a.scale(data.raw[a.dim])
 				if (first) {
 					first = false
 					line.moveTo(x, y)
@@ -681,12 +746,19 @@ export default {
 			let vm = this
 			vm.eventBus.data.forEach(d => {
 				if (d.cal && d.cal.selected) {
-					let line = new vm.$PIXI.Graphics()
-					vm.ctn_lines.addChild(line)
-					d.pcp = line
+					if(d.pcp === undefined){
+						let line = new vm.$PIXI.Graphics()
+						vm.ctn_lines.addChild(line)
+						d.pcp = line
+					}
+					else{
+						d.pcp.alpha = vm.alpha_m * (1 - ((1-data.alpha_u) * vm.eventBus.root.errorAlpha / 100))
+					}
 				}
 				else{
-					d.pcp = undefined
+					if(d.pcp){
+						d.pcp.alpha = 0
+					}
 				}
 			})
 			vm.adjustTicks()
@@ -742,10 +814,24 @@ export default {
 			vm.switch_button.addChild(roundedRect)
 			vm.switch_button.addChild(circle)
 			vm.switch_button.addChild(Label)
+			vm.switch_button.mousedown = () =>{
+				circle.bool = !circle.bool
+				circle.bool?roundedRect.tint = 0xb6cefe:roundedRect.tint = 0xc9c9c9
+				circle.bool?circle.tint = 0x86adff:circle.tint = 0xffffff
+				circle.bool?circle.x = 26:circle.x = 9
+				if(circle.bool){
+					if(vm.eventBus.cal.ctn_box.length !== 0){
+						vm.eventBus.cal.sortAxis(vm.eventBus.cal.ctn_cells)
+					}
+				}
+				vm.switch_button.mode = circle.bool
+			}
+			vm.switch_button.interactive = true
+			vm.switch_button.buttonMode = true
+
 			vm.switch_button.x = -35
 			vm.switch_button.y = 15
 			vm.switch_button.mode = circle.bool
-			console.log(vm.$refs.home.clientHeight,vm.wrapper.height)
 		},
 		// 繪製 switch button
 		drawSwitchButton(text){
@@ -771,25 +857,12 @@ export default {
 			circle.x = 9
 			circle.y = 6
 			circle.endFill();
-			circle.interactive = true
-			circle.buttonMode = true
 			circle.bool = false
-			circle.mousedown = () =>{
-				circle.bool = !circle.bool
-				circle.bool?roundedRect.tint = 0xb6cefe:roundedRect.tint = 0xc9c9c9
-				circle.bool?circle.tint = 0x86adff:circle.tint = 0xffffff
-				circle.bool?circle.x = 26:circle.x = 9
-				if(circle.bool){
-					if(vm.eventBus.cal.ctn_box.length !== 0){
-						vm.eventBus.cal.sortAxis(vm.eventBus.cal.ctn_cells)
-					}
-				}
-				vm.switch_button.mode = circle.bool
-			}
 			return [roundedRect,circle,Label]
 		},
         init(){
 			let vm = this
+			let d3 = vm.$d3
 			vm.state = {}
             vm.pcpInit()
             // get axis start index 
@@ -797,9 +870,10 @@ export default {
 			vm.state.columns = vm.eventBus.columns.slice(start_idx)
 			vm.eventBus.cal.trainedColunms = vm.eventBus.cal.getTrainedColumns()
 			vm.state.axis = []
-			
+			// 加入时间轴
+			vm.addAxis('date',0,start_idx-1)
 			vm.state.columns.forEach((c, ci) => {
-				vm.addAxis(c, ci, ci + start_idx)
+				vm.addAxis(c, ci+1, ci + start_idx)
 			})	
 			vm.loaded = true    
 		},
@@ -820,6 +894,9 @@ export default {
 		window.addEventListener('resize', vm.handleResize)
 		// loaded the pcp completely
 		vm.$emit('loaded')
+        document.getElementById('pcp-wrapper').onscroll = function(){
+            console.log('scrolling',this.scrollLeft-this.clientLeft)
+        }
 	},
 	beforeDestroy() {
 		var vm = this;

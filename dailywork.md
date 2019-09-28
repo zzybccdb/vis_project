@@ -183,3 +183,7 @@
 - 修正 Home view 下 pcp ticks 遮蔽的问题
 - 将 switch button 添加到 calendar view pcp 图中
 - 允许仅仅只在 pcp filter 状态下的拖动
+
+#### 2019/09/28
+- 加入時間軸
+- 修正一些會影響效率的東西
