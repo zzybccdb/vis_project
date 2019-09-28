@@ -86,6 +86,11 @@ export default {
 
 			})
 		},
+		// 清除 highlight
+		clearHighLight(){
+			let vm = this 
+			vm.thick_line.clear()
+		},
 		resetAlpha(){
 			let vm = this;
 			let thick_line = vm.thick_line
@@ -360,14 +365,12 @@ export default {
 			if(cal_mask_boxes===0 && vm.num_filter_box===0){
 				vm.eventBus.data.forEach(d => {
 					d.cal.selected = false
-					if(d.pcp){
-						d.pcp.alpha = 0
-					}
+					d.pcp = undefined	
 					d.cm.tint = d.cal.tint
 					d.cm.alpha = 0.3
 					d.cal.texture = vm.eventBus.cal.cellTexture
 				})
-				vm.clearData()
+				vm.ctn_lines.removeChildren()
 			}
 		},
 		// 移除當前所有的 filter box
@@ -413,7 +416,7 @@ export default {
 			vm.adjustLines()
 		},
 		// 设定 ticks
-		adjustTicks(date=true) {
+		adjustTicks() {
 			let vm = this
 			if(vm.normalizedin === 'selected region' && vm.eventBus.cal.ctn_box.length === 0){
 				return
@@ -430,7 +433,7 @@ export default {
 			//////////////////////////////////
 			// 检查是否需要 date 信息
 			//////////////////////////////////
-			if(date && vm.eventBus.cal.ctn_box.length){
+			if(vm.eventBus.cal.ctn_box.length){
 				date_range = vm.eventBus.data.filter(d => {return d.cal && d.cal.selected})
 			}
 			//////////////////////////////////
@@ -448,7 +451,7 @@ export default {
 				}
 				else{
 					// 如果存在 mask box,日期资料范围是选中的资料范围
-					if(date && date_range){
+					if(date_range){
 						dim_data = date_range.map(d => {
 							return d.datetime
 						})	
@@ -518,11 +521,20 @@ export default {
 		// 设定轴线的位置
 		adjustAxisPosition() {
 			let vm = this
+			let date_index = undefined
 			vm.state.axis.forEach(a => {
 				a.grp.alpha = 0
 			})
 			let axis = vm.state.axis.filter(a => {return a.disabled === false})
-		
+			axis.forEach((a,ai) => {
+				if(a.name === 'date'){
+					date_index = ai
+				}
+			})
+			if(date_index){
+				let date_axis = axis.splice(date_index,1)
+				axis.unshift(date_axis[0])
+			}
 			let min_width = vm.min_axis_gap * (axis.length - 1) + vm.wrapper.x * 2
 			if (vm.app.renderer.width < min_width) {
 				vm.app.renderer.resize(min_width, vm.app.renderer.height)
@@ -736,6 +748,9 @@ export default {
 				if (a.disabled) {
 					return
 				}
+				if(a.name === 'date'){
+					console.log('fuck')
+				}
 				let x = a.grp.x
 				let y = (a.name === 'date')?a.scale(vm.$moment.utc(data.raw[a.dim])):a.scale(data.raw[a.dim])
 				if (first) {
@@ -786,10 +801,15 @@ export default {
 					line.alpha = 0
 				})
 			}
-			// if (vm.ctn_lines) {
-			// 	vm.ctn_lines.removeChildren()
-			// }
-        },
+		},
+		removeAllLines(){
+			if (vm.ctn_lines) {
+				vm.ctn_lines.removeChildren()
+			}
+			vm.eventBus.data.forEach(d => {
+				d.pcp = undefined
+			})
+		},
         pcpInit(){
             let vm = this
 			// constant 
@@ -891,9 +911,9 @@ export default {
 			vm.eventBus.cal.trainedColunms = vm.eventBus.cal.getTrainedColumns()
 			vm.state.axis = []
 			// 加入时间轴
-			vm.addAxis('date',0,start_idx-1)
+			vm.addAxis('date',-1,start_idx-1)
 			vm.state.columns.forEach((c, ci) => {
-				vm.addAxis(c, ci+1, ci + start_idx)
+				vm.addAxis(c, ci, ci + start_idx)
 			})	
 			vm.loaded = true    
 		},

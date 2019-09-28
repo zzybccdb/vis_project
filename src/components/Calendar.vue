@@ -723,12 +723,13 @@ export default {
                 vm.eventBus.pcp.clearData()
                 vm.eventBus.cm.clearHighlight()
                 if(vm.ctn_box.length === 0){
-                    vm.eventBus.pcp.adjustLines()
                     vm.eventBus.pcp.removeAllFilterBox()
+                    vm.eventBus.pcp.clearHighLight()
                     let date_axis = vm.eventBus.pcp.state.axis.filter(axis => axis.name==='date')
                     if(!date_axis[0].disabled){
                         date_axis[0].disabled = true
                         vm.eventBus.pcp.adjustAxisPosition()
+                        vm.eventBus.pcp.removeAllLines()
                     }
                 }
                 else{
