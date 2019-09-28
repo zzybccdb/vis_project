@@ -721,10 +721,19 @@ export default {
                 sp.box = null
                 vm.updateSelection(ctn_cells, vm.ctn_box)
                 vm.eventBus.pcp.clearData()
-                vm.eventBus.pcp.updateData()
                 vm.eventBus.cm.clearHighlight()
                 if(vm.ctn_box.length === 0){
+                    vm.eventBus.pcp.adjustLines()
                     vm.eventBus.pcp.removeAllFilterBox()
+                    let date_axis = vm.eventBus.pcp.state.axis.filter(axis => axis.name==='date')
+                    if(!date_axis[0].disabled){
+                        date_axis[0].disabled = true
+                        vm.eventBus.pcp.adjustAxisPosition()
+                    }
+                }
+                else{
+                    vm.eventBus.pcp.adjustTicks()
+                    vm.eventBus.pcp.adjustLines()                    
                 }
             }            
         },
@@ -832,23 +841,28 @@ export default {
                 }
                 vm.updateSelection(ctn_cells, vm.ctn_box)
                 vm.setBox(ctn_cells, ctn_box)
-
+                // 獲取rawdata, Latent, 爲傳遞後端準備
                 vm.selectedCellData()
                 vm.eventBus.cm.highLightSelectedPoint()
+                vm.eventBus.pcp.clearData()
                 ctn_box.selecting = false   
-
+                let date_axis = vm.eventBus.pcp.state.axis.filter(axis => axis.name==='date')
+                if(date_axis[0].disabled){
+                    date_axis[0].disabled = false
+                    vm.eventBus.pcp.adjustAxisPosition()
+                }
                 if(vm.eventBus.pcp.switch_button.mode){
-                    vm.eventBus.pcp.clearData()
                     vm.sortAxis()
                 }
                 else{
-                    vm.eventBus.pcp.clearData()
-                    vm.eventBus.pcp.updateData()
                     vm.adjustAxisOrder()
                     if(!vm.highLightBlock){
                         vm.eventBus.pcp.highLight();
                     }
                 }
+                vm.eventBus.pcp.adjustTicks()
+                vm.eventBus.pcp.adjustLines()
+                vm.eventBus.pcp.filterLines()
             }
         },
         // 檢查是否子已經在mask box內部
@@ -877,10 +891,9 @@ export default {
                 })
 
                 vm.eventBus.pcp.sortAxis(sort_columns)
-                vm.eventBus.pcp.adjustTicks()
-                vm.eventBus.pcp.adjustLines()
-                vm.eventBus.pcp.filterLines()
-                vm.eventBus.pcp.updateData()
+                // vm.eventBus.pcp.adjustTicks()
+                // vm.eventBus.pcp.adjustLines()
+                // vm.eventBus.pcp.filterLines()
             })
             .catch(error => {
                 window.error = error

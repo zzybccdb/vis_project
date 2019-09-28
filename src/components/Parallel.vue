@@ -6,8 +6,8 @@
 
 <script>
 let format = {
-	'year':'YYYY-MM',
-	'month':'YY-MM-DD',
+	'year':'YYYY-MM-DD',
+	'month':'MM-DD HH:00',
 	'day': 'MM-DD HH:mm'
 }
 export default {
@@ -51,7 +51,7 @@ export default {
 								return
 							}
 							let x = a.grp.x
-							let y = (a.name === 'date')?a.scale(vm.$moment(d.raw[a.dim])):a.scale(d.raw[a.dim])
+							let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
 							if (first) {
 								first = false
 								thick_line.moveTo(x, y)
@@ -67,7 +67,7 @@ export default {
 								return
 							}
 							let x = a.grp.x
-							let y = (a.name === 'date')?a.scale(vm.$moment(d.raw[a.dim])):a.scale(d.raw[a.dim])
+							let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
 							if (first) {
 								first = false
 								thick_line.moveTo(x, y)
@@ -352,11 +352,17 @@ export default {
 			})
 			vm.updateAlpha()
 			vm.filterLines()
+			// 當前沒有 filter box 時執行
+			if(vm.num_filter_box ===0){
+				vm.eventBus.cm.highLightSelectedPoint()
+			}
 			// 如果當前既沒有 filter box 也沒有 ctn box，清空當前內容
 			if(cal_mask_boxes===0 && vm.num_filter_box===0){
 				vm.eventBus.data.forEach(d => {
 					d.cal.selected = false
-					d.pcp = undefined
+					if(d.pcp){
+						d.pcp.alpha = 0
+					}
 					d.cm.tint = d.cal.tint
 					d.cm.alpha = 0.3
 					d.cal.texture = vm.eventBus.cal.cellTexture
@@ -376,7 +382,9 @@ export default {
 			})
 			vm.eventBus.data.forEach(d => {
 				d.cal.selected = false
-				d.pcp = undefined
+				if(d.pcp){
+					d.pcp.alpha = 0
+				}
 				d.cm.texture = vm.eventBus.cm.dotTexture
 				d.cm.alpha = 0.3
 				d.cal.texture = vm.eventBus.cal.cellTexture
@@ -405,8 +413,11 @@ export default {
 			vm.adjustLines()
 		},
 		// 设定 ticks
-		adjustTicks(date=false) {
+		adjustTicks(date=true) {
 			let vm = this
+			if(vm.normalizedin === 'selected region' && vm.eventBus.cal.ctn_box.length === 0){
+				return
+			}
 			let data = null
 			let date_range = undefined
 			let full_extent = []
@@ -419,14 +430,14 @@ export default {
 			//////////////////////////////////
 			// 检查是否需要 date 信息
 			//////////////////////////////////
-			if(date){
+			if(date && vm.eventBus.cal.ctn_box.length){
 				date_range = vm.eventBus.data.filter(d => {return d.cal && d.cal.selected})
 			}
 			//////////////////////////////////
 			vm.state.axis.forEach(a => {
 				let dim_data = undefined
 				// 判定不为时间栏位的话
-				if(a.dim !== 3){					
+				if(a.name !== 'date'){					
 					dim_data = data.map(d => {
 						return parseFloat(d.raw[a.dim])
 					})
@@ -452,7 +463,7 @@ export default {
 			})
 			if (vm.normalizedby === 'all dimension') {
 				vm.state.axis.forEach(a => {
-					if(a.dim !== 3){
+					if(a.name !== 'date'){
 						a.extent = vm.$d3.extent(full_extent)
 					}
 				})
@@ -461,7 +472,7 @@ export default {
 				let axis_y_start = vm.state.axis[0].grp.child_dict.line.y
 				let ticks = undefined
 				// 加入时间 scale 判断
-				if(a.dim !== 3){
+				if(a.name !== 'date'){
 					a.scale = vm.$d3.scaleLinear()
 						.domain(a.extent).range([axis_y_start + vm.plot_height, axis_y_start])
 					// 自己定義間距,計算 ticks 數值 
@@ -479,6 +490,7 @@ export default {
 					a.scale = vm.$d3.scaleTime().range([axis_y_start + vm.plot_height, axis_y_start]).domain(a.extent)
 					// 使用 d3 取得其 ticks 數值
 					ticks = a.scale.ticks(5)
+					ticks = new Set(ticks)
 				}
 				a.grp.child_dict.ctn_ticks.removeChildren()
 				for (let t of ticks) {
@@ -488,7 +500,7 @@ export default {
 					tick.lineTo(vm.tick_length, 0)
 					tick.y = a.scale(t)
 					if(a.name === 'date'){
-						t = vm.$moment(t).format(format[vm.eventBus.calLevel])
+						t = vm.$moment.utc(t).format(format[vm.eventBus.calLevel])
 					}
 					tick.x = - vm.tick_length
 
@@ -608,7 +620,7 @@ export default {
 								if (a.disabled) {
 									return true
 								}
-								let y = (a.name === 'date')?a.scale(vm.$moment(d.raw[a.dim])):a.scale(d.raw[a.dim])
+								let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
 								let upper = box.y
 								let lower = box.y + box.height
 								if ((y >= upper && y <= lower && box.enabled) || box.cancel_selection) {
@@ -633,50 +645,46 @@ export default {
 					// 判断条件是当前没有 filter box，也没有 calender view 的 ctn_box
 					// 这个情况下就绘制
 					////////////////////////////////////////
-					if(pass && !cal_mask_boxes && vm.num_filter_box){
-						if(!line){
-							d.cal.selected = true
-							d.cal.texture = vm.eventBus.cal.cellFilterTexture
-							if (d.cal && d.cal.selected) {
-								let newline = new vm.$PIXI.Graphics()
-								vm.ctn_lines.addChild(newline)
-								d.pcp = newline
-								newline.tint = d.color
-								vm.drawSingleLine(d)
+					if(pass){
+						if(!cal_mask_boxes && vm.num_filter_box){
+							if(!line){
+								d.cal.selected = true
+								d.cal.texture = vm.eventBus.cal.cellFilterTexture
+								if (d.cal && d.cal.selected) {
+									let newline = new vm.$PIXI.Graphics()
+									vm.ctn_lines.addChild(newline)
+									d.pcp = newline
+									newline.tint = d.color
+									vm.drawSingleLine(d)
+									line = d.pcp
+								}								
 							}
 						}
-						else{
-							line.alpha = vm.alpha_m
-							line.alpha *= 1 - ((1-d.alpha_u) * vm.eventBus.root.errorAlpha / 100)
-						}
-						d.cm.tint = 0xffffff
-						d.cm.alpha = 1.0	
-						vm.eventBus.cm.ctn_points.setChildIndex(d.cm,vm.eventBus.cm.ctn_points.children.length-1)
-					}
-					////////////////////////////////////////
-					if (line) {
-						if (pass) {
-							line.tint = d.color
+						if(line){
+							line.tint = d.cal.tint
 							line.alpha = vm.alpha_m * 0.5
 							if (no_box) {
 								d.cal.texture = vm.eventBus.cal.cellTextureSelected
 							} else {
 								d.cal.texture = vm.eventBus.cal.cellFilterTexture
-							}
-						} else {
-							// 沒有 cal mask box 時候
-							if(!cal_mask_boxes){
-								line.alpha = 0
-								d.cal.selected = false
-								d.cal.texture = vm.eventBus.cal.cellTexture
-								d.cm.tint = d.cal.tint
-								d.cm.alpha = 0.3
-							}
-							else{
-								line.alpha = 0
-								d.cal.texture = vm.eventBus.cal.cellTextureSelected
-							}
+							}	
+							d.cm.tint = 0xffffff
+							d.cm.alpha = 1.0	
+							vm.eventBus.cm.ctn_points.setChildIndex(d.cm,vm.eventBus.cm.ctn_points.children.length-1)							
+						}					
+					}
+					else if(line){
+						line.alpha = 0
+						// 沒有 cal mask box 時候
+						if(!cal_mask_boxes){
+							d.cal.selected = false
+							d.cal.texture = vm.eventBus.cal.cellTexture
 						}
+						else{
+							d.cal.texture = vm.eventBus.cal.cellTextureSelected
+						}
+						d.cm.tint = d.cal.tint
+						d.cm.alpha = 0.3						
 					}
 				}
 			})
@@ -685,11 +693,16 @@ export default {
 			let vm = this
 			vm.eventBus.pcp.state.axis.sort((x, y) => x.grp.x - y.grp.x)
 			vm.eventBus.data.forEach(d => {
-				if (d.cal && d.cal.selected && d.pcp) {
+				if (d.cal && d.cal.selected) {
 					let line = d.pcp
+					if(!line){
+						line = new vm.$PIXI.Graphics()
+						vm.ctn_lines.addChild(line)
+						d.pcp = line
+					}
 					line.clear()
 					line.lineStyle(2, 0xFFFFFF)
-					line.tint = d.color
+					line.tint = d.cal.tint
 
 					let first = true
 					vm.state.axis.forEach(a => {
@@ -697,7 +710,7 @@ export default {
 							return
 						}
 						let x = a.grp.x
-						let y = (a.name === 'date')?a.scale(vm.$moment(d.raw[a.dim])):a.scale(d.raw[a.dim])
+						let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
 						if (first) {
 							first = false
 							line.moveTo(x, y)
@@ -705,9 +718,11 @@ export default {
 							line.lineTo(x, y)
 						}
 					})
+					line.alpha = vm.alpha_m
+					line.alpha *= 1 - ((1-d.alpha_u) * vm.eventBus.root.errorAlpha / 100)
+					line.initial_alpha = line.alpha
 				}
 			})
-			vm.updateAlpha()
 		},
 		drawSingleLine(data){
 			let vm = this
@@ -722,7 +737,7 @@ export default {
 					return
 				}
 				let x = a.grp.x
-				let y = (a.name === 'date')?a.scale(vm.$moment(data.raw[a.dim])):a.scale(data.raw[a.dim])
+				let y = (a.name === 'date')?a.scale(vm.$moment.utc(data.raw[a.dim])):a.scale(data.raw[a.dim])
 				if (first) {
 					first = false
 					line.moveTo(x, y)
@@ -744,31 +759,36 @@ export default {
         },
 		updateData() {
 			let vm = this
-			vm.eventBus.data.forEach(d => {
-				if (d.cal && d.cal.selected) {
-					if(d.pcp === undefined){
-						let line = new vm.$PIXI.Graphics()
-						vm.ctn_lines.addChild(line)
-						d.pcp = line
-					}
-					else{
-						d.pcp.alpha = vm.alpha_m * (1 - ((1-data.alpha_u) * vm.eventBus.root.errorAlpha / 100))
-					}
-				}
-				else{
-					if(d.pcp){
-						d.pcp.alpha = 0
-					}
-				}
-			})
+			// vm.eventBus.data.forEach(d => {
+			// 	if (d.cal && d.cal.selected) {
+			// 		if(d.pcp === undefined){
+			// 			let line = new vm.$PIXI.Graphics()
+			// 			vm.ctn_lines.addChild(line)
+			// 			d.pcp = line
+			// 		}
+			// 		// else{
+			// 		// 	d.pcp.alpha = vm.alpha_m * (1 - ((1-d.alpha_u) * vm.eventBus.root.errorAlpha / 100))
+			// 		// }
+			// 	}
+			// 	else{
+			// 		if(d.pcp){
+			// 			d.pcp.alpha = 0
+			// 		}
+			// 	}
+			// })
 			vm.adjustTicks()
 			vm.adjustLines()
         },      
 		clearData() {
 			let vm = this
 			if (vm.ctn_lines) {
-				vm.ctn_lines.removeChildren()
+				vm.ctn_lines.children.forEach(line => {
+					line.alpha = 0
+				})
 			}
+			// if (vm.ctn_lines) {
+			// 	vm.ctn_lines.removeChildren()
+			// }
         },
         pcpInit(){
             let vm = this
