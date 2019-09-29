@@ -733,8 +733,16 @@ export default {
                     }
                 }
                 else{
-                    vm.eventBus.pcp.adjustTicks()
-                    vm.eventBus.pcp.adjustLines()                    
+                    if(vm.eventBus.pcp.switch_button.mode){
+                        vm.selectedCellData()
+                        vm.sortAxis()
+                        console.log('what')
+                    }
+                    else{
+                        vm.eventBus.pcp.adjustTicks()
+                        vm.eventBus.pcp.adjustLines()  
+                        vm.eventBus.pcp.filterLines()                  
+                    }
                 }
             }            
         },
@@ -860,10 +868,11 @@ export default {
                     if(!vm.highLightBlock){
                         vm.eventBus.pcp.highLight();
                     }
+                    vm.eventBus.pcp.adjustTicks()
+                    vm.eventBus.pcp.adjustLines()
+                    vm.eventBus.pcp.filterLines()
                 }
-                vm.eventBus.pcp.adjustTicks()
-                vm.eventBus.pcp.adjustLines()
-                vm.eventBus.pcp.filterLines()
+
             }
         },
         // 檢查是否子已經在mask box內部
@@ -892,13 +901,13 @@ export default {
                 })
 
                 vm.eventBus.pcp.sortAxis(sort_columns)
-                // vm.eventBus.pcp.adjustTicks()
-                // vm.eventBus.pcp.adjustLines()
-                // vm.eventBus.pcp.filterLines()
+                vm.eventBus.pcp.adjustTicks()
+                vm.eventBus.pcp.adjustLines()
+                vm.eventBus.pcp.filterLines()
             })
             .catch(error => {
                 window.error = error
-                console.log(error)
+                console.error(error)
             })
         },
         // 储存被mask cell的data

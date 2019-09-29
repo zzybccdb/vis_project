@@ -37,6 +37,7 @@ export default {
 		highLight(){
 			let vm = this;
 			vm.updateAlpha()
+			vm.eventBus.pcp.state.axis.sort((x, y) => x.grp.x - y.grp.x)
 			vm.eventBus.data.forEach(d => {
 				if (d.cal.selected && d.cal.msover) {
 					let line = d.pcp
@@ -748,9 +749,6 @@ export default {
 				if (a.disabled) {
 					return
 				}
-				if(a.name === 'date'){
-					console.log('fuck')
-				}
 				let x = a.grp.x
 				let y = (a.name === 'date')?a.scale(vm.$moment.utc(data.raw[a.dim])):a.scale(data.raw[a.dim])
 				if (first) {
@@ -935,7 +933,7 @@ export default {
 		// loaded the pcp completely
 		vm.$emit('loaded')
         document.getElementById('pcp-wrapper').onscroll = function(){
-            console.log('scrolling',this.scrollLeft-this.clientLeft)
+            // console.log('scrolling',this.scrollLeft-this.clientLeft)
         }
 	},
 	beforeDestroy() {
