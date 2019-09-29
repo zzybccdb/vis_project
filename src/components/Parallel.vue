@@ -10,6 +10,11 @@ const FORMAT = {
 	'month':[0,2,4,6,,8,10,12,14,16,18,20,22],
 	'day': [0,5,10,15,20,25,30,35,40,45,50,55]
 }
+const UNIT = {
+	'year':'weekday',
+	'month':'hour',
+	'day':'minut'
+}
 export default {
 	components: {},
 	data() {
@@ -269,7 +274,7 @@ export default {
 			let grp_axis = new vm.$PIXI.Container()
 			vm.ctn_axis.addChild(grp_axis)
 			// draw label
-			let label = vm.drawLabel(column)
+			let label = (column==="date")?vm.drawLabel(column+"("+UNIT[vm.eventBus.calLevel]+")"):vm.drawLabel(column)
 			grp_axis.addChild(label)
 			grp_axis.dragging = false
 			let indicator = vm.drawIndicator(additional, label, column)
@@ -782,7 +787,7 @@ export default {
 				}
 				let x = a.grp.x
 				// let y = (a.name === 'date')?a.scale(vm.$moment.utc(data.raw[a.dim])):a.scale(data.raw[a.dim])
-				let y = (a.name === 'date')?a.scale(vm.timeValue(vm.eventBus.calLevel,d.raw[a.dim])):a.scale(d.raw[a.dim])
+				let y = (a.name === 'date')?a.scale(vm.timeValue(vm.eventBus.calLevel,data.raw[a.dim])):a.scale(data.raw[a.dim])
 				if (first) {
 					first = false
 					line.moveTo(x, y)
