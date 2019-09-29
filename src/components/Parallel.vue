@@ -6,9 +6,9 @@
 
 <script>
 const FORMAT = {
-	'year':'YYYY-MM-DD',
-	'month':'MM-DD HH:00',
-	'day': 'MM-DD HH:mm'
+	'year':[1,2,3,4,5,6,7],
+	'month':[0,2,4,6,,8,10,12,14,16,18,20,22],
+	'day': [0,5,10,15,20,25,30,35,40,45,50,55]
 }
 export default {
 	components: {},
@@ -52,7 +52,8 @@ export default {
 								return
 							}
 							let x = a.grp.x
-							let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
+							// let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
+							let y = (a.name === 'date')?a.scale(vm.timeValue(vm.eventBus.calLevel,d.raw[a.dim])):a.scale(d.raw[a.dim])
 							if (first) {
 								first = false
 								thick_line.moveTo(x, y)
@@ -68,7 +69,8 @@ export default {
 								return
 							}
 							let x = a.grp.x
-							let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
+							// let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
+							let y = (a.name === 'date')?a.scale(vm.timeValue(vm.eventBus.calLevel,d.raw[a.dim])):a.scale(d.raw[a.dim])
 							if (first) {
 								first = false
 								thick_line.moveTo(x, y)
@@ -457,18 +459,7 @@ export default {
 					}
 				}
 				else{
-					// 如果存在 mask box,日期资料范围是选中的资料范围
-					if(date_range){
-						dim_data = date_range.map(d => {
-							return d.datetime
-						})	
-					}
-					else{
-						dim_data = data.map(d => {
-							return d.datetime
-						})
-					}
-					a.extent = vm.$d3.extent(dim_data)
+					a.extent = vm.$d3.extent(FORMAT[vm.eventBus.calLevel])
 				}
 			})
 			if (vm.normalizedby === 'all dimension') {
@@ -497,10 +488,8 @@ export default {
 					ticks = new Set(ticks)
 				}
 				else{
-					a.scale = vm.$d3.scaleTime().range([axis_y_start + vm.plot_height, axis_y_start]).domain(a.extent)
-					// 使用 d3 取得其 ticks 數值
-					ticks = a.scale.ticks(5)
-					ticks = new Set(ticks)
+					a.scale = vm.$d3.scaleLinear().range([axis_y_start + vm.plot_height, axis_y_start]).domain(a.extent)
+					ticks = new Array(...FORMAT[vm.eventBus.calLevel])
 				}
 				a.grp.child_dict.ctn_ticks.removeChildren()
 				for (let t of ticks) {
@@ -510,7 +499,8 @@ export default {
 					tick.lineTo(vm.tick_length, 0)
 					tick.y = a.scale(t)
 					if(a.name === 'date'){
-						t = vm.$moment.utc(t).format(FORMAT[vm.eventBus.calLevel])
+						// t = vm.$moment.utc(t).format(FORMAT[vm.eventBus.calLevel])
+						t = vm.Time_AXIS_FORMAT(t)
 					}
 					tick.x = - vm.tick_length
 
@@ -661,7 +651,8 @@ export default {
 								if (a.disabled) {
 									return true
 								}
-								let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
+								// let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
+								let y = (a.name === 'date')?a.scale(vm.timeValue(vm.eventBus.calLevel,d.raw[a.dim])):a.scale(d.raw[a.dim])
 								let upper = box.y
 								let lower = box.y + box.height
 								if ((y >= upper && y <= lower && box.enabled) || box.cancel_selection) {
@@ -752,7 +743,8 @@ export default {
 							return
 						}
 						let x = a.grp.x
-						let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
+						// let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
+						let y = (a.name === 'date')?a.scale(vm.timeValue(vm.eventBus.calLevel,d.raw[a.dim])):a.scale(d.raw[a.dim])
 						if (first) {
 							first = false
 							line.moveTo(x, y)
@@ -765,6 +757,16 @@ export default {
 					line.initial_alpha = line.alpha
 				}
 			})
+		},
+		timeValue(level,date){
+			let vm = this
+			let date_time = vm.$moment.utc(date)
+			let scale = {
+				'year': date_time.isoWeekday(),
+				'month': date_time.hour(),
+				'day': date_time.minute()
+			}
+			return scale[level]
 		},
 		drawSingleLine(data){
 			let vm = this
@@ -779,7 +781,8 @@ export default {
 					return
 				}
 				let x = a.grp.x
-				let y = (a.name === 'date')?a.scale(vm.$moment.utc(data.raw[a.dim])):a.scale(data.raw[a.dim])
+				// let y = (a.name === 'date')?a.scale(vm.$moment.utc(data.raw[a.dim])):a.scale(data.raw[a.dim])
+				let y = (a.name === 'date')?a.scale(vm.timeValue(vm.eventBus.calLevel,d.raw[a.dim])):a.scale(d.raw[a.dim])
 				if (first) {
 					first = false
 					line.moveTo(x, y)
@@ -954,6 +957,7 @@ export default {
 	mounted() {
 		let vm = this
 		vm.loaded = false
+		vm.Time_AXIS_FORMAT = vm.$d3.format("02d");
 		vm.app = new vm.$PIXI.Application({
 			autoResize: true,
 			backgroundColor: 0xFFFFFF,

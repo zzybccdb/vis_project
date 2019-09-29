@@ -736,7 +736,6 @@ export default {
                     if(vm.eventBus.pcp.switch_button.mode){
                         vm.selectedCellData()
                         vm.sortAxis()
-                        console.log('what')
                     }
                     else{
                         vm.eventBus.pcp.adjustTicks()

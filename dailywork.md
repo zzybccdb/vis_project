@@ -191,3 +191,5 @@
 #### 2019/09/29
 - 修正了 sort 模式下, highlight 繪製錯誤
 - 使用者取消calendar view的mask box時,在sort模式下會繼續執行
+- 系統會記錄使用這拖拽的 axis 的位置
+- 修正了時間軸的刻度顯示
