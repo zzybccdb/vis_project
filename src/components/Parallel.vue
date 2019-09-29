@@ -5,7 +5,7 @@
 </template>
 
 <script>
-let format = {
+const FORMAT = {
 	'year':'YYYY-MM-DD',
 	'month':'MM-DD HH:00',
 	'day': 'MM-DD HH:mm'
@@ -131,7 +131,7 @@ export default {
             grp_axis.drag_start_mouse_x = e.data.global.x
         },
         axisDragging(e,grp_axis){
-            let vm = this
+			let vm = this
             if (grp_axis.dragging && e.data.buttons) {
                 grp_axis.x = e.data.global.x - grp_axis.drag_start_mouse_x + grp_axis.drag_start_x
                 vm.adjustLines()
@@ -144,7 +144,13 @@ export default {
         },
         axisStopDrag(grp_axis){
             let vm = this
-            grp_axis.dragging = false
+			grp_axis.dragging = false
+			let axis = vm.state.axis.filter(a => {
+				return a.disabled === false
+			})
+			vm.eventBus.root.USER_SORT_AXIS = axis.map(a => {
+				return a.name
+			})
             vm.adjustAxisPosition()
             vm.adjustLines()
 		},
@@ -504,7 +510,7 @@ export default {
 					tick.lineTo(vm.tick_length, 0)
 					tick.y = a.scale(t)
 					if(a.name === 'date'){
-						t = vm.$moment.utc(t).format(format[vm.eventBus.calLevel])
+						t = vm.$moment.utc(t).format(FORMAT[vm.eventBus.calLevel])
 					}
 					tick.x = - vm.tick_length
 
@@ -527,15 +533,36 @@ export default {
 				a.grp.alpha = 0
 			})
 			let axis = vm.state.axis.filter(a => {return a.disabled === false})
+
+			// 记录第一次预设的轴线顺序
+			if(vm.eventBus.root.USER_SORT_AXIS===undefined){
+				vm.eventBus.root.USER_SORT_AXIS = axis.map(a => {
+					return a.name
+				})
+			} 
+			let index = vm.eventBus.root.USER_SORT_AXIS.indexOf('date')
+			/////////////////////////////////
+			// 让 date 栏位永远位于第一位
+			////////////////////////////////
+			// 保留使用这选中的 axis 排列顺序
 			axis.forEach((a,ai) => {
 				if(a.name === 'date'){
 					date_index = ai
 				}
 			})
-			if(date_index){
+			if(date_index !== undefined ){
 				let date_axis = axis.splice(date_index,1)
 				axis.unshift(date_axis[0])
+				if(index === -1){
+					vm.eventBus.root.USER_SORT_AXIS.unshift('date')
+				}
 			}
+			else{
+				if(index !== -1){
+					vm.eventBus.root.USER_SORT_AXIS.splice(index,1)
+				}
+			}
+			////////////////////////////////
 			let min_width = vm.min_axis_gap * (axis.length - 1) + vm.wrapper.x * 2
 			if (vm.app.renderer.width < min_width) {
 				vm.app.renderer.resize(min_width, vm.app.renderer.height)
@@ -550,8 +577,9 @@ export default {
 
 			let available_width = vm.plot_width - (leftPad + rightPad)
 			let axis_gap = available_width / (axis.length - 1)
-			axis.forEach((a,ai) => {
+			axis.forEach((a) => {
 				let ctn_ticks = a.grp.child_dict.ctn_ticks.children
+				let ai = vm.eventBus.root.USER_SORT_AXIS.indexOf(a.name) 
 				a.grp.alpha = 1
 				if (!a.grp.dragging) {
 					a.grp.x = leftPad + ai * axis_gap
@@ -702,9 +730,10 @@ export default {
 				}
 			})
 		},
+		// 在调整折线绘制的时候,有重置轴线在container 的顺序
 		adjustLines() {
 			let vm = this
-			vm.eventBus.pcp.state.axis.sort((x, y) => x.grp.x - y.grp.x)
+			vm.state.axis.sort((x, y) => x.grp.x - y.grp.x)
 			vm.eventBus.data.forEach(d => {
 				if (d.cal && d.cal.selected) {
 					let line = d.pcp
@@ -818,7 +847,7 @@ export default {
 			vm.dim_font = 'Arial'
 			vm.dim_font_size = 14
             vm.tick_length = 5
-            vm.indicator_radius = 5 
+			vm.indicator_radius = 5 
 			
 			vm.normalizedby = 'each dimension'
             vm.normalizedin = 'view region'
@@ -861,6 +890,12 @@ export default {
 					if(vm.eventBus.cal.ctn_box.length !== 0){
 						vm.eventBus.cal.sortAxis(vm.eventBus.cal.ctn_cells)
 					}
+				}
+				else{
+					vm.adjustTicks()
+					vm.adjustAxisPosition()
+					vm.adjustLines()
+					vm.filterLines()
 				}
 				vm.switch_button.mode = circle.bool
 			}

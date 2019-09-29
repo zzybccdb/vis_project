@@ -559,6 +559,8 @@ export default {
 		vm.$refs.pcp.eventBus = EventBus
 		// vm.$refs.sld.eventBus = EventBus
 
+		vm.USER_SORT_AXIS = undefined
+
 		let fixed_bottom_height = vm.$refs.mx_height.$el.clientHeight
 		vm.$refs.cal.$el.style.height = fixed_bottom_height + 'px'
 		vm.$refs.leftpanel.style.height = fixed_bottom_height + 10 + 'px'
