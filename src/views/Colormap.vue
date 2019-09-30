@@ -312,14 +312,28 @@ export default {
 				return
 			}
 			if (vm.eventBus.pcp.state) {
+				let date_dim = undefined
+				if(vm.USER_SORT_AXIS){
+					date_dim = vm.USER_SORT_AXIS.includes('date')
+				}
 				vm.eventBus.pcp.state.axis.forEach(a => {
-					// if(a.name !== 'date'){
-					// 	a.disabled = !vm.columns.includes(a.name) 
-					// }
-					// else{
-					// 		a.disabled = false
-					// }
-					a.disabled = !vm.columns.includes(a.name) 
+					a.disabled = !vm.columns.includes(a.name) 	
+					if(vm.USER_SORT_AXIS){
+						if(a.name === 'date'){
+							a.disabled = !date_dim
+						}
+						let index = vm.USER_SORT_AXIS.indexOf(a.name)
+						if(!a.disabled && index === -1){
+							if(date_dim){
+								vm.USER_SORT_AXIS.splice(1,0,a.name)
+							}else{
+								vm.USER_SORT_AXIS.unshift(a.name)
+							}
+						}
+						else if(a.disabled && index !== -1){
+							vm.USER_SORT_AXIS.splice(index,1)
+						}
+					}
 				});
 			}
 			vm.eventBus.pcp.adjustTicks()

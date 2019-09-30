@@ -135,7 +135,7 @@ export default {
         axisStartDrag(e,grp_axis){
             grp_axis.dragging = true
             grp_axis.drag_start_x = grp_axis.x
-            grp_axis.drag_start_mouse_x = e.data.global.x
+			grp_axis.drag_start_mouse_x = e.data.global.x
         },
         axisDragging(e,grp_axis){
 			let vm = this
@@ -201,6 +201,17 @@ export default {
 			line.y = indicator.y + vm.indicator_radius + 5
 			line.box = []	
 			return line		
+		},
+		// 绘制背景板
+		drawBackground(){
+			let vm = this
+			let PIXI = vm.$PIXI
+			let backgournd = new PIXI.Graphics()
+			backgournd.beginFill(0xFFFFFF,1);
+			backgournd.drawRect(-40, 0, 40, 300);
+			backgournd.endFill();
+			backgournd.y = 0
+			return backgournd
 		},
 		drawFilterStart(e, line, grp_axis){
 			let vm = this
@@ -275,7 +286,6 @@ export default {
 			vm.ctn_axis.addChild(grp_axis)
 			// draw label
 			let label = (column==="date")?vm.drawLabel(column+"("+UNIT[vm.eventBus.calLevel]+")"):vm.drawLabel(column)
-			grp_axis.addChild(label)
 			grp_axis.dragging = false
 			let indicator = vm.drawIndicator(additional, label, column)
 			if(column !== 'date'){
@@ -286,8 +296,15 @@ export default {
 				// 指示符操作
 				indicator.on("mousedown", () => vm.hiddenLabels(column))
 			}
+			else{
+				// 绘制时间轴背景板
+				let background = vm.drawBackground(indicator)
+				grp_axis.addChild(background)
+			}
+			// 绘制顺序问题
+			grp_axis.addChild(label)
 			//  draw line
-			let line = vm.drawLine(indicator, grp_axis)
+			let line = vm.drawLine(indicator)
 			grp_axis.addChild(line)
 			//  draw ticks
 			let ctn_ticks = new vm.$PIXI.Container()
@@ -528,7 +545,6 @@ export default {
 				a.grp.alpha = 0
 			})
 			let axis = vm.state.axis.filter(a => {return a.disabled === false})
-
 			// 记录第一次预设的轴线顺序
 			if(vm.eventBus.root.USER_SORT_AXIS===undefined){
 				vm.eventBus.root.USER_SORT_AXIS = axis.map(a => {
@@ -549,6 +565,7 @@ export default {
 				let date_axis = axis.splice(date_index,1)
 				axis.unshift(date_axis[0])
 				if(index === -1){
+					console.log(index)
 					vm.eventBus.root.USER_SORT_AXIS.unshift('date')
 				}
 			}
@@ -557,6 +574,7 @@ export default {
 					vm.eventBus.root.USER_SORT_AXIS.splice(index,1)
 				}
 			}
+			// console.log("PCP:", vm.eventBus.root.USER_SORT_AXIS,index)
 			////////////////////////////////
 			let min_width = vm.min_axis_gap * (axis.length - 1) + vm.wrapper.x * 2
 			if (vm.app.renderer.width < min_width) {
@@ -583,7 +601,7 @@ export default {
 			})
 		},
 		// 将资料进行 Axis vs latentdim似度排序
-		sortAxis(columns){
+		sortAxis(columns,sort=true){
 			let vm = this
 			vm.state.axis.forEach(a => {
 				a.grp.alpha = 0
@@ -605,16 +623,28 @@ export default {
 
 			let available_width = vm.plot_width - (leftPad + rightPad)
 			let axis_gap = available_width / (axis.length - 1)
-
-			axis.forEach((a) => {
-				let ai = (a.name === 'date')?0:columns.indexOf(a.name) + 1
-				a.grp.alpha = 1
-				
-				if (!a.grp.dragging) {
-					a.grp.x = leftPad + ai * axis_gap
-				}
-				a.idx = ai
-			})
+			if(sort){
+				axis.forEach((a) => {
+					let ai = (a.name === 'date')?0:columns.indexOf(a.name) + 1
+					a.grp.alpha = 1
+					
+					if (!a.grp.dragging) {
+						a.grp.x = leftPad + ai * axis_gap
+					}
+					a.idx = ai
+				})
+			}
+			else{
+				axis.forEach((a) => {
+					let ai = columns.indexOf(a.name)
+					a.grp.alpha = 1
+					
+					if (!a.grp.dragging) {
+						a.grp.x = leftPad + ai * axis_gap
+					}
+					a.idx = ai
+				})				
+			}
 		},
 		getAxisList() {
 			var vm = this;
@@ -856,7 +886,7 @@ export default {
 			vm.dim_font_size = 14
             vm.tick_length = 5
 			vm.indicator_radius = 5 
-			
+
 			vm.normalizedby = 'each dimension'
             vm.normalizedin = 'view region'
 
@@ -871,7 +901,7 @@ export default {
 
 			vm.ctn_axis = new vm.$PIXI.Container()
 			vm.wrapper.addChild(vm.ctn_axis)
-			
+
             // highlight thick line 
 			vm.thick = new vm.$PIXI.Container()
 			vm.thick.name = "thick"
@@ -951,13 +981,22 @@ export default {
 			vm.state.columns = vm.eventBus.columns.slice(start_idx)
 			vm.eventBus.cal.trainedColunms = vm.eventBus.cal.getTrainedColumns()
 			vm.state.axis = []
-			// 加入时间轴
-			vm.addAxis('date',-1,start_idx-1)
 			vm.state.columns.forEach((c, ci) => {
 				vm.addAxis(c, ci, ci + start_idx)
 			})	
+			// 加入时间轴
+			vm.addAxis('date',-1,start_idx-1)
 			vm.loaded = true    
 		},
+		// 固定时间轴
+		fixedDateDim(dom){
+			let vm = this
+			let time_dimension = vm.state.axis.filter(a => a.name==='date')
+			time_dimension[0].grp.x = dom.scrollLeft - dom.clientLeft 
+			vm.adjustLines()
+			// let columns = vm.state.axis.map(a => a.name)
+			// vm.sortAxis(columns,false)
+		}
 	},
 	mounted() {
 		let vm = this
@@ -977,8 +1016,11 @@ export default {
 		// loaded the pcp completely
 		vm.$emit('loaded')
         document.getElementById('pcp-wrapper').onscroll = function(){
-            // console.log('scrolling',this.scrollLeft-this.clientLeft)
-        }
+			if(vm.eventBus.cal.ctn_box.length > 0){
+				console.log('onscroll')
+				vm.fixedDateDim(this)
+			}
+		}
 	},
 	beforeDestroy() {
 		var vm = this;
