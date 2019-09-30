@@ -129,7 +129,6 @@ export default {
 				label.interactive = true
 				label.buttonMode = true
 			}
-            
             return label
         },
         axisStartDrag(e,grp_axis){
@@ -203,12 +202,12 @@ export default {
 			return line		
 		},
 		// 绘制背景板
-		drawBackground(){
+		drawBackground(x,y,w,h){
 			let vm = this
 			let PIXI = vm.$PIXI
 			let backgournd = new PIXI.Graphics()
-			backgournd.beginFill(0xFFFFFF,1);
-			backgournd.drawRect(-40, 0, 40, 300);
+			backgournd.beginFill(0xffffff,1);
+			backgournd.drawRect(x,y,w,h);
 			backgournd.endFill();
 			backgournd.y = 0
 			return backgournd
@@ -285,7 +284,32 @@ export default {
 			let grp_axis = new vm.$PIXI.Container()
 			vm.ctn_axis.addChild(grp_axis)
 			// draw label
-			let label = (column==="date")?vm.drawLabel(column+"("+UNIT[vm.eventBus.calLevel]+")"):vm.drawLabel(column)
+			let label = undefined
+			if(column === 'date'){
+				label = vm.drawLabel(column+"("+UNIT[vm.eventBus.calLevel]+")")
+				let graphics = new vm.$PIXI.Graphics()
+				graphics.beginFill(0xffffff);
+				graphics.lineStyle(1, 0xffffff, 1);
+				graphics.moveTo(label.x, 0);
+				graphics.lineTo(label.x, label.y);
+				graphics.lineTo(label.y/Math.tan(Math.PI/6), 0);
+				graphics.lineTo(label.x, 0);
+				graphics.closePath();
+				graphics.endFill();
+				let backgournd = vm.drawBackground(-60,0,60,70)
+				let label_background= vm.drawBackground(0,0,2*label.y/Math.tan(Math.PI/6),label.height)
+				label_background.x = label.x
+				label_background.y = label.y
+				label_background.rotation = - Math.PI / 6
+				grp_axis.addChild(graphics)
+				grp_axis.addChild(backgournd)
+				grp_axis.addChild(label_background)
+			}
+			else{
+				label = vm.drawLabel(column)
+			}
+			// 绘制顺序问题
+			grp_axis.addChild(label)
 			grp_axis.dragging = false
 			let indicator = vm.drawIndicator(additional, label, column)
 			if(column !== 'date'){
@@ -298,11 +322,9 @@ export default {
 			}
 			else{
 				// 绘制时间轴背景板
-				let background = vm.drawBackground(indicator)
+				let background = vm.drawBackground(-60, indicator.y-vm.indicator_radius-5, 60, 300)
 				grp_axis.addChild(background)
 			}
-			// 绘制顺序问题
-			grp_axis.addChild(label)
 			//  draw line
 			let line = vm.drawLine(indicator)
 			grp_axis.addChild(line)
@@ -993,9 +1015,10 @@ export default {
 			let vm = this
 			let time_dimension = vm.state.axis.filter(a => a.name==='date')
 			time_dimension[0].grp.x = dom.scrollLeft - dom.clientLeft 
+			if(time_dimension[0].grp.x===0){
+				time_dimension[0].grp.x += 20	
+			}
 			vm.adjustLines()
-			// let columns = vm.state.axis.map(a => a.name)
-			// vm.sortAxis(columns,false)
 		}
 	},
 	mounted() {
