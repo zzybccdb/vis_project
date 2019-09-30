@@ -561,6 +561,7 @@ export default {
 		},
 		// 设定轴线的位置
 		adjustAxisPosition() {
+			console.log('设定轴线的位置')
 			let vm = this
 			let date_index = undefined
 			vm.state.axis.forEach(a => {
@@ -624,6 +625,7 @@ export default {
 		},
 		// 将资料进行 Axis vs latentdim似度排序
 		sortAxis(columns,sort=true){
+			console.log('给轴线进行排序')
 			let vm = this
 			vm.state.axis.forEach(a => {
 				a.grp.alpha = 0
@@ -649,7 +651,9 @@ export default {
 				axis.forEach((a) => {
 					let ai = (a.name === 'date')?0:columns.indexOf(a.name) + 1
 					a.grp.alpha = 1
-					
+					if(a.name === 'date' && vm.scroll){
+						return 
+					}
 					if (!a.grp.dragging) {
 						a.grp.x = leftPad + ai * axis_gap
 					}
@@ -921,9 +925,6 @@ export default {
 			vm.ctn_lines = new vm.$PIXI.Container()
 			vm.wrapper.addChild(vm.ctn_lines)
 
-			vm.ctn_axis = new vm.$PIXI.Container()
-			vm.wrapper.addChild(vm.ctn_axis)
-
             // highlight thick line 
 			vm.thick = new vm.$PIXI.Container()
 			vm.thick.name = "thick"
@@ -931,7 +932,10 @@ export default {
             
 			vm.thick_line = new vm.$PIXI.Graphics()
 			vm.thick.addChild(vm.thick_line)
-			
+
+			vm.ctn_axis = new vm.$PIXI.Container()
+			vm.wrapper.addChild(vm.ctn_axis)
+
 			// sort switch button
 			vm.switch_button = new vm.$PIXI.Container()
 			vm.switch_button.name = 'swith button'
@@ -1016,15 +1020,18 @@ export default {
 			let time_dimension = vm.state.axis.filter(a => a.name==='date')
 			time_dimension[0].grp.x = dom.scrollLeft - dom.clientLeft 
 			if(time_dimension[0].grp.x===0){
-				time_dimension[0].grp.x += 20	
+				time_dimension[0].grp.x += 20
+				vm.scroll = false	
 			}
 			vm.adjustLines()
+			vm.filterLines()
 		}
 	},
 	mounted() {
 		let vm = this
 		vm.loaded = false
 		vm.Time_AXIS_FORMAT = vm.$d3.format("02d");
+		vm.scroll = false
 		vm.app = new vm.$PIXI.Application({
 			autoResize: true,
 			backgroundColor: 0xFFFFFF,
@@ -1041,6 +1048,7 @@ export default {
         document.getElementById('pcp-wrapper').onscroll = function(){
 			if(vm.eventBus.cal.ctn_box.length > 0){
 				console.log('onscroll')
+				vm.scroll = true
 				vm.fixedDateDim(this)
 			}
 		}
