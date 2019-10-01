@@ -618,7 +618,7 @@ export default {
 				let ai = vm.eventBus.root.USER_SORT_AXIS.indexOf(a.name) 
 				a.grp.alpha = 1
 				if (!a.grp.dragging) {
-					a.grp.x = leftPad + ai * axis_gap
+					a.grp.x = leftPad + ai * axis_gap + 10
 				}
 				a.idx = ai
 			})
