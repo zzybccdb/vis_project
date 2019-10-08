@@ -526,7 +526,7 @@ export default {
                     // 注意 slice 回傳的是一個 array
                     mask_pts = vm.mask_group.slice(-1)[0]
                 }
-                if(mask_pts !== undefined && !vm.pcp_mode){
+                if(mask_pts !== undefined){
                     vm.maskPointsMove(e,mask_pts)
                 }
             }    

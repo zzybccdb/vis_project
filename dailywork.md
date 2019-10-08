@@ -201,6 +201,7 @@
 
 #### 2019/10/08
 - home view 下 color scatter move highlight(done)
-- 允许使用者在 pcp mode 下拖动 mask_pts
-- 补回旋转跟缩放
+- 允许使用者在 pcp mode 下拖动 mask_pts(done)
+- 检查传统方式下是否依旧是只训练了 level 资料，而非全部原始资料
+- home view scatter 旋转跟缩放
 - 修改dataloader，改为只抓取不同 level 的资料， 非原始资料（目前之抓取 day & hour）
