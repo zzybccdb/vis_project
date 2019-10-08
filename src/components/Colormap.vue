@@ -514,7 +514,8 @@ export default {
 					ctn_box.selecting = false
 					vm.eventBus.cal.adjustAxisOrder()
 					vm.eventBus.pcp.clearData()
-					vm.eventBus.pcp.updateData()
+					vm.eventBus.pcp.adjustTicks()
+					vm.eventBus.pcp.adjustLines()
 					vm.highLightSelectedPoint()
 				}
 			}

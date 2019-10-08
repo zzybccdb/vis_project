@@ -157,8 +157,8 @@ export default {
             vm.app.stage.buttonmode = true
             vm.app.stage.mousedown = vm.mousedown
             vm.app.stage.mouseup = vm.mouseup
+            vm.app.stage.mousemove = vm.mousemove
             // vm.app.stage.rightdown = vm.rightdown
-            vm.app.stage.mousemove = vm.mosuemove
             vm.app.stage.rightup = vm.rightup
             // 将 PIXI application 加入 Dom Tree
             vm.$refs.colorScatter.appendChild(vm.app.view)
@@ -330,17 +330,16 @@ export default {
             if(vm.mask_mode){
                 if(!vm.mask_pt_clicked){
                     // 根据设定半径进行搜索
-                    vm.circleFilter(vm.filter_radius,[e.data.global.x, e.data.global.y])
+                    vm.circleFilter([e.data.global.x, e.data.global.y])
                 }
             }
         },
         // 半径搜索
-        circleFilter(r,center){
+        circleFilter(center){
             let group = []
             vm.mask_pts = vm.ctn_pts.children.filter((pt) => {
                 // 检查是否在半径内
-                let value = Math.pow((pt.x-center[0]),2) + Math.pow((pt.y-center[1]),2)
-                if(value <= Math.pow(r,2)){
+                if(vm.checkPtInCircle(pt,vm.filter_radius,center)){
                     pt.tint = 0xffffff
                     pt.mask_group = group
                     group.push(pt)
@@ -349,7 +348,7 @@ export default {
                     pt.buttonmode = true
                     pt.mousedown = vm.mask_pts_click
                     pt.rightdown = vm.mask_pts_rightClick
-                    return true
+                    return true                
                 }
                 else if(pt.mask_group === undefined){
                     pt.tint = vm.getColor(pt.x,pt.y)
@@ -363,6 +362,14 @@ export default {
             vm.mask_group.push(group)
             vm.mask_group_drawPCP()
             vm.mask_pts = undefined
+        },
+        // 检查 pt 是否在半径内
+        checkPtInCircle(pt,radius,center){
+            let value = Math.pow((pt.x-center[0]),2) + Math.pow((pt.y-center[1]),2)
+            if(value <= Math.pow(radius,2)){
+                return true
+            }
+            else return false
         },
         // 將上一輪有保留的 mask_group 標記
         setPreMask_group(mask_group){
@@ -470,7 +477,30 @@ export default {
             })     
         },
         // 按鍵旋轉移動，拖拽控制
-        mosuemove(e){
+        mousemove(e){
+            if(vm.pcp_mode){
+                let pcp = vm.eventBus.pcp
+                let center = [e.data.global.x, e.data.global.y]
+                if(pcp !== undefined){
+                    pcp.removeMoveLines()
+                    vm.highlight_pts = vm.ctn_pts.children.filter((pt) => {
+                        if(vm.checkPtInCircle(pt,10,center)){
+                            pt.tint = 0xffffff
+                            vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1)
+                            vm.eventBus.pcp.drawSingleLine(pt)   
+                            return true
+                        }
+                        else{
+                            // 判断是否为 mask_pts
+                            if(!pt.center_mark){
+                                pt.tint = vm.getColor(pt.x,pt.y)
+                                pt.alpha = 0.3
+                            }
+                            return false
+                        }
+                    })
+                }
+            }
             // 邊界設定，超出結束控制
             if (e.data.global.y >= 512 || e.data.global.y < 0 ||  e.data.global.x >= 512 ||  e.data.global.x < 0 ){
                 // mask box 錯誤判斷
@@ -485,15 +515,6 @@ export default {
             if(!vm.mask_mode && vm.group_move){
                 vm.allPointsMove(e)
             }
-            // // 執行 PCP mask 選擇框
-            // if(vm.mask_box_draw && vm.pcp_mode){
-            //     if(vm.pcp_mask_pts){
-            //         vm.clearPCPMaskPts()
-            //         let pcp = vm.eventBus.pcp
-            //         pcp.removeLines()
-            //     }
-            //     vm.maskBoxRisize(e)
-            // }
             // 直接移动 mask 标注数据点
             // if(vm.mask_mode && vm.group_move && !vm.pcp_mode){  
             if(vm.mask_mode && vm.group_move){

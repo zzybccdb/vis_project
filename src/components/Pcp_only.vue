@@ -222,29 +222,47 @@ export default {
             let latent_scatter = vm.eventBus.latent_scatter
             mask_pts.forEach(pt => {
                 let data = latent_scatter.filterSelectedDimData(pt.data)
-                let line = new PIXI.Graphics()
-                line.lineStyle(1, 0xffffff, 1)
-
-                data.forEach((d,i) => {
-                    let c = vm.columns[i]
-                    let scale = vm.scale[c].scale
-                    let x = vm.axis[c].ctn.x
-                    let y = vm.axis[c].axisLine.y + scale(d)
-                    if( i === 0 ){
-                        line.moveTo(x,y)
-                    }
-                    else{
-                        line.lineTo(x,y)
-                    }
-                    line.tint = (color_cb)?color_cb(pt.x,pt.y):0x000000
-                    line.alpha = 0.4
-                })
-                vm.ctn_lines.addChild(line)               
+                if(pt.pcp === undefined){
+                    vm.drawSingleLine(pt,color_cb)       
+                }
+                else{
+                    pt.pcp.alpha = 0.4
+                }
             })
+        },
+        // 绘制一条折线
+        drawSingleLine(pt){
+            let line = new PIXI.Graphics()
+            let color_cb = vm.eventBus.latent_scatter.getColor
+            let data = vm.eventBus.latent_scatter.filterSelectedDimData(pt.data)
+            line.lineStyle(1, 0xffffff, 1)
+            data.forEach((d,i) => {
+                let c = vm.columns[i]
+                let scale = vm.scale[c].scale
+                let x = vm.axis[c].ctn.x
+                let y = vm.axis[c].axisLine.y + scale(d)
+                if( i === 0 ){
+                    line.moveTo(x,y)
+                }
+                else{
+                    line.lineTo(x,y)
+                }
+                line.tint = (color_cb)?color_cb(pt.x,pt.y):0x000000
+                line.alpha = 0.4
+            })
+            line.pt = pt
+            pt.pcp = line
+            vm.ctn_lines.addChild(line)            
         },
         // 移除當前的 data line
         removeLines(){
-            vm.ctn_lines.removeChildren()
+            vm.ctn_lines.children.forEach(line => line.alpha = 0)
+        },
+        // 移除当前移动经过的 data line
+        removeMoveLines(){
+            vm.ctn_lines.children.forEach(line => {
+                line.alpha = (line.pt.center_mark)?0.4:0
+            })
         },
         // 刪除 filter box 
         removeFilterBox(e){
