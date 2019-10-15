@@ -100,10 +100,10 @@ export default {
 
 			let data = vm.eventBus.data
 			// console.log(data)
-			let x_extent = vm.$d3.extent(data.map(d => {return parseFloat(d.raw[0])}))
-			let y_extent = vm.$d3.extent(data.map(d => {return parseFloat(d.raw[1])}))
-			let x_range = x_extent[1] - x_extent[0]
-			let y_range = y_extent[1] - y_extent[0]
+			// let x_extent = vm.$d3.extent(data.map(d => {return parseFloat(d.raw[0])}))
+			// let y_extent = vm.$d3.extent(data.map(d => {return parseFloat(d.raw[1])}))
+			// let x_range = x_extent[1] - x_extent[0]
+			// let y_range = y_extent[1] - y_extent[0]
 
 			//////////////////////////
 			/// draw the (3,3) point
@@ -119,16 +119,13 @@ export default {
 			data.forEach(d => {
 				let p = new vm.$PIXI.Point(parseFloat(d.raw[0]), parseFloat(d.raw[1]))
 				let sp = new vm.$PIXI.Sprite(vm.dotTexture)
-				let nx = (p.x - x_extent[0]) / x_range
-				let ny = (p.y - y_extent[0]) / y_range
-				let x = nx * 250 + 3
-				let y = ny * 250 + 3
+				let x = vm.x_scale(d.raw[0])	
+				let y = vm.y_scale(d.raw[1])
 				sp.rawpos = [x, y]
 				sp.orgpos = [x, y]
-				sp.npos = [nx, ny]
 				sp.x = x
 				sp.y = y
-				pts.push([x+3, y+3])
+				pts.push([x, y])
 				d.cm = sp
 				sp.alpha = 0.3
 				sp.oldAlpha = 0.3
@@ -552,7 +549,8 @@ export default {
 		},
 	},
 	mounted() {
-		var vm = this;
+		let vm = this;
+		let d3 = vm.$d3
 		vm.dirty = true
 		vm.rotate_dirty = false
 		vm.rotation = 0
@@ -561,6 +559,9 @@ export default {
 		vm.colormapHeight = 256
 		vm.currrentTransform = vm.$d3.zoomIdentity
 		vm.$refs.home.addEventListener('contextmenu', e => {e.preventDefault()})
+
+		vm.x_scale = d3.scaleLinear().range([0,256]).domain([-1,1])
+		vm.y_scale = d3.scaleLinear().range([0,256]).domain([-1,1])  
 
 		vm.app = new vm.$PIXI.Application({
 			width: 256,
