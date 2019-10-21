@@ -339,6 +339,7 @@ export default {
 			vm.eventBus.pcp.adjustTicks()
 			vm.eventBus.pcp.adjustAxisPosition()
 			vm.eventBus.pcp.adjustLines()
+			vm.eventBus.pcp.filterLines()
 		},
 		remove (item) {
 			console.log('remove', item)	

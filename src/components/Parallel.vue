@@ -23,6 +23,10 @@ export default {
 		}
 	},
 	methods: {  
+		lineAlpha(alpha_u){
+			let vm = this
+			return (1 - ((1-alpha_u) * vm.eventBus.root.errorAlpha / 100))*0.4
+		},
 		changeAlpha(alpha) {
 			let vm = this;
 			vm.alpha_m = Math.min(1, Math.max(0.1, alpha))
@@ -34,7 +38,7 @@ export default {
 				if (d.cal.selected && d.pcp) {
 					let line = d.pcp
 					line.alpha = vm.alpha_m
-					line.alpha *= 1 - ((1-d.alpha_u) * vm.eventBus.root.errorAlpha / 100)
+					line.alpha *= vm.lineAlpha(d.alpha_u)
 					line.initial_alpha = line.alpha
 				}
 			})
@@ -112,6 +116,7 @@ export default {
             let height = vm.$refs.home.clientHeight;
             vm.app.renderer.resize(width, height);
 			if (vm.loaded) {
+				vm.adjustTicks()
 				vm.adjustAxisPosition()
 				vm.adjustLines()
 				vm.filterLines()
@@ -140,8 +145,8 @@ export default {
 			let vm = this
             if (grp_axis.dragging && e.data.buttons) {
                 grp_axis.x = e.data.global.x - grp_axis.drag_start_mouse_x + grp_axis.drag_start_x
-                vm.adjustLines()
                 vm.adjustAxisPosition()
+				vm.adjustLines()
             } else {
                 if (grp_axis.dragging) {
                     vm.axisStopDrag(grp_axis)
@@ -158,7 +163,8 @@ export default {
 				return a.name
 			})
             vm.adjustAxisPosition()
-            vm.adjustLines()
+			vm.adjustLines()
+			vm.filterLines()
 		},
         drawIndicator(additional, label, column){
             let vm = this
@@ -755,7 +761,7 @@ export default {
 						}
 						if(line){
 							line.tint = d.cal.tint
-							line.alpha = vm.alpha_m * 0.5
+							line.alpha = vm.alpha_m * vm.lineAlpha(d.alpha_u)
 							if (no_box) {
 								d.cal.texture = vm.eventBus.cal.cellTextureSelected
 							} else {
@@ -767,7 +773,12 @@ export default {
 						}					
 					}
 					else if(line){
-						line.alpha = 0
+						if(!cal_mask_boxes && vm.num_filter_box){
+							line.alpha = 0
+						}
+						else{
+							line.alpha = 0.02
+						}
 						// 沒有 cal mask box 時候
 						if(!cal_mask_boxes){
 							d.cal.selected = false
@@ -814,7 +825,7 @@ export default {
 						}
 					})
 					line.alpha = vm.alpha_m
-					line.alpha *= 1 - ((1-d.alpha_u) * vm.eventBus.root.errorAlpha / 100)
+					line.alpha *= vm.lineAlpha(d.alpha_u)
 					line.initial_alpha = line.alpha
 				}
 			})
@@ -852,7 +863,7 @@ export default {
 				}
 			})
 			line.alpha = vm.alpha_m
-			line.alpha *= 1 - ((1-data.alpha_u) * vm.eventBus.root.errorAlpha / 100)
+			line.alpha *= vm.lineAlpha(data.alpha_u)
 			line.initial_alpha = line.alpha
 		},
 		replaceData(data, colors) {

@@ -199,9 +199,21 @@
 - 修正了 date Dimension 于过去功能兼容性的问题
 - 添加了 date Dimension 固定移动的功能
 
-#### 2019/10/08
+#### 2019/10 倒計時
 - home view 下 color scatter move highlight(done)
 - 允许使用者在 pcp mode 下拖动 mask_pts(done)
-- 检查传统方式下是否依旧是只训练了 level 资料，而非全部原始资料
+- 傳統降爲方式沒有限定range（-1,1），後端修改(done)
+- 修改dataloader，改为只抓取不同 level 的资料， 非原始资料（目前只抓取 day & hour）
+- calender view pcp resize 後折線沒有保持自動更新(暫時done，沒有再出現bug了)
+- 折線出現 filter box 無法點選的錯誤(暫時done，沒有再出現bug了)
+- 在 calender view pcp 下添加軸線沒有自動調整透明度跟filter(done)
+- 軸線移動時透明度變化(done)
+- home view pcp 過濾時，不清除沒有選中折線的透明度(done)
+
+
+- 在 Home view 下 color scatter 可以看到傳統降維度結果，並且可以進行操作
 - home view scatter 旋转跟缩放
-- 修改dataloader，改为只抓取不同 level 的资料， 非原始资料（目前之抓取 day & hour）
+- mask_pts 点选后， 开启 pcp 没有绘制
+- 在移动 mask_pts 的过程中， 颜色匹配错误
+- 取消 mask_pts 触发了 post，继而引发错误
+- 检查传统方式下是否依旧是只训练了 level 资料，而非全部原始资料
