@@ -138,6 +138,7 @@ import Covariance from '@/views/Results.vue'
 
 const EventBus = {}
 let id = 0
+const classic_network = ['PCA','MDS','TSNE','UMAP']
 export default {
 	components: {
 		HISTOGRAM,
@@ -241,7 +242,7 @@ export default {
 	
 						pcp.setDimensions(vm.columns,latent_scatter.data,extents)
 						latent_scatter.mask_group.forEach(mask_pts => {
-							pcp.drawMaskDataLine(mask_pts,cb)
+							pcp.drawMaskDataLine(mask_pts)
 						})
 					}).catch(error => {
 						console.error('获取资料 extents 时错误',error)
@@ -332,6 +333,25 @@ export default {
 				vm.config.data.labels = []
 				vm.config.data.datasets[0].data = []
 				vm.loss_plot.update()
+				
+				// 傳統降維方式 繪製 
+				if(classic_network.indexOf(vm.network) !== -1){
+					this.$axios.get(this.$api + '/inference/get_classic_latent')
+					.then(response => {
+						let latent_scatter = vm.$refs.latent_scatter
+						let data = response.data.rawdata
+						let columns = response.data.columns
+
+						latent_scatter.column_index = response.data.column_index
+						latent_scatter.data = data
+						latent_scatter.columns = columns	
+
+						if(latent_scatter.latent===false){
+							latent_scatter.addPoints(window.sample_raw_data)
+							latent_scatter.pointsTransition(data)
+						}
+					})
+				}
 			})
 		},
 		async onContinue() {
@@ -688,23 +708,38 @@ export default {
 
 				EventBus.latent_scatter = latent_scatter
 				latent_scatter.eventBus = EventBus
+				
 				if(latent_scatter.latent===false){
 					latent_scatter.addPoints(window.sample_raw_data)
 				}
-				// 加载 latent 资料点， 资料结构 =》 {date,latentx，latenty}
-				vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':vm.iteration}).then(response => {
-					let data = response.data.rawdata
-					let columns = response.data.columns
+				
+				//區分爲傳統降維方法和非傳統降維方式 
+				if(classic_network.indexOf(vm.network) !== -1){
+					this.$axios.get(this.$api + '/inference/get_classic_latent')
+					.then(response => {
+						let data = response.data.rawdata
+						let columns = response.data.columns
 
-					latent_scatter.data = data
-					latent_scatter.columns = columns
-					// 載入上一輪latent 位置
-					latent_scatter.pointsTransition(data)
-					// 載入上一輪設定的控制點
-					latent_scatter.setPreMask_group(window.mask_group)
-				}).catch(error => {
-					console.error('Home Get progress went wrong!',error)
-				})
+						latent_scatter.data = data
+						latent_scatter.columns = columns	
+						latent_scatter.pointsTransition(data)
+					})					
+				}else{
+					// 加载 latent 资料点， 资料结构 =》 {date,latentx，latenty}
+					vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':vm.iteration}).then(response => {
+						let data = response.data.rawdata
+						let columns = response.data.columns
+	
+						latent_scatter.data = data
+						latent_scatter.columns = columns
+						// 載入上一輪latent 位置
+						latent_scatter.pointsTransition(data)
+						// 載入上一輪設定的控制點
+						latent_scatter.setPreMask_group(window.mask_group)
+					}).catch(error => {
+						console.error('Home Get progress went wrong!',error)
+					})
+				}
 
 			}
 

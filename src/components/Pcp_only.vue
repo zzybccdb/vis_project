@@ -218,12 +218,13 @@ export default {
             return axisTicks
         },
         // 繪製選中資料點
-        drawMaskDataLine(mask_pts, color_cb=undefined){
+        drawMaskDataLine(mask_pts){
             let latent_scatter = vm.eventBus.latent_scatter
+            console.log(mask_pts)
             mask_pts.forEach(pt => {
                 let data = latent_scatter.filterSelectedDimData(pt.data)
                 if(pt.pcp === undefined){
-                    vm.drawSingleLine(pt,color_cb)       
+                    vm.drawSingleLine(pt)       
                 }
                 else{
                     pt.pcp.alpha = 0.4
@@ -279,7 +280,7 @@ export default {
                 axisLine.filter_box.removeChild(box)
                 vm.removeLines()
                 let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
-                vm.drawMaskDataLine(mask_pts,cb)
+                vm.drawMaskDataLine(mask_pts)
             }
         },
         // 基本的 filter box 元件繪製
@@ -336,7 +337,7 @@ export default {
                 vm.filter_start = false
                 vm.removeLines()
                 let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
-                vm.drawMaskDataLine(mask_pts,cb)
+                vm.drawMaskDataLine(mask_pts)
             }
         },
         // mouseout
