@@ -19,7 +19,7 @@ export default {
 	methods: {  
         // pixi 初始化设定
         pixiInit(){
-            vm.line_alpha = 0.4
+            vm.line_alpha = 0.3
             vm.min_axis_gap = 120
             vm.filterbox_width = 10
             vm.plot_height = 190
@@ -220,16 +220,28 @@ export default {
         // 繪製選中資料點
         drawMaskDataLine(mask_pts){
             let latent_scatter = vm.eventBus.latent_scatter
-            console.log(mask_pts)
             mask_pts.forEach(pt => {
                 let data = latent_scatter.filterSelectedDimData(pt.data)
                 if(pt.pcp === undefined){
-                    vm.drawSingleLine(pt)       
+                    vm.drawSingleLine(pt)      
                 }
                 else{
-                    pt.pcp.alpha = 0.4
+                    pt.pcp.alpha = vm.line_alpha
                 }
             })
+        },
+        drawFilterDataLine(mask_pts){
+            let latent_scatter = vm.eventBus.latent_scatter
+            mask_pts.forEach(pt => {
+                let data = latent_scatter.filterSelectedDimData(pt.data)
+                if(pt.pcp === undefined){
+                    vm.drawSingleLine(pt)      
+                }
+                else{
+                    pt.pcp.alpha = vm.line_alpha
+                }
+                pt.pcp.filter = true 
+            })            
         },
         // 绘制一条折线
         drawSingleLine(pt){
@@ -249,21 +261,40 @@ export default {
                     line.lineTo(x,y)
                 }
                 line.tint = (color_cb)?color_cb(pt.x,pt.y):0x000000
-                line.alpha = 0.4
+                line.alpha = vm.line_alpha
             })
             line.pt = pt
-            pt.pcp = line
-            vm.ctn_lines.addChild(line)            
+            line.filter = false
+            vm.ctn_lines.addChild(line)      
+            pt.pcp = line  
         },
         // 移除當前的 data line
         removeLines(){
-            vm.ctn_lines.children.forEach(line => line.alpha = 0)
+            vm.ctn_lines.children.forEach(line => {
+                line.alpha = 0
+                line.filter = false
+            })
         },
         // 移除当前移动经过的 data line
         removeMoveLines(){
-            vm.ctn_lines.children.forEach(line => {
-                line.alpha = (line.pt.center_mark)?0.4:0
+            if(!vm.eventBus){
+                return 
+            }
+            let latent_scatter = vm.eventBus.latent_scatter
+            // 存在有左鍵標記的 mask pts,且同時 pcp 的filter box 爲 0
+            let filter_box = vm.columns.some(c => {
+                return vm.axis[c].filter_box.children.length
             })
+            if(latent_scatter.mask_group.length > 0 && filter_box){
+                vm.ctn_lines.children.forEach(line => {
+                    line.alpha = (line.pt.center_mark)?(line.filter)?vm.line_alpha:0:0
+                })
+            }
+            else{
+                vm.ctn_lines.children.forEach(line => {
+                    line.alpha = (line.pt.center_mark || line.filter)?vm.line_alpha:0
+                })
+            }
         },
         // 刪除 filter box 
         removeFilterBox(e){
@@ -279,8 +310,8 @@ export default {
             if(box !== undefined){
                 axisLine.filter_box.removeChild(box)
                 vm.removeLines()
-                let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
-                vm.drawMaskDataLine(mask_pts)
+                let [mask_pts] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
+                vm.drawFilterDataLine(mask_pts)
             }
         },
         // 基本的 filter box 元件繪製
@@ -337,14 +368,20 @@ export default {
                 vm.filter_start = false
                 vm.removeLines()
                 let [mask_pts,cb] = vm.eventBus.latent_scatter.pcpFilter(vm.columns,vm.axis)
-                vm.drawMaskDataLine(mask_pts)
+                vm.drawFilterDataLine(mask_pts)
             }
         },
         // mouseout
         drawMouseOut(e){
             vm.drawFilterEnd(e)
+        },
+        // 改變折線顏色
+        changeTint(color_cb){
+            vm.ctn_lines.children.forEach(line => {
+                let pt = line.pt
+                line.tint = color_cb(pt.curpos[0],pt.curpos[1])
+            })            
         }
-
 	},
 	mounted() {
         vm = this
@@ -357,6 +394,9 @@ export default {
         vm.$refs.home.addEventListener('contextmenu', e => {e.preventDefault()})
 	},
 	beforeDestroy() {
+        vm.ctn_lines.children.forEach(line => {
+            line.pt.pcp = undefined
+        })
 		if (vm.app !== undefined) {
 			vm.app.destroy()
 		}

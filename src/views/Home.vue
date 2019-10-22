@@ -103,7 +103,7 @@
 												<v-icon light>cached</v-icon>
 											</span>
 										</v-btn>
-										<v-btn small ref='adjust' :disabled="disableNewTrainBtn || pcp" color="primary" @click="onMask">
+										<v-btn small ref='adjust' :disabled="disableNewTrainBtn" color="primary" @click="onMask">
 											<v-icon>swap_horiz</v-icon>
 											{{adjust}}
 										</v-btn>
@@ -226,8 +226,8 @@ export default {
 			let vm = this
 			let latent_scatter = vm.$refs.latent_scatter
 			latent_scatter.pcp_mode = !latent_scatter.pcp_mode
-			latent_scatter.mask_mode = true
-			vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
+			// latent_scatter.mask_mode = true
+			// vm.adjust = (latent_scatter.mask_mode)?'adjust':'pan'
 			
 			if( latent_scatter.data !== undefined){
 				vm.pcp = !vm.pcp
@@ -311,6 +311,8 @@ export default {
 		startTrain(){
 			console.log(' training start ')
 			let vm = this
+			let latent_scatter = vm.$refs.latent_scatter
+
 			this.$axios.post(this.$api + '/train/start', {
 				'network': vm.network,
 				'dataset': vm.dataset,
@@ -321,7 +323,6 @@ export default {
 				'input_window':Number(vm.input_window),
 				'output_window':Number(vm.output_window),
 			}).then(response => {
-				let latent_scatter = vm.$refs.latent_scatter
 				latent_scatter.column_index = response.data.column_index
 				vm.state = response.data.state
 			}).catch(error => {
@@ -338,7 +339,6 @@ export default {
 				if(classic_network.indexOf(vm.network) !== -1){
 					this.$axios.get(this.$api + '/inference/get_classic_latent')
 					.then(response => {
-						let latent_scatter = vm.$refs.latent_scatter
 						let data = response.data.rawdata
 						let columns = response.data.columns
 
@@ -704,7 +704,7 @@ export default {
 				let latent_scatter = vm.$refs.latent_scatter
 				latent_scatter.column_index = window.column_index
 				latent_scatter.pcp_mode = false
-				latent_scatter.mask_mode = true
+				latent_scatter.mask_mode = false
 
 				EventBus.latent_scatter = latent_scatter
 				latent_scatter.eventBus = EventBus
@@ -774,6 +774,17 @@ export default {
 		window.mask_group = latent_scatter.mask_group
 		window.latent = latent_scatter.latent
 		window.column_index = latent_scatter.column_index
+		let new_latent = {}
+		if(Object.keys(latent_scatter.dataWrapper).length){
+			let x_scale = latent_scatter.x_scale.invert
+			let y_scale = latent_scatter.y_scale.invert
+			for(let index in latent_scatter.dataWrapper){
+				let x = latent_scatter.dataWrapper[index].point.x
+				let y = latent_scatter.dataWrapper[index].point.y
+				new_latent[index] = [x_scale(x),y_scale(y)]
+			}
+		}
+		latent_scatter.latentChange(new_latent)
 	}
 }
 </script>

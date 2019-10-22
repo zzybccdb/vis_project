@@ -209,11 +209,15 @@
 - 在 calender view pcp 下添加軸線沒有自動調整透明度跟filter(done)
 - 軸線移動時透明度變化(done)
 - home view pcp 過濾時，不清除沒有選中折線的透明度(done)
+- 检查传统方式下是否依旧是只训练了 level 资料，而非全部原始资料(done)
 
 
-- 在 Home view 下 color scatter 可以看到傳統降維度結果，並且可以進行操作
-- home view scatter 旋转跟缩放
-- mask_pts 点选后， 开启 pcp 没有绘制
-- 在移动 mask_pts 的过程中， 颜色匹配错误
-- 取消 mask_pts 触发了 post，继而引发错误
-- 检查传统方式下是否依旧是只训练了 level 资料，而非全部原始资料
+- 在 Home view 下 color scatter 可以看到傳統降維度結果(done)
+- 在 Home view 下可以進行操作(done)
+- home view scatter 旋转跟缩放(done)
+- mask_pts 点选后， 开启 pcp 没有绘制(done)
+- 在移动 mask_pts 的过程中， 颜色匹配错误(done)
+- 取消 mask_pts 触发了 post，继而引发错误(done)
+
+- 後端資料保存
+- 前端從後端獲取當前位置資料

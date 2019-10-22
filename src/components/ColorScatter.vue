@@ -87,6 +87,16 @@ export default {
                 console.error('Confirm latent error',error)
             })            
         },
+        async latentChange(new_latent){
+            await　vm.$axios.post(vm.$api + '/inference/change_latent_position',{
+                'new_latent':new_latent
+            })
+            .then(() => {
+                console.log('update latent position ok')
+            }).catch(error => {
+                console.error('update latent position error',error)
+            })    	            
+        },
         //(Home reset button 使用)reset 空間內容
         onReset(){
             vm.rotate_dirty = false
@@ -158,7 +168,7 @@ export default {
             vm.app.stage.mousedown = vm.mousedown
             vm.app.stage.mouseup = vm.mouseup
             vm.app.stage.mousemove = vm.mousemove
-            // vm.app.stage.rightdown = vm.rightdown
+            vm.app.stage.rightdown = vm.rightdown
             vm.app.stage.rightup = vm.rightup
             // 将 PIXI application 加入 Dom Tree
             vm.$refs.colorScatter.appendChild(vm.app.view)
@@ -203,6 +213,48 @@ export default {
             // control shadow 贴图
             vm.controlShadowTexture = vm.controlShadowStyle()
         },
+        // 缩放平移
+        d3Init(){
+            vm.x_scale = d3.scaleLinear().range([0,512]).domain([-1,1])
+            vm.y_scale = d3.scaleLinear().range([0,512]).domain([-1,1]) 
+            // 缩放参数设定
+            let zoom = d3.zoom().on('zoom',vm.zoomed)
+            d3.select('#colorScatter').call(zoom)
+            vm.zoom = zoom
+        },
+        zoomed(){
+            vm.transform = d3.event.transform
+            vm.applyZoom()
+        },
+        applyZoom(){
+            let pcp = vm.eventBus.pcp
+            vm.zoom_dirty = true
+            vm.rotation_acc = 0
+            if(!vm.mask_mode){
+                // 資料點縮放控制
+                vm.ctn_pts.children.forEach(pt => {
+                    if(vm.rotate_dirty){
+                        pt.refpos=pt.curpos
+                    }
+                    let new_pos = vm.transform.apply(pt.refpos)
+                    pt.curpos = new_pos
+                    pt.x = pt.curpos[0]
+                    pt.y = pt.curpos[1]
+                    if(pt.tint !== 0xffffff){
+                        pt.tint = vm.getColor(pt.x,pt.y)
+                    }
+                    if(pt.pcp){
+                        pt.pcp.tint = pt.tint
+                    }
+                })
+                if(vm.rotate_dirty){
+                    vm.rotate_dirty = false
+                }                     
+            }
+            if(pcp){
+                pcp.changeTint(vm.getColor)
+            }           
+        },
         // 数据点的贴图
         dotStyle(){
             let g = new PIXI.Graphics()
@@ -241,18 +293,6 @@ export default {
             g.endFill()
             return g.generateCanvasTexture()
         },
-        // d3 axis scale initial
-        d3Init(){
-            vm.x_scale = d3.scaleLinear().range([0,512]).domain([-1,1])
-            vm.y_scale = d3.scaleLinear().range([0,512]).domain([-1,1])  
-            // 縮放參數設定
-            // let zoom = d3.zoom()
-            //         .on('zoom',vm.zoomed)
-            //         // 將 d3.zoom() 的 scaleExtent 設定爲 【1,1】，阻止其 zoom 
-            //         .scaleExtent([1,1])
-            // d3.select('#colorScatter').call(zoom)
-            // vm.zoom = zoom
-        },
         // 绘制图像
         drawGraph(){
             // 背景贴图,载入贴图
@@ -267,16 +307,18 @@ export default {
         addPoints(latent){
             vm.dataWrapper = {}
             vm.ctn_pts.count = latent.length
+            // console.log(latent)
             latent.forEach((d) => {
-                let date_index = moment(d[0]).utc().format(date_format)
-                vm .dataWrapper[date_index] = {}
+                let date_index = moment(d[1]).utc().format(date_format)
+                let index = ''+d[0]+'-'+date_index
+                vm .dataWrapper[index] = {}
                 let sp = new PIXI.Sprite(vm.dotTexture)
                 vm.setPointLocation(sp,0,0)
                 sp.alpha = 0.3
-                sp.data = d
+                sp.data = d.slice(1)
                 sp.center_mark = false
                 sp.mask_group = undefined
-                vm.dataWrapper[date_index].point = sp
+                vm.dataWrapper[index].point = sp
                 vm.ctn_pts.addChild(sp)
             });
             vm.latent = true
@@ -286,10 +328,12 @@ export default {
             if(!vm.temp_pause){
                 data.forEach(d => {
                     let date_index = moment(d[0]).utc().format(date_format)
-                    let pt = vm.dataWrapper[date_index].point
-                    vm.setPointLocation(pt,d.slice(-2)[0],d.slice(-2)[1],false)
+                    let index = ''+d[3]+'-'+date_index
+                    let pt = vm.dataWrapper[index].point
+                    vm.setPointLocation(pt,d[1],d[2],false)
                 });
             }
+            // console.log(vm.dataWrapper.length)
             // d3.select('#colorScatter').call(vm.zoom.transform,d3.zoomIdentity)
         },
         // 設定資料點的座標位置, 傳入pt, Latent_x, Latent_y
@@ -416,7 +460,7 @@ export default {
                 let pcp = vm.eventBus.pcp
                 pcp.removeLines()
                 vm.mask_group.forEach(mask_pts => {
-                    pcp.drawMaskDataLine(mask_pts,vm.getColor)
+                    pcp.drawMaskDataLine(mask_pts)
                 })
             }
         },
@@ -440,20 +484,14 @@ export default {
             })
             vm.mask_group = []
         },
-        // 右鍵旋轉操作,以及選取框開始
-        // rightdown(e){
-        //     // if(vm.eventBus.pcp.ctn_lines !== undefined){
-        //     //     let pcp_lines = vm.eventBus.pcp.ctn_lines.children
-        //     // }
-        //     let mask_group = vm.mask_group
-        //     // // 選擇框模式
-        //     // if(vm.mask_mode && vm.pcp_mode && mask_group.length === 0){
-        //     //     // 控制是否 mask_box 绘制模式
-        //     //     vm.mask_box_draw = true
-        //     //     vm.mask_box.startx = e.data.global.x
-        //     //     vm.mask_box.starty = e.data.global.y
-        //     // }
-        // },
+        // 右鍵旋轉操作开始
+        rightdown(e){
+            if(!vm.mask_mode){
+                vm.rotating = true
+                // 中心点旋转
+                vm.ang1 = Math.atan2(e.data.global.y - 256, e.data.global.x - 256)
+            }
+        },
         // 清除 mask_pts
         clearPCPMaskPts(){
             vm.pcp_mask_pts.forEach(pt => {
@@ -478,21 +516,23 @@ export default {
         },
         // 按鍵旋轉移動，拖拽控制
         mousemove(e){
-            if(vm.pcp_mode){
+            if(vm.pcp_mode && !vm.group_move){
                 let pcp = vm.eventBus.pcp
                 let center = [e.data.global.x, e.data.global.y]
-                if(pcp !== undefined){
+                if(pcp){
                     pcp.removeMoveLines()
                     vm.highlight_pts = vm.ctn_pts.children.filter((pt) => {
-                        if(vm.checkPtInCircle(pt,10,center)){
+                        if(vm.checkPtInCircle(pt,9,center)){
                             pt.tint = 0xffffff
                             vm.ctn_pts.setChildIndex(pt,vm.ctn_pts.count-1)
-                            vm.eventBus.pcp.drawSingleLine(pt)   
+                            pcp.drawSingleLine(pt)   
                             return true
                         }
                         else{
+                            let pt_pcp = pt.pcp || undefined
+                            let filter = (pt_pcp)?pt.pcp.filter:undefined
                             // 判断是否为 mask_pts
-                            if(!pt.center_mark){
+                            if(!pt.center_mark && !filter){
                                 pt.tint = vm.getColor(pt.x,pt.y)
                                 pt.alpha = 0.3
                             }
@@ -512,12 +552,15 @@ export default {
             }
 
             // 控制視圖平移
-            if(!vm.mask_mode && vm.group_move){
-                vm.allPointsMove(e)
+            // if(!vm.mask_mode && vm.group_move){
+            //     vm.allPointsMove(e)
+            // }
+            if(!vm.mask_mode && vm.rotating){
+                vm.rotation = Math.atan2(e.data.global.y-256, e.data.global.x-256) - vm.ang1 + vm.rotation_acc
+                vm.rotate(vm.rotation)
             }
-            // 直接移动 mask 标注数据点
-            // if(vm.mask_mode && vm.group_move && !vm.pcp_mode){  
-            if(vm.mask_mode && vm.group_move){
+
+            if(vm.group_move){
                 let mask_pts = undefined
                 if (vm.mask_pt_clicked ){
                     mask_pts = vm.current_mask_pts
@@ -548,7 +591,7 @@ export default {
                 vm.mask_box.alpha = 0.3
             }
         },
-        // 移動所有數據點
+        // 移動所有數據點(改爲 apply zoom 處理)
         allPointsMove(e){
             let x_move = e.data.global.x - vm.group_move[0]
             let y_move = e.data.global.y - vm.group_move[1]
@@ -562,31 +605,47 @@ export default {
         },
         // 直接移动 mask 标注数据点
         maskPointsMove(e,mask_pts){
+            let pcp = vm.eventBus.pcp
             let x_move = e.data.global.x - vm.group_move[0] 
             let y_move = e.data.global.y - vm.group_move[1]  
             mask_pts.forEach(pt => {
                 pt.x = pt.curpos[0]+x_move
                 pt.y = pt.curpos[1]+y_move
             })
+            if(pcp){
+                pcp.changeTint(vm.getColor)
+            }
         },
         // 旋转停止, mask pts 行为停止, 确认被标注的 mask pts
         rightup(){
-            // vm.rotating = false
-            vm.mask_box_draw = false
-            vm.mask_box.alpha = 0
+            vm.rotating = false
             vm.rotation_acc = vm.rotation
-            if(vm.mask_mode && vm.mask_box.width >= 3 && vm.pcp_mode){
-                vm.maskBoxCollision()
-                // 取消右鍵選取框設定
-                if(vm.pcp_mode){
-                    let pcp = vm.eventBus.pcp
-                    pcp.removeLines()
-                    if(vm.pcp_mask_pts){
-                        pcp.drawMaskDataLine(vm.pcp_mask_pts,vm.getColor)
-                    }
-                }
+        },
+        // 旋转
+        rotate(rad){
+            // 旋转矩阵公式
+            let cos = Math.cos(rad)
+            let sin = Math.sin(rad)
+            if(vm.zoom_dirty){
+                vm.ctn_pts.children.forEach(pt => pt.refpos=pt.curpos)
+                vm.$d3.select('#colorScatter').call(vm.zoom.transform, d3.zoomIdentity)
+                vm.zoom_dirty = false
             }
-            vm.mask_box.clear()
+            // 资料点旋转
+            vm.ctn_pts.children.forEach(pt => {
+                let tx = pt.refpos[0] - 256, ty = pt.refpos[1] - 256
+                pt.x = tx * cos - ty * sin + 256
+                pt.y = tx * sin + ty * cos + 256
+                pt.curpos = [pt.x,pt.y]
+                if(pt.tint !== 0xffffff){
+                    pt.tint = vm.getColor(pt.x,pt.y)
+                }
+            })
+            vm.rotate_dirty = true
+            let pcp = vm.eventBus.pcp
+            if(pcp){
+                pcp.changeTint(vm.getColor)
+            }
         },
         // 左鍵停止移動
         mouseup(){
@@ -609,7 +668,6 @@ export default {
             if(mask_pts !== undefined){
                 mask_pts.forEach(pt => {
                     pt.curpos = [pt.x,pt.y]
-                    // pt.rawpos = pt.curpos 
                 })
             }
 
