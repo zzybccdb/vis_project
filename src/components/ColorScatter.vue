@@ -88,6 +88,7 @@ export default {
             })            
         },
         async latentChange(new_latent){
+            console.log('latent change')
             await　vm.$axios.post(vm.$api + '/inference/change_latent_position',{
                 'new_latent':new_latent
             })

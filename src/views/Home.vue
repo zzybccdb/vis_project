@@ -723,10 +723,13 @@ export default {
 						latent_scatter.data = data
 						latent_scatter.columns = columns	
 						latent_scatter.pointsTransition(data)
+						// 載入上一輪設定的控制點
+						latent_scatter.setPreMask_group(window.mask_group)
 					})					
 				}else{
 					// 加载 latent 资料点， 资料结构 =》 {date,latentx，latenty}
-					vm.$axios.post(vm.$api + '/inference/get_training_latent',{'id':vm.iteration}).then(response => {
+					vm.$axios.get(vm.$api + '/inference/get_pre_latent')
+					.then(response => {
 						let data = response.data.rawdata
 						let columns = response.data.columns
 	
