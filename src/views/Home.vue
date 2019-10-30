@@ -279,10 +279,12 @@ export default {
 			vm.requesting = 'newTrain'
 			vm.start = true
 			vm.pcp = false
+			
 			let latent_scatter = vm.$refs.latent_scatter
 			EventBus.latent_scatter = latent_scatter
 			latent_scatter.eventBus = EventBus
 			latent_scatter.mask_group = []
+			latent_scatter.pcp_mode = false
 
 			// 清空 scatter 
 			latent_scatter.removePoints()
