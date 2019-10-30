@@ -5,6 +5,7 @@
 </template>
 
 <script>
+let vm = undefined
 const FORMAT = {
 	'year':[1,2,3,4,5,6,7],
 	'month':[0,2,4,6,,8,10,12,14,16,18,20,22],
@@ -906,11 +907,17 @@ export default {
 		},
 		removeAllLines(){
 			if (vm.ctn_lines) {
+				let date_axis = vm.eventBus.pcp.state.axis.filter(axis => axis.name==='date')
+				if(!date_axis[0].disabled){
+					date_axis[0].disabled = true
+					vm.eventBus.pcp.adjustAxisPosition()
+				}
 				vm.ctn_lines.removeChildren()
+				vm.eventBus.data.forEach(d => {
+					d.pcp = undefined
+				})
+
 			}
-			vm.eventBus.data.forEach(d => {
-				d.pcp = undefined
-			})
 		},
         pcpInit(){
             let vm = this
@@ -1039,7 +1046,7 @@ export default {
 		}
 	},
 	mounted() {
-		let vm = this
+		vm = this
 		vm.loaded = false
 		vm.Time_AXIS_FORMAT = vm.$d3.format("02d");
 		vm.scroll = false

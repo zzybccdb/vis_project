@@ -482,7 +482,7 @@ export default {
 				vm.$refs.cal.clearData()
 			}
 			if (vm.init.pcp) {
-				vm.$refs.pcp.clearData()
+				vm.$refs.pcp.removeAllLines()
 			}
 
 			let param = {
@@ -559,6 +559,7 @@ export default {
 		})
 	},
 	mounted() {
+		console.log('load calendar view')
 		var vm = this;
 		window.vm = vm
 		vm.eventBus = EventBus

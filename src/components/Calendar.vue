@@ -725,12 +725,13 @@ export default {
                 if(vm.ctn_box.length === 0){
                     vm.eventBus.pcp.removeAllFilterBox()
                     vm.eventBus.pcp.clearHighLight()
-                    let date_axis = vm.eventBus.pcp.state.axis.filter(axis => axis.name==='date')
-                    if(!date_axis[0].disabled){
-                        date_axis[0].disabled = true
-                        vm.eventBus.pcp.adjustAxisPosition()
-                        vm.eventBus.pcp.removeAllLines()
-                    }
+                    vm.eventBus.pcp.removeAllLines()
+                    // let date_axis = vm.eventBus.pcp.state.axis.filter(axis => axis.name==='date')
+                    // if(!date_axis[0].disabled){
+                    //     date_axis[0].disabled = true
+                    //     vm.eventBus.pcp.adjustAxisPosition()
+                    //     vm.eventBus.pcp.removeAllLines()
+                    // }
                 }
                 else{
                     if(vm.eventBus.pcp.switch_button.mode){
