@@ -25,7 +25,6 @@ export default {
         let vm = this
         vm.selected_raw_data = []
         vm.selceted_latent = []
-        // vm.selected_date = []   
     },
 	methods: {
         // 修改 calender view cell 的透明度.
@@ -78,14 +77,13 @@ export default {
                 })
                 
 				if( c.data != undefined ){
-                    if ((pass && !c.data.mask && c.tint != 0xCCCCCC)){
-						c.texture = vm.cellTextureSelected
+                    if ((pass /*&& !c.data.mask*/ && c.tint != 0xCCCCCC)){
+						c.texture = (c.data.mask) ? vm.cellLabeledTexture : vm.cellTextureSelected
                         c.selected = true
 					} else {
-						c.texture = vm.cellTexture
                         c.selected = false
                         c.box = undefined
-					}
+                    }
 				}
             })
 		},
@@ -170,9 +168,9 @@ export default {
         // (有待回顧)
 		similarProcess(item,single=true){
 			let process = {
-				c:single?vm.hexToRgb(vm.zeroPadding(item.tint.toString(16))):vm.hexToRgb(vm.zeroPadding(item.cal.tint.toString(16))),
-				d:single?item.data.raw.slice(4):item.raw.slice(4),
-				l:single?item.data.raw.slice(0,2):item.raw.slice(0,2),
+				c:single ? vm.hexToRgb(vm.zeroPadding(item.tint.toString(16))) : vm.hexToRgb(vm.zeroPadding(item.cal.tint.toString(16))),
+				d:single ? item.data.raw.slice(4) : item.raw.slice(4),
+				l:single ? item.data.raw.slice(0,2) : item.raw.slice(0,2),
 			}
 			return process[vm.keyDown]
         },
@@ -207,10 +205,14 @@ export default {
             vm.handleResize()
             // 取消網頁右鍵設定
             vm.$refs.home.oncontextmenu = ()=>{return false ;};
-			vm.$emit('loaded')
+            vm.$emit('loaded')
         },
         // PIXI 初始化參數設定
         PIXIinit(){
+            // 參數初始化
+            vm.dim_font = 'Arial'
+            vm.dim_font_size = 14
+            
             // PIXI物件宣告
             vm.app = new PIXI.Application({
                 autoResize: true,
@@ -251,8 +253,12 @@ export default {
 			vm.tooltip.alpha = 0
 			vm.ctn_tooltip.addChild(vm.tooltip)
             // setting the tooltip label and box
-			vm.tooltip_label = new PIXI.Text("Test"
-			, {fontFamily : vm.pixi_font, fontSize: vm.pixi_font_size, fill : 0xFFFFFF, align : 'center'})
+			vm.tooltip_label = new PIXI.Text("Test", {
+                fontFamily : vm.pixi_font, 
+                fontSize: vm.pixi_font_size, 
+                fill : 0xFFFFFF, 
+                align : 'center'
+            })
 			vm.tooltip_box = new PIXI.Graphics()
 			vm.tooltip_box.lineStyle(1, 0x0)
 			vm.tooltip_box.beginFill(0x0, 0.5)
@@ -274,6 +280,10 @@ export default {
         },
         // 貼圖設定
         textureSetting(){
+            // 有備標注 label 的 cell 貼圖
+            vm.cellLabeledTexture = vm.labeledCellTexture().generateCanvasTexture()
+            // pcp 選中時有 label 的圓形貼圖
+            vm.cellFilterLabeledTexture = vm.filterLabeledCellTexture().generateCanvasTexture()
             // 基礎正方形 cell 貼圖
             vm.cellTexture = vm.initialTexture().generateCanvasTexture()
             // 基礎 mask cell 貼圖
@@ -283,12 +293,32 @@ export default {
             // 右鍵圈選的特殊貼圖（左上角有小三角）
             vm.cellTextureSelected = vm.selectedCellTexture().generateCanvasTexture()
         },
+        // 有標注 label 的 cell 貼圖
+        labeledCellTexture() {
+            let g = new PIXI.Graphics()
+			g.lineStyle(2, 0xFF0000)
+			g.beginFill(0xFFFFFF)
+			g.drawRect(0, 0, vm.cellSize, vm.cellSize)
+            g.endFill()
+            return g
+        },
+        // pcp 選中時有 label 的圓形貼圖
+		filterLabeledCellTexture() {
+			let g = new PIXI.Graphics()
+            g.lineStyle(1, 0xff77ff)
+            g.beginFill(0xff77ff)
+            g.drawRect(0, 0, vm.cellSize, vm.cellSize)
+            g.beginFill(0xFFFFFF)
+            g.drawCircle(vm.cellSize/2, vm.cellSize/2, vm.cellSize/2)
+            g.endFill()
+            return g
+        },
         // 基礎的正方形 texture
         initialTexture(){
             let g = new PIXI.Graphics()
 			g.lineStyle(1, 0xCCCCCC)
 			g.beginFill(0xFFFFFF)
-			g.drawRect(0, 0, vm.cellSize, vm.cellSize)
+            g.drawRect(0, 0, vm.cellSize, vm.cellSize)
             g.endFill()
             return g
         },
@@ -369,10 +399,12 @@ export default {
 
 		handleResize() {
 			let width = vm.$refs.home.clientWidth
-			vm.app.renderer.resize(width, vm.app.renderer.height);
-			if (vm.wrapper) {
-				vm.wrapper.x = (vm.app.renderer.width - vm.wrapper.width) / 2
-			}
+            vm.app.renderer.resize(width, vm.app.renderer.height);
+            
+			// if (vm.wrapper) {
+			// 	vm.wrapper.x = (vm.app.renderer.width - vm.wrapper.width) / 2
+            // }
+            
         },
 
 		getTrainedColumns(){
@@ -403,8 +435,11 @@ export default {
                 d.cal.data = d
 
 				if (d.mask) {
-					d.cal.texture = vm.cellMaskTexture
-					d.cal.oldTexture = vm.cellMaskTexture
+                    // Corn: 將 mask 的貼圖改成紅框框起來
+					// d.cal.texture = vm.cellMaskTexture
+                    // d.cal.oldTexture = vm.cellMaskTexture
+                    d.cal.texture = vm.cellLabeledTexture
+					d.cal.oldTexture = vm.cellLabeledTexture
                 }
             }) 
 
@@ -549,9 +584,9 @@ export default {
                 vm.spInitial(sp,x,y)
                 sp.class = main_ctn.name
                 // cell 鼠標操作
-                sp.mouseover = (e) => {vm.spMouseOver(e,sp,ctn_box)}
-                sp.mouseout = () => {vm.spMouseOut(sp,ctn_box)}
-                sp.rightdown = () => {vm.spMouseDown(sp,ctn_box,ctn_cells)}
+                sp.mouseover = (e) => {vm.spMouseOver(e, sp, ctn_box)}
+                sp.mouseout = () => {vm.spMouseOut(sp, ctn_box)}
+                sp.rightdown = () => {vm.spMouseDown(sp, ctn_box, ctn_cells)}
                 // sp.rightdown = () => {vm.spRightDown(sp)}                
 				vm.mapping[date.format(date_format)] = sp
 
@@ -661,7 +696,7 @@ export default {
             sp.selected = false
         },
         // 鼠標移動到 cell 觸發
-        spMouseOver(e,sp,ctn_box){
+        spMouseOver(e, sp, ctn_box){
             let data = sp.data
             if(!vm.highLightBlock){
                 sp.msover = true
@@ -707,15 +742,15 @@ export default {
         },
         // 鼠標左鍵點擊(已經修改爲右鍵)
         spMouseDown(sp,ctn_box,ctn_cells){
-            if( sp.selected && sp.box ){	
+            if( sp.selected && sp.box ){
                 ctn_cells.children.forEach( c => {
-                    c.singSelected = false	
-                    c.texture = vm.cellTexture
+                    c.singSelected = false
+                    c.texture = (c.data && c.data.mask) ? vm.cellLabeledTexture : vm.cellTexture
                     c.selected = false
                     // 檢測當前 cell 是否爲空，如果是空白就跳過
                     if(c.tint === 0xCCCCCC)
                         c.data.pcp = undefined
-                })				
+                })		
                 ctn_box.removeChild(sp.box)
                 vm.ctn_box.splice(sp.box.index,1)
                 sp.box = null
@@ -725,20 +760,17 @@ export default {
                 if(vm.ctn_box.length === 0){
                     vm.eventBus.pcp.removeAllFilterBox()
                     vm.eventBus.pcp.clearHighLight()
-                    vm.eventBus.pcp.removeAllLines()
-                    // let date_axis = vm.eventBus.pcp.state.axis.filter(axis => axis.name==='date')
-                    // if(!date_axis[0].disabled){
-                    //     date_axis[0].disabled = true
-                    //     vm.eventBus.pcp.adjustAxisPosition()
-                    //     vm.eventBus.pcp.removeAllLines()
-                    // }
-                }
-                else{
-                    if(vm.eventBus.pcp.switch_button.mode){
+                    let date_axis = vm.eventBus.pcp.state.axis.filter(axis => axis.name==='date')
+                    if(!date_axis[0].disabled){
+                        date_axis[0].disabled = true
+                        vm.eventBus.pcp.adjustAxisPosition()
+                        vm.eventBus.pcp.removeAllLines()
+                    }
+                } else {
+                    if (vm.eventBus.pcp.switch_button.mode){
                         vm.selectedCellData()
                         vm.sortAxis()
-                    }
-                    else{
+                    } else {
                         vm.eventBus.pcp.adjustTicks()
                         vm.eventBus.pcp.adjustLines()  
                         vm.eventBus.pcp.filterLines()                  
@@ -747,22 +779,21 @@ export default {
             }            
         },
         // 鼠標右鍵點擊 cell 觸發
-        spRightDown(sp){
-            if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC){
+        spRightDown(sp) {
+            if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC) {
                 vm.message = vm.notice[vm.keyDown]
                 vm.color = "black"
                 setTimeout(() => {
                     vm.color = "white"
                 }, 1500);
                 sp.singSelected = true
-                if(!vm.highLightBlock){
+                if( !vm.highLightBlock ){
                     sp.msover = true
                     sp.texture = vm.cellFilterTexture
                 }
                 sp.selected = true
                 vm.Similar(sp)
-            }
-            else{
+            } else{
                 if(vm.keyDown != undefined)
                     console.error("Key Invalid")
             }            
@@ -776,9 +807,7 @@ export default {
             // 當前鼠標的位置
             let p = e.data.getLocalPosition(main_ctn)
             // 判断是否存在 pcp filter box
-            let pcp_filter_boxes = vm.eventBus.pcp.state.axis.some(a => {
-                return a.grp.child_dict.line.box.length !== 0
-            })
+            let pcp_filter_boxes = vm.eventBus.pcp.state.axis.some(a => a.grp.child_dict.line.box.length !== 0 )
             let cell_masked = vm.checkCellMasked(ctn_box,p)
             // 满足条件此時 pcp 上存有 filter box, 沒有 mask box, 禁止繪製
             // 检查当前点是否已经被 mask box 圈选，选中禁止绘制
@@ -794,12 +823,11 @@ export default {
                 ctn_box.addChild(box)
                 vm.ctn_box.push(box)
                 ctn_box.selecting = true
-            }
-            else{
+            } else {
                 ctn_box.selecting = false
             }
         },
-        SelectionBoxSelecting(e,ctn_box,ctn_cells,main_ctn){
+        SelectionBoxSelecting(e, ctn_box,ctn_cells, main_ctn){
             // e.data.buttons 判定鼠標左右鍵
             // 0 表示沒有按下鼠標，1 鼠標左鍵， 2 鼠標右鍵
             if (e.data.buttons != 1) {
@@ -809,7 +837,7 @@ export default {
                 return
             }
             if (ctn_box.selecting) {
-                if(vm.keyDown != undefined){
+                if(vm.keyDown != undefined) {
                     vm.eventBus.data.forEach( d => {
                         d.cal.singSelected = false
                         d.cal.neibor = false	
@@ -880,8 +908,7 @@ export default {
             return ctn_box.children.some(box => {
                 if(position.x >= box.x && position.x <= box.x+box.width && position.y >= box.y && position.y <= box.y+box.height){
                     return true
-                }
-                else{
+                } else {
                     return false
                 }
             })

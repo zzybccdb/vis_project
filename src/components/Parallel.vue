@@ -5,7 +5,6 @@
 </template>
 
 <script>
-let vm = undefined
 const FORMAT = {
 	'year':[1,2,3,4,5,6,7],
 	'month':[0,2,4,6,,8,10,12,14,16,18,20,22],
@@ -311,8 +310,7 @@ export default {
 				grp_axis.addChild(graphics)
 				grp_axis.addChild(backgournd)
 				grp_axis.addChild(label_background)
-			}
-			else{
+			} else{
 				label = vm.drawLabel(column)
 			}
 			// 绘制顺序问题
@@ -450,7 +448,7 @@ export default {
 				}
 				d.cm.texture = vm.eventBus.cm.dotTexture
 				d.cm.alpha = 0.3
-				d.cal.texture = vm.eventBus.cal.cellTexture
+				d.cal.texture = (d.cal.data.mask) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTexture
 			})
 		},
 		initFilterBox(x, y, container, line){
@@ -694,11 +692,10 @@ export default {
 			let vm = this
 			// 統計當前 calendar view mask box 的數量
 			let cal_mask_boxes = vm.eventBus.cal.ctn_box.length
+
 			vm.num_filter_box = 0
 			// 没有 filter box 存在
-			let no_box = vm.state.axis.every(a => {
-				return a.grp.child_dict.line.box.length === 0
-			})	
+			let no_box = vm.state.axis.every(a => a.grp.child_dict.line.box.length === 0 )	
 			// 忘記作用了,先註解
 			// if(!cal_mask_boxes){
 			// 	vm.updateAlpha()
@@ -720,12 +717,12 @@ export default {
 									return true
 								}
 								// let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
-								let y = (a.name === 'date')?a.scale(vm.timeValue(vm.eventBus.calLevel,d.raw[a.dim])):a.scale(d.raw[a.dim])
+								let y = (a.name === 'date') ? a.scale(vm.timeValue(vm.eventBus.calLevel,d.raw[a.dim])) : a.scale(d.raw[a.dim])
 								let upper = box.y
 								let lower = box.y + box.height
 								if ((y >= upper && y <= lower && box.enabled) || box.cancel_selection) {
 									return true
-								}else{
+								} else {
 									return false
 								}
 							}).some(a =>{
@@ -736,6 +733,7 @@ export default {
 							return true
 						}
 					})
+
 					let pass = boolmap.every(a => {
 						return a === true
 					})
@@ -749,7 +747,8 @@ export default {
 						if(!cal_mask_boxes && vm.num_filter_box){
 							if(!line){
 								d.cal.selected = true
-								d.cal.texture = vm.eventBus.cal.cellFilterTexture
+								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellFilterLabeledTexture : vm.eventBus.cal.cellFilterTexture
+								// d.cal.texture = vm.eventBus.cal.cellFilterTexture
 								if (d.cal && d.cal.selected) {
 									let newline = new vm.$PIXI.Graphics()
 									vm.ctn_lines.addChild(newline)
@@ -764,16 +763,16 @@ export default {
 							line.tint = d.cal.tint
 							line.alpha = vm.alpha_m * vm.lineAlpha(d.alpha_u)
 							if (no_box) {
-								d.cal.texture = vm.eventBus.cal.cellTextureSelected
+								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTextureSelected // vm.eventBus.cal.cellTextureSelected
 							} else {
-								d.cal.texture = vm.eventBus.cal.cellFilterTexture
+								// d.cal.texture = vm.eventBus.cal.cellFilterTexture
+								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellFilterLabeledTexture : vm.eventBus.cal.cellFilterTexture
 							}	
 							d.cm.tint = 0xffffff
 							d.cm.alpha = 1.0	
 							vm.eventBus.cm.ctn_points.setChildIndex(d.cm,vm.eventBus.cm.ctn_points.children.length-1)							
-						}					
-					}
-					else if(line){
+						}
+					} else if ( line ) {
 						if(!cal_mask_boxes && vm.num_filter_box){
 							line.alpha = 0
 						}
@@ -784,9 +783,8 @@ export default {
 						if(!cal_mask_boxes){
 							d.cal.selected = false
 							d.cal.texture = vm.eventBus.cal.cellTexture
-						}
-						else{
-							d.cal.texture = vm.eventBus.cal.cellTextureSelected
+						} else {
+							d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTextureSelected // vm.eventBus.cal.cellTextureSelected
 						}
 						d.cm.tint = d.cal.tint
 						d.cm.alpha = 0.3						
@@ -907,17 +905,11 @@ export default {
 		},
 		removeAllLines(){
 			if (vm.ctn_lines) {
-				let date_axis = vm.eventBus.pcp.state.axis.filter(axis => axis.name==='date')
-				if(!date_axis[0].disabled){
-					date_axis[0].disabled = true
-					vm.eventBus.pcp.adjustAxisPosition()
-				}
 				vm.ctn_lines.removeChildren()
-				vm.eventBus.data.forEach(d => {
-					d.pcp = undefined
-				})
-
 			}
+			vm.eventBus.data.forEach(d => {
+				d.pcp = undefined
+			})
 		},
         pcpInit(){
             let vm = this
@@ -963,17 +955,17 @@ export default {
 			vm.switch_button.addChild(roundedRect)
 			vm.switch_button.addChild(circle)
 			vm.switch_button.addChild(Label)
+
 			vm.switch_button.mousedown = () =>{
 				circle.bool = !circle.bool
-				circle.bool?roundedRect.tint = 0xb6cefe:roundedRect.tint = 0xc9c9c9
-				circle.bool?circle.tint = 0x86adff:circle.tint = 0xffffff
-				circle.bool?circle.x = 26:circle.x = 9
+				roundedRect.tint = circle.bool ? 0xb6cefe : 0xc9c9c9
+				circle.tint = circle.bool ? 0x86adff : 0xffffff
+				circle.x = circle.bool ? 26 : 9
 				if(circle.bool){
 					if(vm.eventBus.cal.ctn_box.length !== 0){
 						vm.eventBus.cal.sortAxis(vm.eventBus.cal.ctn_cells)
 					}
-				}
-				else{
+				} else{
 					vm.adjustTicks()
 					vm.adjustAxisPosition()
 					vm.adjustLines()
@@ -987,6 +979,52 @@ export default {
 			vm.switch_button.x = -35
 			vm.switch_button.y = 15
 			vm.switch_button.mode = circle.bool
+
+			// sort switch button2
+			vm.label_button = new vm.$PIXI.Container()
+			vm.label_button.name = 'outlier button'
+			vm.wrapper.addChild(vm.label_button)
+
+			let [ roundedRect2, Label2 ] = vm.drawLabelButton('Set Outlier', 6, 5)
+			vm.label_button.addChild(roundedRect2)
+			vm.label_button.addChild(Label2)
+
+			vm.label_button.mousedown = () =>{
+				roundedRect2.tint = 0xabffff
+				vm.labelSelected()
+				roundedRect2.tint = 0xc9c9c9
+			}
+			vm.label_button.mouseup = () =>{
+				roundedRect2.tint = 0xc9c9c9
+			}
+			vm.label_button.interactive = true
+			vm.label_button.buttonMode = true
+
+			vm.label_button.x = -35
+			vm.label_button.y = 40
+		},
+		// draw label button
+		drawLabelButton(text, x=12, y=2){
+			let vm = this
+			let PIXI = vm.$PIXI
+			let roundedRect = new PIXI.Graphics()
+			// 按鈕上面的文字
+			let Label = new PIXI.Text(text, {
+				fontFamily : vm.dim_font,
+				fontSize: 12,
+				fill : 0x000000,
+				align : 'center'
+			})
+			Label.x = x
+			Label.y = y
+			// 圆角矩形
+			roundedRect.lineStyle(1, 0x655353, 0.5)
+			roundedRect.beginFill(0x00f5f5, 1)
+			roundedRect.drawRoundedRect(0, 0, 70, 25, 3)
+			roundedRect.endFill();
+			roundedRect.tint = 0xc9c9c9
+			
+			return [ roundedRect, Label ]
 		},
 		// 繪製 switch button
 		drawSwitchButton(text){
@@ -1014,6 +1052,21 @@ export default {
 			circle.endFill();
 			circle.bool = false
 			return [roundedRect,circle,Label]
+		},
+		labelSelected() {
+			let vm = this
+
+			vm.eventBus.data.forEach(d => {
+				if (d.cal.texture === vm.eventBus.cal.cellFilterTexture || d.cal.texture === vm.eventBus.cal.cellFilterLabeledTexture) {
+					d.mask = 1
+					console.log(`labeled`, d.mask)
+					d.cal.texture = vm.eventBus.cal.cellFilterLabeledTexture
+				}
+				if (d.cal.texture === vm.eventBus.cal.cellLabeledTexture && d.cal.selected) {
+					d.mask = 0
+					d.cal.texture = vm.eventBus.cal.cellTextureSelected
+				}
+			})
 		},
         init(){
 			let vm = this
@@ -1046,7 +1099,7 @@ export default {
 		}
 	},
 	mounted() {
-		vm = this
+		let vm = this
 		vm.loaded = false
 		vm.Time_AXIS_FORMAT = vm.$d3.format("02d");
 		vm.scroll = false
