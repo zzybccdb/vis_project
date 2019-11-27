@@ -905,11 +905,16 @@ export default {
 		},
 		removeAllLines(){
 			if (vm.ctn_lines) {
+				let date_axis = vm.eventBus.pcp.state.axis.filter(axis => axis.name==='date')
+				if(!date_axis[0].disabled){
+					date_axis[0].disabled = true
+					vm.eventBus.pcp.adjustAxisPosition()
+				}
 				vm.ctn_lines.removeChildren()
+				vm.eventBus.data.forEach(d => {
+					d.pcp = undefined
+				})
 			}
-			vm.eventBus.data.forEach(d => {
-				d.pcp = undefined
-			})
 		},
         pcpInit(){
             let vm = this

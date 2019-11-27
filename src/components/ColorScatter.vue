@@ -7,13 +7,11 @@
 <script>
 // Home view 下所使用到的 training 過程觀察的 scatter plot 組件
 // 參考 components/colormap.vue
-
 let vm = undefined
 let PIXI = undefined
 let d3 = undefined
 let moment = undefined
 const date_format = 'YYYY-MM-DD HH:mm:ss'
-
 export default {
     computed(){
         vm.column_index = undefined
@@ -78,7 +76,6 @@ export default {
                 'cdata': cdata
             }
             console.log(param)
-
             // 将中心点坐标,原始数据传回后端,同時清空當前的 vm.mask_pts
             await vm.$axios.post(vm.$api + '/inference/confirm_latent',param)
             .then(() => {
@@ -137,7 +134,6 @@ export default {
 		getColor(x, y) {
 			x = parseInt(x)
 			y = parseInt(y)
-
 			if (x >= 0 && y >= 0 && x < 512 && y < 512) {
 				return vm.colors[x][y]
 			}
@@ -341,7 +337,6 @@ export default {
         setPointLocation(pt,x,y,first=true){
             x = vm.x_scale(x)
             y = vm.y_scale(y)
-
             pt.rawpos = [x,y]
             pt.curpos = [x,y]
             // rotation 和 zooming 時的參考座標
@@ -465,7 +460,6 @@ export default {
                 })
             }
         },
-
         mask_pts_remove(mask_pts){
             mask_pts.forEach(pt => {
                 pt.x = pt.rawpos[0]
@@ -551,7 +545,6 @@ export default {
                 if(vm.group_move)
                     vm.mouseup()
             }
-
             // 控制視圖平移
             // if(!vm.mask_mode && vm.group_move){
             //     vm.allPointsMove(e)
@@ -560,7 +553,6 @@ export default {
                 vm.rotation = Math.atan2(e.data.global.y-256, e.data.global.x-256) - vm.ang1 + vm.rotation_acc
                 vm.rotate(vm.rotation)
             }
-
             if(vm.group_move){
                 let mask_pts = undefined
                 if (vm.mask_pt_clicked ){
@@ -671,10 +663,8 @@ export default {
                     pt.curpos = [pt.x,pt.y]
                 })
             }
-
             vm.mask_pt_clicked = false
             vm.group_move = undefined
-
             if(vm.temp_pause){
                 vm.onContinue()
                 vm.temp_pause = false
@@ -842,7 +832,6 @@ export default {
         vm.mask_group = []
         // 暂时停止
         vm.temp_pause = false
-
         vm.$refs.colorScatter.addEventListener('contextmenu',e => e.preventDefault())
         vm.pixiInit()
         vm.d3Init()
