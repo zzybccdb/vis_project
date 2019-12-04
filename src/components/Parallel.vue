@@ -695,7 +695,7 @@ export default {
 
 			vm.num_filter_box = 0
 			// 没有 filter box 存在
-			let no_box = vm.state.axis.every(a => a.grp.child_dict.line.box.length === 0 )	
+			let no_box = vm.state.axis.every(a => a.grp.child_dict.line.box.length === 0 )
 			// 忘記作用了,先註解
 			// if(!cal_mask_boxes){
 			// 	vm.updateAlpha()
@@ -703,15 +703,15 @@ export default {
 			// 統計當前共有多少個 filter box
 			vm.state.axis.forEach(e=>{
 				vm.num_filter_box += e.grp.child_dict.line.box.length
-
 			})
+			
 			// 遍歷所有資料
 			vm.eventBus.data.forEach(d => {
 				if ((d.cal && d.cal.selected) || (!cal_mask_boxes && vm.num_filter_box !== 0)) {
 					let line = d.pcp
 					let boolmap = vm.state.axis.map(a =>{
 						let length = a.grp.child_dict.line.box.length
-						if(length>0 && a.disabled === false){
+						if(length > 0 && a.disabled === false){
 							return a.grp.child_dict.line.box.map(box => {
 								if (a.disabled) {
 									return true
@@ -725,11 +725,8 @@ export default {
 								} else {
 									return false
 								}
-							}).some(a =>{
-								return a === true
-							})
-						}
-						else{
+							}).some(a => a === true)
+						} else{
 							return true
 						}
 					})
@@ -737,6 +734,7 @@ export default {
 					let pass = boolmap.every(a => {
 						return a === true
 					})
+
 					/////////////////////////////////////////
 					// 允許使用者在沒有對 calendar view 進行選擇的時候，直接對 pcp 進行選取
 					// 由於當前沒有繪製出 line, 需要重新绘制
@@ -744,50 +742,58 @@ export default {
 					// 这个情况下就绘制
 					////////////////////////////////////////
 					if(pass){
-						if(!cal_mask_boxes && vm.num_filter_box){
+						/**
+						 * 如果直接在 PCP 上面進行操作
+						 */
+						if(cal_mask_boxes === 0 && vm.num_filter_box > 0){
 							if(!line){
 								d.cal.selected = true
-								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellFilterLabeledTexture : vm.eventBus.cal.cellFilterTexture
-								// d.cal.texture = vm.eventBus.cal.cellFilterTexture
-								if (d.cal && d.cal.selected) {
-									let newline = new vm.$PIXI.Graphics()
-									vm.ctn_lines.addChild(newline)
-									d.pcp = newline
-									newline.tint = d.color
-									vm.drawSingleLine(d)
-									line = d.pcp
-								}								
+								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellFilterTexture
+								// if (d.cal && d.cal.selected) {
+								let newline = new vm.$PIXI.Graphics()
+								vm.ctn_lines.addChild(newline)
+								d.pcp = newline
+								newline.tint = d.color
+								vm.drawSingleLine(d)
+								line = d.pcp
+								// }		
+							} 
+						/**
+						 * 先對 calendar view 進行操作
+						 */
+						} else {
+							if( line ){
+								line.tint = d.cal.tint
+								line.alpha = vm.alpha_m * vm.lineAlpha(d.alpha_u)
+								if (no_box) {
+									d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTextureSelected
+								} else {
+									d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellFilterAndSelectedTexture
+								}
+								d.cm.tint = 0xffffff
+								d.cm.alpha = 1.0	
+								vm.eventBus.cm.ctn_points.setChildIndex(d.cm,vm.eventBus.cm.ctn_points.children.length - 1)							
+							} else {
+								throw new Error(` 先選擇 calendar view 了可是這條線卻還沒實做 `)
 							}
 						}
-						if(line){
-							line.tint = d.cal.tint
-							line.alpha = vm.alpha_m * vm.lineAlpha(d.alpha_u)
-							if (no_box) {
-								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTextureSelected // vm.eventBus.cal.cellTextureSelected
+					} else {
+						if (line) {
+							if(!cal_mask_boxes && vm.num_filter_box){
+								line.alpha = 0
+							} else{
+								line.alpha = 0.02
+							}
+							// 沒有 cal mask box 時候
+							if(!cal_mask_boxes){
+								d.cal.selected = false
+								d.cal.texture = vm.eventBus.cal.cellTextureSelected
 							} else {
-								// d.cal.texture = vm.eventBus.cal.cellFilterTexture
-								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellFilterLabeledTexture : vm.eventBus.cal.cellFilterTexture
-							}	
-							d.cm.tint = 0xffffff
-							d.cm.alpha = 1.0	
-							vm.eventBus.cm.ctn_points.setChildIndex(d.cm,vm.eventBus.cm.ctn_points.children.length-1)							
+								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTextureSelected
+							}
+							d.cm.tint = d.cal.tint
+							d.cm.alpha = 0.3						
 						}
-					} else if ( line ) {
-						if(!cal_mask_boxes && vm.num_filter_box){
-							line.alpha = 0
-						}
-						else{
-							line.alpha = 0.02
-						}
-						// 沒有 cal mask box 時候
-						if(!cal_mask_boxes){
-							d.cal.selected = false
-							d.cal.texture = vm.eventBus.cal.cellTexture
-						} else {
-							d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTextureSelected // vm.eventBus.cal.cellTextureSelected
-						}
-						d.cm.tint = d.cal.tint
-						d.cm.alpha = 0.3						
 					}
 				}
 			})
@@ -815,7 +821,7 @@ export default {
 						}
 						let x = a.grp.x
 						// let y = (a.name === 'date')?a.scale(vm.$moment.utc(d.raw[a.dim])):a.scale(d.raw[a.dim])
-						let y = (a.name === 'date')?a.scale(vm.timeValue(vm.eventBus.calLevel,d.raw[a.dim])):a.scale(d.raw[a.dim])
+						let y = (a.name === 'date') ? a.scale(vm.timeValue(vm.eventBus.calLevel,d.raw[a.dim])) : a.scale(d.raw[a.dim])
 						if (first) {
 							first = false
 							line.moveTo(x, y)
@@ -985,18 +991,18 @@ export default {
 			vm.switch_button.y = 15
 			vm.switch_button.mode = circle.bool
 
-			// sort switch button2
+			// label button
 			vm.label_button = new vm.$PIXI.Container()
 			vm.label_button.name = 'outlier button'
 			vm.wrapper.addChild(vm.label_button)
 
-			let [ roundedRect2, Label2 ] = vm.drawLabelButton('Set Outlier', 6, 5)
+			let [ roundedRect2, Label2 ] = vm.drawLabelButton('Set', 7, 5)
 			vm.label_button.addChild(roundedRect2)
 			vm.label_button.addChild(Label2)
 
 			vm.label_button.mousedown = () =>{
 				roundedRect2.tint = 0xabffff
-				vm.labelSelected()
+				vm.setOutlier()
 				roundedRect2.tint = 0xc9c9c9
 			}
 			vm.label_button.mouseup = () =>{
@@ -1007,6 +1013,29 @@ export default {
 
 			vm.label_button.x = -35
 			vm.label_button.y = 40
+
+			// label button2
+			vm.label_button2 = new vm.$PIXI.Container()
+			vm.label_button2.name = 'disable outlier button'
+			vm.wrapper.addChild(vm.label_button2)
+
+			let [ roundedRect3, Label3 ] = vm.drawLabelButton('UnSet', 1, 6)
+			vm.label_button2.addChild(roundedRect3)
+			vm.label_button2.addChild(Label3)
+
+			vm.label_button2.mousedown = () =>{
+				roundedRect3.tint = 0xabffff
+				vm.unsetOutlier()
+				roundedRect3.tint = 0xc9c9c9
+			}
+			vm.label_button2.mouseup = () =>{
+				roundedRect3.tint = 0xc9c9c9
+			}
+			vm.label_button2.interactive = true
+			vm.label_button2.buttonMode = true
+
+			vm.label_button2.x = 10
+			vm.label_button2.y = 40
 		},
 		// draw label button
 		drawLabelButton(text, x=12, y=2){
@@ -1025,7 +1054,7 @@ export default {
 			// 圆角矩形
 			roundedRect.lineStyle(1, 0x655353, 0.5)
 			roundedRect.beginFill(0x00f5f5, 1)
-			roundedRect.drawRoundedRect(0, 0, 70, 25, 3)
+			roundedRect.drawRoundedRect(0, 0, 35, 25, 3)
 			roundedRect.endFill();
 			roundedRect.tint = 0xc9c9c9
 			
@@ -1058,20 +1087,31 @@ export default {
 			circle.bool = false
 			return [roundedRect,circle,Label]
 		},
-		labelSelected() {
+		setOutlier() {
 			let vm = this
 
 			vm.eventBus.data.forEach(d => {
-				if (d.cal.texture === vm.eventBus.cal.cellFilterTexture || d.cal.texture === vm.eventBus.cal.cellFilterLabeledTexture) {
+				if (d.cal.texture === vm.eventBus.cal.cellFilterAndSelectedTexture) {
 					d.mask = 1
-					console.log(`labeled`, d.mask)
-					d.cal.texture = vm.eventBus.cal.cellFilterLabeledTexture
-				}
-				if (d.cal.texture === vm.eventBus.cal.cellLabeledTexture && d.cal.selected) {
-					d.mask = 0
-					d.cal.texture = vm.eventBus.cal.cellTextureSelected
+					d.cal.texture = vm.eventBus.cal.cellLabeledTexture
 				}
 			})
+		},
+		unsetOutlier() {
+			let vm = this
+
+			let no_box = vm.state.axis.every(a => a.grp.child_dict.line.box.length === 0 )
+
+			if (no_box) {
+				vm.eventBus.data.forEach(d => {
+					if (d.cal.texture === vm.eventBus.cal.cellLabeledTexture && d.cal.selected) {
+						d.mask = 0
+						d.cal.texture = vm.eventBus.cal.cellTextureSelected
+					}
+				})
+			} else {
+				alert('請先將所有 filter box 取消才可以 unset outlier')
+			}
 		},
         init(){
 			let vm = this
