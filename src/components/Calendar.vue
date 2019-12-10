@@ -78,7 +78,8 @@ export default {
                 
 				if( c.data != undefined ){
                     if ((pass /*&& !c.data.mask*/ && c.tint != 0xCCCCCC)){
-						c.texture = (c.data.mask) ? vm.cellLabeledTexture : vm.cellTextureSelected
+                        // here
+						c.texture = (c.data.mask) ? vm.cellLabeledAndSelectedTexture : vm.cellTextureSelected
                         c.selected = true
 					} else {
                         c.selected = false
@@ -282,15 +283,17 @@ export default {
         textureSetting(){
             // 有備標注 label 的 cell 貼圖
             vm.cellLabeledTexture = vm.labeledCellTexture().generateCanvasTexture()
-            // 同事被 calendat view and pcp 選取的
+            // 有備標注 label 且被選取的 cell 貼圖
+            vm.cellLabeledAndSelectedTexture = vm.labeledAndSelectedCellTexture().generateCanvasTexture()
+            // 同時被 pcp and cal 選取的貼圖
             vm.cellFilterAndSelectedTexture = vm.filterAndSelectedCellTesture().generateCanvasTexture()
             // 基礎正方形 cell 貼圖
             vm.cellTexture = vm.initialTexture().generateCanvasTexture()
             // 基礎 mask cell 貼圖
             vm.cellMaskTexture = vm.maskCellTexture().generateCanvasTexture()
-            // pcp 選中時的圓形貼圖
+            // pcp 選中的貼圖
             vm.cellFilterTexture = vm.filterCellTexture().generateCanvasTexture()
-            // 右鍵圈選的特殊貼圖（左上角有小三角）
+            // 左鍵圈選的貼圖
             vm.cellTextureSelected = vm.selectedCellTexture().generateCanvasTexture()
         },
         // 基礎的正方形 texture
@@ -328,112 +331,64 @@ export default {
 			g.lineStyle(1,0xcccccc)
 			g.beginFill(0x000000)
 			g.moveTo(0,0)
-            g.lineTo(0, 8)
-            g.lineTo(6, 2)
-            g.lineTo(13, 9)
-            g.lineTo(7, 15)
-            g.lineTo(15, 15)
-            g.lineTo(15, 7)
-            g.lineTo(9, 13)
-            g.lineTo(2, 6)
-			g.lineTo(8, 0)
-			g.lineTo(0,0)
+            g.lineTo(0, 15)
+            g.lineTo(15, 0)
+            g.lineTo(0, 0)
             g.endFill()
             
 			g.beginFill(0xFFFFFF)
 			g.moveTo(0,15)
-            g.lineTo(7,15)
-            g.lineTo(9, 13)
-            g.lineTo(2, 6)
-			g.lineTo(0, 8)
-			g.lineTo(0,15)
+            g.lineTo(15,15)
+            g.lineTo(15, 0)
+            g.lineTo(0, 15)
+            g.endFill()
+
+            return g
+        },
+        // 有標注 label  且被選取的 cell 貼圖
+        labeledAndSelectedCellTexture() {
+            let g = new PIXI.Graphics()
+			g.lineStyle(1,0x000000)
+			g.beginFill(0x000000)
+			g.moveTo(0,0)
+            g.lineTo(0, 15)
+            g.lineTo(15, 0)
+            g.lineTo(0, 0)
             g.endFill()
             
-            g.beginFill(0xFFFFFF)
-			g.moveTo(15, 0)
-            g.lineTo(8, 0)
-            g.lineTo(6, 2)
-            g.lineTo(13, 9)
-			g.lineTo(15, 7)
-			g.lineTo(15, 0)
+			g.beginFill(0xFFFFFF)
+			g.moveTo(0,15)
+            g.lineTo(15,15)
+            g.lineTo(15, 0)
+            g.lineTo(0, 15)
             g.endFill()
-            
-            // g.lineStyle(1,0xcccccc)
-			// g.beginFill(0x000000)
-			// g.moveTo(0,0)
-            // g.lineTo(0, 8)
-            // g.lineTo(7, 15)
-            // g.lineTo(15, 15)
-            // g.lineTo(15, 7)
-            // g.lineTo(8, 0)
-            // g.lineTo(0, 0)
-            // g.endFill()
-            
-			// g.beginFill(0xFFFFFF)
-			// g.moveTo(0,15)
-            // g.lineTo(7,15)
-            // g.lineTo(0, 8)
-            // g.lineTo(0, 15)
-            // g.endFill()
-            
-            // g.beginFill(0xFFFFFF)
-			// g.moveTo(15, 0)
-            // g.lineTo(15, 7)
-            // g.lineTo(8, 0)
-			// g.lineTo(15, 0)
-			// g.endFill()
+
             return g
         },
         // 同時被 pcp and calendar view 選中的時候
         filterAndSelectedCellTesture() {
             let g = new PIXI.Graphics()
-			g.lineStyle(1,0xcccccc)
+                        
+            g.lineStyle(1,0x000000)
 			g.beginFill(0x000000)
-			g.moveTo(15, 15)
-			g.lineTo(15, 7)
-			g.lineTo(7, 15)
-			g.lineTo(15, 15)
-            g.endFill()
-            
-            g.beginFill(0x000000)
 			g.moveTo(0,0)
 			g.lineTo(0, 8)
 			g.lineTo(8, 0)
 			g.lineTo(0,0)
+			g.endFill()
+            g.beginFill(0xFFFFFF)
+			g.moveTo(0,15)
+			g.lineTo(15,15)
+            g.lineTo(15,0)
+            g.lineTo(8, 0)
+            g.lineTo(0, 8)
+			g.lineTo(0,15)
             g.endFill()
             
-			g.beginFill(0xFFFFFF)
-			g.moveTo(0, 8)
-			g.lineTo(0, 15)
-            g.lineTo(7, 15)
-            g.lineTo(15, 7)
-            g.lineTo(15, 0)
-			g.lineTo(8, 0)
-			g.endFill()
-			return g
+            return g
         },
-        // pcp 選中時的貼圖 (正方形右下角會有黑色三角形的記號)
+        // pcp 選中時的貼圖 (正方形左上角會有黑色三角形的記號)
 		filterCellTexture() {
-			let g = new PIXI.Graphics()
-			g.lineStyle(1,0xcccccc)
-			g.beginFill(0x000000)
-			g.moveTo(15, 15)
-			g.lineTo(15, 7)
-			g.lineTo(7, 15)
-			g.lineTo(15, 15)
-			g.endFill()
-			g.beginFill(0xFFFFFF)
-			g.moveTo(0, 0)
-			g.lineTo(0, 15)
-            g.lineTo(7, 15)
-            g.lineTo(15, 7)
-            g.lineTo(15, 0)
-			g.lineTo(0, 0)
-			g.endFill()
-			return g
-        },
-        // 左鍵圈選的貼圖（左上角有小三角的記號）
-		selectedCellTexture(){
 			let g = new PIXI.Graphics()
 			g.lineStyle(1,0xcccccc)
 			g.beginFill(0x000000)
@@ -450,6 +405,15 @@ export default {
 			g.lineTo(0, 8)
 			g.lineTo(0,15)
 			g.endFill()
+            return g
+        },
+        // 左鍵圈選的貼圖（邊框變成黑匡）
+		selectedCellTexture(){
+			let g = new PIXI.Graphics()
+			g.lineStyle(1, 0x000000)
+			g.beginFill(0xFFFFFF)
+            g.drawRect(0, 0, vm.cellSize, vm.cellSize)
+            g.endFill()
             return g
         },
         // 按鍵設定
@@ -821,12 +785,13 @@ export default {
                 }
             }
         },
-        // 鼠標左鍵點擊(已經修改爲右鍵)
+        // 鼠標右鍵點擊
         spMouseDown(sp,ctn_box,ctn_cells){
             if( sp.selected && sp.box ){
                 ctn_cells.children.forEach( c => {
                     c.singSelected = false
-                    c.texture = (c.data && c.data.mask) ? vm.cellLabeledTexture : vm.cellTexture
+                    // here
+                    c.texture = (c.data && c.data.mask) ? vm.cellLabeledAndSelectedTexture : vm.cellTexture
                     c.selected = false
                     // 檢測當前 cell 是否爲空，如果是空白就跳過
                     if(c.tint === 0xCCCCCC)

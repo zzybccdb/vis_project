@@ -426,7 +426,9 @@ export default {
 					d.pcp = undefined	
 					d.cm.tint = d.cal.tint
 					d.cm.alpha = 0.3
-					d.cal.texture = vm.eventBus.cal.cellTexture
+					// here
+					d.cal.texture = (d.cal.data.mask) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTexture
+					// d.cal.texture = (d.cal.) vm.eventBus.cal.cellTexture
 				})
 				vm.ctn_lines.removeChildren()
 			}
@@ -448,6 +450,7 @@ export default {
 				}
 				d.cm.texture = vm.eventBus.cm.dotTexture
 				d.cm.alpha = 0.3
+				// here
 				d.cal.texture = (d.cal.data.mask) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTexture
 			})
 		},
@@ -692,7 +695,7 @@ export default {
 			let vm = this
 			// 統計當前 calendar view mask box 的數量
 			let cal_mask_boxes = vm.eventBus.cal.ctn_box.length
-
+			
 			vm.num_filter_box = 0
 			// 没有 filter box 存在
 			let no_box = vm.state.axis.every(a => a.grp.child_dict.line.box.length === 0 )
@@ -748,7 +751,7 @@ export default {
 						if(cal_mask_boxes === 0 && vm.num_filter_box > 0){
 							if(!line){
 								d.cal.selected = true
-								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellFilterTexture
+								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledAndSelectedTexture : vm.eventBus.cal.cellFilterTexture
 								// if (d.cal && d.cal.selected) {
 								let newline = new vm.$PIXI.Graphics()
 								vm.ctn_lines.addChild(newline)
@@ -766,9 +769,10 @@ export default {
 								line.tint = d.cal.tint
 								line.alpha = vm.alpha_m * vm.lineAlpha(d.alpha_u)
 								if (no_box) {
-									d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTextureSelected
+									// here
+									d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledAndSelectedTexture : vm.eventBus.cal.cellTextureSelected
 								} else {
-									d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellFilterAndSelectedTexture
+									d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledAndSelectedTexture : vm.eventBus.cal.cellFilterAndSelectedTexture
 								}
 								d.cm.tint = 0xffffff
 								d.cm.alpha = 1.0	
@@ -787,9 +791,10 @@ export default {
 							// 沒有 cal mask box 時候
 							if(!cal_mask_boxes){
 								d.cal.selected = false
-								d.cal.texture = vm.eventBus.cal.cellTextureSelected
+								d.cal.texture = (d.cal.data.mask) ? vm.eventBus.cal.cellLabeledAndSelectedTexture : vm.eventBus.cal.cellFilterTexture
 							} else {
-								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledTexture : vm.eventBus.cal.cellTextureSelected
+								// here
+								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledAndSelectedTexture : vm.eventBus.cal.cellTextureSelected
 							}
 							d.cm.tint = d.cal.tint
 							d.cm.alpha = 0.3						
@@ -1093,7 +1098,7 @@ export default {
 			vm.eventBus.data.forEach(d => {
 				if (d.cal.texture === vm.eventBus.cal.cellFilterAndSelectedTexture) {
 					d.mask = 1
-					d.cal.texture = vm.eventBus.cal.cellLabeledTexture
+					d.cal.texture = vm.eventBus.cal.cellLabeledAndSelectedTexture
 				}
 			})
 		},
@@ -1104,7 +1109,7 @@ export default {
 
 			if (no_box) {
 				vm.eventBus.data.forEach(d => {
-					if (d.cal.texture === vm.eventBus.cal.cellLabeledTexture && d.cal.selected) {
+					if (d.cal.texture === vm.eventBus.cal.cellLabeledAndSelectedTexture) {
 						d.mask = 0
 						d.cal.texture = vm.eventBus.cal.cellTextureSelected
 					}
