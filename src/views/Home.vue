@@ -290,23 +290,28 @@ export default {
 			latent_scatter.removePoints()
 			
 
-			new Promise((resolve) => {
+			new Promise((resolve, reject) => {
 				if(vm.network === 'NN based MDS'){
 					vm.loss_plot.reset()
 					vm.config.options.title.text = 'Distance Loss'
 					resolve('NN based MDS')
-				}
-				else if(vm.network === 'Autoencoder' || vm.network === 'VAE'){
+				} else if (vm.network === 'Autoencoder' || vm.network === 'VAE'){
 					vm.loss_plot.reset()
 					vm.config.options.title.text = 'Reconstruction Loss'
 					resolve('Autoencoder or VAE')
-				}
-				else{
+				} else if(vm.network === 'MDS') {
+					if ( confirm(`第一次跑 MSD 會花費你至少 20 分鐘的時間，請問是否要繼續？`) ) {
+						resolve('not a NN based model')
+					} else {
+						reject (`要跑很久 會怕齁～`)
+					}
+				} else {
 					resolve('not a NN based model')
 				}
 			}).then(() => {
 				vm.startTrain()
 			}).catch(error => {
+				vm.requesting = 'none'
 				console.error('new train plot error',error)
 			})
 		},

@@ -1093,6 +1093,7 @@ export default {
 			return [roundedRect,circle,Label]
 		},
 		setOutlier() {
+			// vm.$axios.post(vm.$api+'/dataset/setOutlier')
 			let vm = this
 
 			vm.eventBus.data.forEach(d => {
