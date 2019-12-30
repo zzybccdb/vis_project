@@ -769,7 +769,6 @@ export default {
 								line.tint = d.cal.tint
 								line.alpha = vm.alpha_m * vm.lineAlpha(d.alpha_u)
 								if (no_box) {
-									// here
 									d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledAndSelectedTexture : vm.eventBus.cal.cellTextureSelected
 								} else {
 									d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledAndSelectedTexture : vm.eventBus.cal.cellFilterAndSelectedTexture
@@ -788,12 +787,12 @@ export default {
 							} else{
 								line.alpha = 0.02
 							}
+							if (d.cal.data.mask) console.warn(`Heres`)
 							// 沒有 cal mask box 時候
 							if(!cal_mask_boxes){
 								d.cal.selected = false
 								d.cal.texture = (d.cal.data.mask) ? vm.eventBus.cal.cellLabeledAndSelectedTexture : vm.eventBus.cal.cellFilterTexture
 							} else {
-								// here
 								d.cal.texture = ( d.mask ) ? vm.eventBus.cal.cellLabeledAndSelectedTexture : vm.eventBus.cal.cellTextureSelected
 							}
 							d.cm.tint = d.cal.tint
@@ -986,6 +985,7 @@ export default {
 					vm.adjustAxisPosition()
 					vm.adjustLines()
 					vm.filterLines()
+
 				}
 				vm.switch_button.mode = circle.bool
 			}
@@ -1093,24 +1093,34 @@ export default {
 			return [roundedRect,circle,Label]
 		},
 		setOutlier() {
-			// vm.$axios.post(vm.$api+'/dataset/setOutlier')
 			let vm = this
-
+			let outliers = []
 			vm.eventBus.data.forEach(d => {
 				if (d.cal.texture === vm.eventBus.cal.cellFilterAndSelectedTexture) {
+					outliers.push( d.datetime.toDate().toISOString().split('.')[0].replace('T', ' ')  )
 					d.mask = 1
 					d.cal.texture = vm.eventBus.cal.cellLabeledAndSelectedTexture
 				}
 			})
+
+			if (outliers.length > 0) vm.$axios.post(vm.$api + '/dataset/setLabel', { outliers, isoutlier: true })
 		},
 		unsetOutlier() {
 			let vm = this
 
 			let no_box = vm.state.axis.every(a => a.grp.child_dict.line.box.length === 0 )
+			let outliers = []
 
 			if (no_box) {
 				vm.eventBus.data.forEach(d => {
+					if (d.mask !== 0) {
+						console.warn(d.cal.texture)
+						console.warn(d.cal.oldTexture)
+						console.warn(vm.eventBus.cal.cellLabeledAndSelectedTexture)
+						console.warn(d.cal.oldTexture === vm.eventBus.cal.cellLabeledTexture)
+					}
 					if (d.cal.texture === vm.eventBus.cal.cellLabeledAndSelectedTexture) {
+						outliers.push( d.datetime.toDate().toISOString().split('.')[0].replace('T', ' ')  )
 						d.mask = 0
 						d.cal.texture = vm.eventBus.cal.cellTextureSelected
 					}
@@ -1118,6 +1128,8 @@ export default {
 			} else {
 				alert('請先將所有 filter box 取消才可以 unset outlier')
 			}
+			console.warn(outliers)
+			if (outliers.length > 0) vm.$axios.post(vm.$api + '/dataset/setLabel', { outliers, isoutlier: false })
 		},
         init(){
 			let vm = this

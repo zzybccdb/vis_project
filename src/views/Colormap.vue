@@ -559,7 +559,6 @@ export default {
 		})
 	},
 	mounted() {
-		console.log('load calendar view')
 		var vm = this;
 		window.vm = vm
 		vm.eventBus = EventBus

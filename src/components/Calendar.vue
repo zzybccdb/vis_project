@@ -77,8 +77,7 @@ export default {
                 })
                 
 				if( c.data != undefined ){
-                    if ((pass /*&& !c.data.mask*/ && c.tint != 0xCCCCCC)){
-                        // here
+                    if ((pass && c.tint != 0xCCCCCC)){
 						c.texture = (c.data.mask) ? vm.cellLabeledAndSelectedTexture : vm.cellTextureSelected
                         c.selected = true
 					} else {
@@ -328,7 +327,7 @@ export default {
         // 有標注 label 的 cell 貼圖
         labeledCellTexture() {
             let g = new PIXI.Graphics()
-			g.lineStyle(1,0xcccccc)
+			g.lineStyle(1,0xCCCCCC)
 			g.beginFill(0x000000)
 			g.moveTo(0,0)
             g.lineTo(0, 11)
@@ -794,7 +793,6 @@ export default {
             if( sp.selected && sp.box ){
                 ctn_cells.children.forEach( c => {
                     c.singSelected = false
-                    // here
                     c.texture = (c.data && c.data.mask) ? vm.cellLabeledAndSelectedTexture : vm.cellTexture
                     c.selected = false
                     // 檢測當前 cell 是否爲空，如果是空白就跳過
@@ -830,7 +828,7 @@ export default {
         },
         // 鼠標右鍵點擊 cell 觸發
         spRightDown(sp) {
-            if(vm.keyDown != undefined && !sp.data.mask && sp.tint != 0xCCCCCC) {
+            if(vm.keyDown != undefined/* && !sp.data.mask */&& sp.tint != 0xCCCCCC) {
                 vm.message = vm.notice[vm.keyDown]
                 vm.color = "black"
                 setTimeout(() => {
@@ -852,16 +850,16 @@ export default {
         // ****** 右鍵選擇框操作
         // 右鍵選擇框設定
         SelectionBoxStart(e,ctn_box,main_ctn){
+            console.warn(`圈選`)
             // 记录当前 mask box 的数量
             let cal_mask_boxes = vm.ctn_box.length
             // 當前鼠標的位置
             let p = e.data.getLocalPosition(main_ctn)
             // 判断是否存在 pcp filter box
             let pcp_filter_boxes = vm.eventBus.pcp.state.axis.some(a => a.grp.child_dict.line.box.length !== 0 )
-            let cell_masked = vm.checkCellMasked(ctn_box,p)
             // 满足条件此時 pcp 上存有 filter box, 沒有 mask box, 禁止繪製
             // 检查当前点是否已经被 mask box 圈选，选中禁止绘制
-            if((cal_mask_boxes !== 0 || !pcp_filter_boxes) && !cell_masked){
+            if((cal_mask_boxes !== 0 || !pcp_filter_boxes)){
                 let box = new PIXI.Graphics()
                 // 將 box 也綁定到當前的 main ctn 下
                 box.class = main_ctn.name
@@ -1149,7 +1147,7 @@ export default {
 				}
 			})
 			if (boxes.length <= 1) {
-				vm.eventBus.pcp.state.axis.sort((x, y) => x.dim - y.dim)
+                vm.eventBus.pcp.state.axis.sort((x, y) => x.dim - y.dim)
 				vm.eventBus.pcp.adjustAxisPosition()
 				return
 			}

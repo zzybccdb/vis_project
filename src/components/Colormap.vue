@@ -311,11 +311,11 @@ export default {
 								d.cal.alpha = 1
 							}
 
-							if (d.mask) {
-								d.cal.tint = 0xCCCCCC
-								sp.tint = 0xCCCCCC
-								sp.alpha = 0
-							}
+							// if (d.mask) {
+							// 	d.cal.tint = 0xCCCCCC
+							// 	sp.tint = 0xCCCCCC
+							// 	sp.alpha = 0
+							// }
 						}
 						if (d.pcp) {
 							d.pcp.tint = color
