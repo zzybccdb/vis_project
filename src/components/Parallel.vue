@@ -1097,13 +1097,14 @@ export default {
 			let outliers = []
 			vm.eventBus.data.forEach(d => {
 				if (d.cal.texture === vm.eventBus.cal.cellFilterAndSelectedTexture) {
+					console.log(d)
 					outliers.push( d.datetime.toDate().toISOString().split('.')[0].replace('T', ' ')  )
 					d.mask = 1
 					d.cal.texture = vm.eventBus.cal.cellLabeledAndSelectedTexture
 				}
 			})
 
-			if (outliers.length > 0) vm.$axios.post(vm.$api + '/dataset/setLabel', { outliers, isoutlier: true })
+			if (outliers.length > 0) vm.$axios.post(vm.$api + '/dataset/setLabel', { outliers, isoutlier: true, level: vm.eventBus.calLevel })
 		},
 		unsetOutlier() {
 			let vm = this
@@ -1113,12 +1114,6 @@ export default {
 
 			if (no_box) {
 				vm.eventBus.data.forEach(d => {
-					if (d.mask !== 0) {
-						console.warn(d.cal.texture)
-						console.warn(d.cal.oldTexture)
-						console.warn(vm.eventBus.cal.cellLabeledAndSelectedTexture)
-						console.warn(d.cal.oldTexture === vm.eventBus.cal.cellLabeledTexture)
-					}
 					if (d.cal.texture === vm.eventBus.cal.cellLabeledAndSelectedTexture) {
 						outliers.push( d.datetime.toDate().toISOString().split('.')[0].replace('T', ' ')  )
 						d.mask = 0
@@ -1128,8 +1123,7 @@ export default {
 			} else {
 				alert('請先將所有 filter box 取消才可以 unset outlier')
 			}
-			console.warn(outliers)
-			if (outliers.length > 0) vm.$axios.post(vm.$api + '/dataset/setLabel', { outliers, isoutlier: false })
+			if (outliers.length > 0) vm.$axios.post(vm.$api + '/dataset/setLabel', { outliers, isoutlier: false, level: vm.eventBus.calLevel })
 		},
         init(){
 			let vm = this

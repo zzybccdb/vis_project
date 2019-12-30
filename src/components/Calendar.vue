@@ -850,7 +850,6 @@ export default {
         // ****** 右鍵選擇框操作
         // 右鍵選擇框設定
         SelectionBoxStart(e,ctn_box,main_ctn){
-            console.warn(`圈選`)
             // 记录当前 mask box 的数量
             let cal_mask_boxes = vm.ctn_box.length
             // 當前鼠標的位置
