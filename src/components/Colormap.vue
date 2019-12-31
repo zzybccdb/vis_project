@@ -28,10 +28,8 @@ export default {
 
 		highLightSelectedPoint(){
 			let vm = this
-			// console.log(vm.eventBus.data[0].cm)
 			vm.eventBus.data.forEach(d => {
 				if(d.cal.selected && d.cal){
-					// d.cm.texture = vm.selectedTexture
 					d.cm.tint = 0xffffff
 					d.cm.alpha = 1.0	
 					vm.ctn_points.setChildIndex(d.cm,vm.ctn_points.children.length-1)

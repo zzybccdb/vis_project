@@ -38,7 +38,6 @@ export default {
                  vm.pixiInit()
                 vm.d3Init(vm.data)
                 vm.drawGraph()
-
             })
             .catch(error => {
                 window.error = error

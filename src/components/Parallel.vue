@@ -787,7 +787,6 @@ export default {
 							} else{
 								line.alpha = 0.02
 							}
-							if (d.cal.data.mask) console.warn(`Heres`)
 							// 沒有 cal mask box 時候
 							if(!cal_mask_boxes){
 								d.cal.selected = false

@@ -434,6 +434,7 @@ export default {
 			let error_extent = vm.$d3.extent(errors)
 			let error_range_extent = [1, 0.2]
 			let error_scale = vm.$d3.scaleLinear().domain(error_extent).range(error_range_extent)
+
 			vm.eventBus.data = response.data.data.map((d, di) => {
 				return {
 					mask: vm.eventBus.mask[di][1],
@@ -468,11 +469,9 @@ export default {
 			vm.eventBus.zoomHistory.push({
 				calLevel: vm.eventBus.calLevel,
 				interval,
-				// startDate,
-				// endDate
 				date_range,
 			})
-			// console.log(interval)
+
 			vm.init.me = false
 			// vm.$refs.sld.clearData()
 			if (vm.init.cm) {
@@ -504,7 +503,7 @@ export default {
 			// param.other_dims = vm.columns
 			// vm.$axios.post(vm.$api + '/model/latent', param)
 			// console.log("Load data")
-			vm.$axios.post(vm.$api + '/inference/latent', param)
+			vm.$axios.post(vm.$api + '/inference/latent',  param)
 			.then(vm.onDataLoaded)
 			.catch(error => {
 				window.error = error

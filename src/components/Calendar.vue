@@ -477,15 +477,13 @@ export default {
                 console.error("height undefined")
             }
             vm.app.renderer.resize(vm.app.renderer.width, height + 50)
+
             // binding the data for the eventBus
             vm.eventBus.data.forEach(d => {
                 d.cal = vm.mapping[d.datetime.format(date_format)]
                 d.cal.data = d
 
 				if (d.mask) {
-                    // Corn: 將 mask 的貼圖改成紅框框起來
-					// d.cal.texture = vm.cellMaskTexture
-                    // d.cal.oldTexture = vm.cellMaskTexture
                     d.cal.texture = vm.cellLabeledTexture
 					d.cal.oldTexture = vm.cellLabeledTexture
                 }
@@ -569,11 +567,12 @@ export default {
 			return ctn_year
         },
         // level 月 calendar view,每一格顯示2小時資料
-        monthChart(){   
+        monthChart(){ 
             // 獲取資料的年份,起始和結束月份
 			let year = vm.eventBus.startDate.year()
 			let startMonth = vm.eventBus.startDate.month()
             let endMonth = vm.eventBus.endDate.month()
+
             // 每個月之間間距設定
             let gap_size = (vm.padding + vm.cellSize * 13)
             let height = undefined
@@ -582,7 +581,7 @@ export default {
             vm.drawBackLabel(str)
 
             // 以每個月爲一個 main_ctn 
-			for(let m=startMonth;m<=endMonth;++m) {
+			for(let m=startMonth; m<=endMonth; ++m) {
                 let m_ctn = vm.addMonth(year, m)
 
 				if(m%2 === 1){
@@ -594,8 +593,7 @@ export default {
                         m_ctn.y = (m - startMonth)/2 * gap_size  + vm.padding + 20
                         m_ctn.x = 31 * vm.cellSize + 60
                     }
-				}
-				else{
+				} else {
                     if(startMonth%2 === 0){
                         m_ctn.y = (m - startMonth)/2 * gap_size  + vm.padding + 20
                     }
@@ -611,6 +609,7 @@ export default {
         // level month 實際繪製代碼
         addMonth(year, month){
             let date = vm.eventBus.startDate.clone().month(month).date(1)
+
             let [ctn_month,main_ctn,ctn_box,ctn_cells] = vm.containerInitial("ctn_month")
             // 標籤容器宣告,繪製側邊月份信息
             let y = 12
@@ -634,8 +633,7 @@ export default {
                 // cell 鼠標操作
                 sp.mouseover = (e) => {vm.spMouseOver(e, sp, ctn_box)}
                 sp.mouseout = () => {vm.spMouseOut(sp, ctn_box)}
-                sp.rightdown = () => {vm.spMouseDown(sp, ctn_box, ctn_cells)}
-                // sp.rightdown = () => {vm.spRightDown(sp)}                
+                sp.rightdown = () => {vm.spMouseDown(sp, ctn_box, ctn_cells)}  
 				vm.mapping[date.format(date_format)] = sp
 
 				let dayOfMonth = date.date()
@@ -1101,6 +1099,7 @@ export default {
             label.y = vm.cellSize * y / 2 + label.width / 2
 			label.interactive = true
             label.buttonMode = true
+
             // 标签点击事件宣告
             label.mousedown = ()=>{
                 if(month === undefined){
@@ -1108,9 +1107,9 @@ export default {
                     let sd = vm.$moment.utc().year(year).dayOfYear(1).hour(0).minute(0).second(0)
                     let ed = vm.$moment.utc().year(year+1).dayOfYear(1).hour(0).minute(0).second(0).add(-1, 'second')
                     vm.eventBus.calLevel = 'month'
-                    vm.eventBus.root.loadData('2 hour', [sd.format(date_format), ed.format(date_format)])         
-                }
-                else{
+                    // call colorMap loadData
+                    vm.eventBus.root.loadData('2 hour', [sd.format(date_format), ed.format(date_format)])
+                } else {
                     let sd = vm.$moment.utc().year(year).month(month).date(1).hour(0).minute(0).second(0)
                     let ed = vm.$moment.utc().year(year).month(month+1).date(1).hour(0).minute(0).second(0).add(-1, 'second')
                     vm.eventBus.calLevel = 'day'

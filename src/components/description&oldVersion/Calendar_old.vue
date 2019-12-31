@@ -333,7 +333,6 @@ export default {
 			label.mousedown = function() {
 				let sd = vm.$moment.utc().year(year).dayOfYear(1).hour(0).minute(0).second(0)
 				let ed = vm.$moment.utc().year(year+1).dayOfYear(1).hour(0).minute(0).second(0).add(-1, 'second')
-				console.log(sd,ed)
 				vm.eventBus.calLevel = 'month'
 				vm.eventBus.root.loadData('2 hour', [sd.format(date_format), ed.format(date_format)])
 			}
