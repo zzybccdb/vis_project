@@ -240,4 +240,6 @@
 
 #### 2020/05/18
 - 將 `web server` 的 `port` 改成 `443`，執行指令： `sudo ./node_modules/.bin/vue-cli-service serve --port <portNumber>`
-- 設置 `VUE_APP_APIPORT` 為 `80`
+- 設置 `VUE_APP_APIPORT` 為 `80`，執行指令： `export VUE_APP_APIPORT=80`
+- 此外，App 在取用 `apiport` 的時候可能會取得的是 `string`，因此在 `main.js` 裡面需要把它轉換成 int 確保你設置的環境變數是有用的
+- 但是不知道為什麼 app 還是會使用預設的 port ， 所以暫時先把預設的 port 變成 80
