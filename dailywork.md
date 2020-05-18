@@ -237,3 +237,7 @@
 #### 2019/12/31
 - 修正在 year 讀 level 標記資料之後進去 month 會有時間偏移的狀況，原因是後端 api 沒有限制時間範圍，也就是 response 回來的資料 data 是 2016/1/1 - 2016/12/31 但是 mask 是  2015/7/x - 2017/x/x 導致 mask 對不上
 > 2019 結案
+
+#### 2020/05/18
+- 將 `web server` 的 `port` 改成 `443`，執行指令： `sudo ./node_modules/.bin/vue-cli-service serve --port <portNumber>`
+- 設置 `VUE_APP_APIPORT` 為 `80`
