@@ -16,7 +16,7 @@
     "chart.streamgraph.js": "0.0.2-alpha",
     "d3": "^5.5.0",
     "handsontable": "^6.2.2",
-    "moment": "^2.22.2",
+    "moment": "^2.29.4",
     "pixi.js": "^4.8.6",
     "plotly": "^1.0.6",
     "vue": "^2.5.17",
