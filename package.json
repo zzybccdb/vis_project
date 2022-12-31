@@ -27,14 +27,14 @@
   },
   "devDependencies": {
     "@babel/polyfill": "^7.0.0-beta.49",
-    "@vue/cli-plugin-babel": "^3.4.0",
-    "@vue/cli-plugin-eslint": "^3.4.0",
-    "@vue/cli-plugin-unit-mocha": "^3.4.0",
-    "@vue/cli-service": "^3.8.0",
+    "@vue/cli-plugin-babel": "^5.0.8",
+    "@vue/cli-plugin-eslint": "^5.0.8",
+    "@vue/cli-plugin-unit-mocha": "^5.0.8",
+    "@vue/cli-service": "^5.0.8",
     "@vue/test-utils": "^1.0.0-beta.20",
     "chai": "^4.1.2",
     "node-sass": "^4.11.0",
-    "sass-loader": "^7.0.1",
+    "sass-loader": "^13.2.0",
     "vue-cli-plugin-vuetify": "^0.1.6",
     "vue-template-compiler": "^2.5.17"
   }
